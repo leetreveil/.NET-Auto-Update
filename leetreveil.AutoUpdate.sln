@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "leetreveil.AutoUpdate.Core", "src\app\leetreveil.AutoUpdate.Core\leetreveil.AutoUpdate.Core.csproj", "{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "leetreveil.AutoUpdate.Tests", "src\test\leetreveil.AutoUpdate.Tests\leetreveil.AutoUpdate.Tests.csproj", "{2742ABE7-977D-4989-B12A-992A50B28E2F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2742ABE7-977D-4989-B12A-992A50B28E2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2742ABE7-977D-4989-B12A-992A50B28E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2742ABE7-977D-4989-B12A-992A50B28E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2742ABE7-977D-4989-B12A-992A50B28E2F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
