@@ -50,8 +50,12 @@
     <Compile Include="Unit\Appcast\AppcastReaderTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Samples\adobereference.xml" />
-    <Content Include="Samples\zunesocialtagger.xml" />
+    <Content Include="Samples\adobereference.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Samples\zunesocialtagger.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\app\leetreveil.AutoUpdate.Core\leetreveil.AutoUpdate.Core.csproj">
