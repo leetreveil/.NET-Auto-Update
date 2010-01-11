@@ -48,6 +48,9 @@
   <ItemGroup>
     <Compile Include="Appcast\AppcastItem.cs" />
     <Compile Include="Appcast\AppcastReader.cs" />
+    <Compile Include="FileDownload\FileDownloader.cs" />
+    <Compile Include="UpdateCheck\Update.cs" />
+    <Compile Include="UpdateCheck\UpdateChecker.cs" />
     <Compile Include="Zip\EmptyZipFileException.cs" />
     <Compile Include="Zip\NonValidZipFileException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -46,7 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Integration\ZipFileExtractorTests.cs" />
+    <Compile Include="Integration\FileDownload\FileDownloaderTests.cs" />
+    <Compile Include="Integration\Zip\ZipFileExtractorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\Appcast\AppcastReaderTests.cs" />
   </ItemGroup>

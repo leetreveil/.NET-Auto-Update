@@ -1,0 +1,18 @@
+﻿<Window x:Class="leetreveil.AutoUpdate.SampleApp.UpdateWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="SampleApp Update" Height="270" Width="400" ResizeMode="NoResize" Topmost="True">
+    <Grid>
+        <StackPanel>
+            <TextBlock TextWrapping="Wrap">An update for SampleApp is available. It is reccomended that you install it as soon as possible.</TextBlock>
+            <TextBlock Margin="0,10,0,0" FontSize="20" Text="SampleApp v1.2"/>
+            <Line Margin="0,10,0,0"/>
+        </StackPanel>
+
+        <StackPanel VerticalAlignment="Bottom">
+            <Button Content="Install When I Exit" Height="40"/>
+            <Button Content="Install Now" Height="40" Click="InstallNow_Click" />
+        </StackPanel>
+    </Grid>
+
+</Window>
