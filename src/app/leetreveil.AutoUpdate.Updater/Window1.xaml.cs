@@ -13,8 +13,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Reflection;
 using System.Resources;
-using leetreveil.AutoUpdate.Core.Zip;
 using System.Diagnostics;
+using leetreveil.AutoUpdate.Updater.Zip;
 
 namespace leetreveil.AutoUpdate.Updater
 {
@@ -32,9 +32,18 @@ namespace leetreveil.AutoUpdate.Updater
         {
             string[] args = Environment.GetCommandLineArgs();
 
-            ExtractAndStartApplication(args[2],args[1]);
+            var compressedUpdateFile = args[2];
+            var appPath = args[1];
 
-            //TODO: clean up update files after extraction
+            if (!File.Exists(compressedUpdateFile))
+                throw new FileNotFoundException();
+
+            ExtractAndStartApplication(compressedUpdateFile,appPath);
+
+            //TODO: clean up update file after extraction
+
+            if (File.Exists(compressedUpdateFile))
+                File.Delete(compressedUpdateFile);
         }
 
         private void ExtractAndStartApplication(string updateFilePath, string applicationFilePath)

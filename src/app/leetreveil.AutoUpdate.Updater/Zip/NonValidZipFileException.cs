@@ -1,6 +1,6 @@
 using System;
 
-namespace leetreveil.AutoUpdate.Core.Zip
+namespace leetreveil.AutoUpdate.Updater.Zip
 {
     public class NonValidZipFileException : Exception
     {

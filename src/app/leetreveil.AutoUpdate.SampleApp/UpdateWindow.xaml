@@ -5,7 +5,11 @@
     <Grid>
         <StackPanel>
             <TextBlock TextWrapping="Wrap">An update for SampleApp is available. It is reccomended that you install it as soon as possible.</TextBlock>
-            <TextBlock Margin="0,10,0,0" FontSize="20" Text="SampleApp v1.2"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <TextBlock FontSize="20" Text="SampleApp v"/>
+                <TextBlock FontSize="20" Text="{Binding UpdateVersion}"/>
+            </StackPanel>
             <Line Margin="0,10,0,0"/>
         </StackPanel>
 

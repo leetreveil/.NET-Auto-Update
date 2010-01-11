@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using leetreveil.AutoUpdate.Core.FileDownload;
 using leetreveil.AutoUpdate.Core.UpdateCheck;
@@ -17,6 +18,13 @@ namespace leetreveil.AutoUpdate.SampleApp
         {
             _newUpdate = newUpdate;
             InitializeComponent();
+
+            this.DataContext = this;
+        }
+
+        public string UpdateVersion
+        {
+            get { return _newUpdate.Version.ToString(); }
         }
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
@@ -25,17 +33,25 @@ namespace leetreveil.AutoUpdate.SampleApp
 
             var filePathToUpdate = fDownloader.Download();
 
-            StartUpdaterExeAndShutdown(filePathToUpdate);
+            if (!String.IsNullOrEmpty(filePathToUpdate))
+            {
+                StartUpdaterExeAndShutdown(filePathToUpdate);
+            }
+            else
+            {
+                //TODO: error downloading the update, display message to user
+            }
+
         }
 
         /// <summary>
         /// Starts the update executable, shuts down the current application so the update can start
         /// </summary>
-        /// <param name="filePathToUpdate">The path to the compressed file that should be extracted and used to update existing files</param>
-        private void StartUpdaterExeAndShutdown(string filePathToUpdate)
+        /// <param name="compressedUpdateFileName">The name of the compressed file that should be extracted and used to update existing files</param>
+        private void StartUpdaterExeAndShutdown(string compressedUpdateFileName)
         {
             var thisAppsFileName = Path.GetFileName(System.Reflection.Assembly.GetEntryAssembly().Location);
-            Process.Start("updater.exe", thisAppsFileName + " " + filePathToUpdate);
+            Process.Start("updater.exe", thisAppsFileName + " " + Path.Combine(Environment.CurrentDirectory, compressedUpdateFileName));
 
             Application.Current.Shutdown();
         }

@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Ionic.Zip.Reduced, Version=1.8.4.29, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\libs\dontnetzipreduced\Ionic.Zip.Reduced.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -81,6 +85,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Zip\EmptyZipFileException.cs" />
+    <Compile Include="Zip\NonValidZipFileException.cs" />
+    <Compile Include="Zip\ZipFileExtractor.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -91,12 +98,6 @@
     </None>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\leetreveil.AutoUpdate.Core\leetreveil.AutoUpdate.Core.csproj">
-      <Project>{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}</Project>
-      <Name>leetreveil.AutoUpdate.Core</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -106,6 +107,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).exe "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\bin\Debug"</PostBuildEvent>
+    <PostBuildEvent>copy $(TargetName).exe "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\bin\Debug"
+copy Ionic.Zip.Reduced.dll "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\bin\Debug"</PostBuildEvent>
   </PropertyGroup>
 </Project>

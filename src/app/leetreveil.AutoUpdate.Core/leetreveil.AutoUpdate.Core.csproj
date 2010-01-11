@@ -31,10 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Ionic.Zip.Reduced, Version=1.8.4.29, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\libs\dontnetzipreduced\Ionic.Zip.Reduced.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -51,10 +47,7 @@
     <Compile Include="FileDownload\FileDownloader.cs" />
     <Compile Include="UpdateCheck\Update.cs" />
     <Compile Include="UpdateCheck\UpdateChecker.cs" />
-    <Compile Include="Zip\EmptyZipFileException.cs" />
-    <Compile Include="Zip\NonValidZipFileException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Zip\ZipFileExtractor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

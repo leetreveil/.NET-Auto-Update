@@ -1,10 +1,9 @@
 using System;
 using System.IO;
-using leetreveil.AutoUpdate.Core.Zip;
+using leetreveil.AutoUpdate.Updater.Zip;
 using NUnit.Framework;
 
-
-namespace leetreveil.AutoUpdate.Tests.Integration.Zip
+namespace leetreveil.AutoUpdate.Tests.Integration.Updater.Zip
 {
     [TestFixture]
     public class ZipFileExtractorTests
