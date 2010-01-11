@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.IO;
-using System.Linq;
-using System.Windows;
+﻿using System.Windows;
 using leetreveil.AutoUpdate.Core.UpdateCheck;
-using leetreveil.AutoUpdate.Core.FileDownload;
-using System.Diagnostics;
-using System.Reflection;
 
 namespace leetreveil.AutoUpdate.SampleApp
 {
@@ -20,10 +11,12 @@ namespace leetreveil.AutoUpdate.SampleApp
         public App()
         {
             //check for update asyncronously
+            //TODO: move the update checking to somewhere after the app has started, i.e main window
 
+            //TODO: make this code asyncronous
             var updateChecker = new UpdateChecker();
 
-            if (updateChecker.CheckForUpdate("zunesocialtagger.xml"))
+            if (updateChecker.CheckForUpdate("sampleappupdatefeed.xml"))
             {
                 //ask user if he wants to update or not
                 new UpdateWindow(updateChecker.Update).Show();

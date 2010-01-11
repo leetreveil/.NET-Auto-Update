@@ -30,12 +30,19 @@ namespace leetreveil.AutoUpdate.Updater
 
         private void button1_Click(object sender, RoutedEventArgs e)
         {
-            string[] strings = Environment.GetCommandLineArgs();
+            string[] args = Environment.GetCommandLineArgs();
 
-            var extractor = new ZipFileExtractor(strings[2]);
+            ExtractAndStartApplication(args[2],args[1]);
+
+            //TODO: clean up update files after extraction
+        }
+
+        private void ExtractAndStartApplication(string updateFilePath, string applicationFilePath)
+        {
+            var extractor = new ZipFileExtractor(updateFilePath);
             extractor.ExtractTo(Environment.CurrentDirectory);
 
-            Process.Start(strings[1]);
+            Process.Start(applicationFilePath);
         }
     }
 }

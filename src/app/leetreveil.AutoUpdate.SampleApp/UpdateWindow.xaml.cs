@@ -25,9 +25,17 @@ namespace leetreveil.AutoUpdate.SampleApp
 
             var filePathToUpdate = fDownloader.Download();
 
-            var thisAppsFileName2 = Path.GetFileName(System.Reflection.Assembly.GetEntryAssembly().Location);
-            Process.Start("updater.exe", thisAppsFileName2 + " " + filePathToUpdate);
+            StartUpdaterExeAndShutdown(filePathToUpdate);
+        }
 
+        /// <summary>
+        /// Starts the update executable, shuts down the current application so the update can start
+        /// </summary>
+        /// <param name="filePathToUpdate">The path to the compressed file that should be extracted and used to update existing files</param>
+        private void StartUpdaterExeAndShutdown(string filePathToUpdate)
+        {
+            var thisAppsFileName = Path.GetFileName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            Process.Start("updater.exe", thisAppsFileName + " " + filePathToUpdate);
 
             Application.Current.Shutdown();
         }

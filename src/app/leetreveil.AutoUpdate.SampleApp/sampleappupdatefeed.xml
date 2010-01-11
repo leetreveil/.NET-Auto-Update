@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:appcast="http://www.adobe.com/xml-namespaces/appcast/1.0">
   <channel>
-    <title>Zune Social Tagger Update Feed</title>
+    <title>SampleApp Update Feed</title>
     <link>http://github.com/leetreveil/Zune-Social-Tagger/downloads</link>
-    <description>Link an album to the zune social with any album available on the zune marketplace!</description>
+    <description>Sample application that demonstrates the autoupdate capabilities</description>
     <item>
-      <title>Zune Social Tagger</title>
+      <title>SampleApp</title>
       <link>http://github.com/leetreveil/Zune-Social-Tagger/downloads</link>
       <description>.WMA Support and other minor bug fixes</description>
       <pubDate>Sunday, 27 December 2009 00:35:00 GMT</pubDate>
       <appcast:version>1.2</appcast:version>
-      <enclosure url="http://cloud.github.com/downloads/leetreveil/Zune-Social-Tagger/Zune_Social_Tagger_1.2.zip" length="865843" type="application/octet-stream" />
+      <enclosure url="SampleApp1.2.zip" length="865843" type="application/octet-stream" />
     </item>
   </channel>
 </rss>

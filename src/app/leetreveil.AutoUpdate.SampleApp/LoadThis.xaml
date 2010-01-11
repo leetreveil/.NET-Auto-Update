@@ -1,8 +1,0 @@
-﻿<Window x:Class="leetreveil.AutoUpdate.SampleApp.Window1"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="LoadThis" Height="300" Width="300">
-    <Grid>
-        <Button Height="23" Margin="77,107,78,0" Name="button1" VerticalAlignment="Top" Click="button1_Click">Do Update</Button>
-    </Grid>
-</Window>
