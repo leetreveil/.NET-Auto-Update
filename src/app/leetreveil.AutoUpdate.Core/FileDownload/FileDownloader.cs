@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.IO;
 
 namespace leetreveil.AutoUpdate.Core.FileDownload
 {
@@ -18,7 +19,8 @@ namespace leetreveil.AutoUpdate.Core.FileDownload
             {
                 var client = new WebClient();
 
-                var fileNameToSaveAs = ExtractFileNameFromString(_url);
+                //gets the filename from the end of the url
+                var fileNameToSaveAs = Path.GetFileName(_url);
 
                 client.DownloadFile(_url, fileNameToSaveAs);
 
@@ -30,11 +32,6 @@ namespace leetreveil.AutoUpdate.Core.FileDownload
 
                 return String.Empty;
             }
-        }
-
-        private string ExtractFileNameFromString(string url)
-        {
-            return url.Substring(url.LastIndexOf('/') + 1);
         }
     }
 }

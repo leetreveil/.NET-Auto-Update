@@ -47,20 +47,5 @@ namespace leetreveil.AutoUpdate.Tests.Integration.Updater.Zip
         {
             throw new NotImplementedException();
         }
-
-
-        [Test]
-        [ExpectedException(typeof(NonValidZipFileException))]
-        public void Should_throw_an_exception_if_file_is_not_a_zip_file()
-        {
-            new ZipFileExtractor("Samples/adobereference.xml").ExtractTo("Samples/EmptyFolder");
-        }
-
-        [Test]
-        [ExpectedException(typeof(EmptyZipFileException))]
-        public void Should_throw_an_exception_of_the_zip_file_is_empty()
-        {
-            new ZipFileExtractor("Samples/zipfilewithnofiles.zip").ExtractTo("Samples/EmptyFolder");
-        }
     }
 }
