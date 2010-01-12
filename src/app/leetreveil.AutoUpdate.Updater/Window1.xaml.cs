@@ -44,6 +44,8 @@ namespace leetreveil.AutoUpdate.Updater
 
             if (File.Exists(compressedUpdateFile))
                 File.Delete(compressedUpdateFile);
+
+            Application.Current.Shutdown();
         }
 
         private void ExtractAndStartApplication(string updateFilePath, string applicationFilePath)

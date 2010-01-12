@@ -10,14 +10,12 @@ namespace leetreveil.AutoUpdate.Core.UpdateCheck
         public Update Update { get; private set; }
 
         /// <summary>
-        /// Checks for update with the default settings for Assembly versioning, minor version resolution
+        /// Checks for update with the default settings for Assembly versioning
         /// </summary>
         /// <param name="updateUrl"></param>
         /// <returns></returns>
         public bool CheckForUpdate(string updateUrl)
         {
-            var appVersion = Assembly.GetEntryAssembly().GetName().Version;
-
             try
             {
                 var appcastReader = new AppcastReader(updateUrl);
@@ -26,11 +24,10 @@ namespace leetreveil.AutoUpdate.Core.UpdateCheck
                 AppcastItem firstUpdate = updates.First();
                 var firstUpdateVers = new Version(firstUpdate.Version);
 
-                //so 1.2 > 1.1 && 1.2.1 > 1.1.1
-                if (firstUpdateVers.Major >= appVersion.Major && firstUpdateVers.Minor > appVersion.Minor)
+                if (firstUpdateVers > Assembly.GetEntryAssembly().GetName().Version)
                 {
                     //update is available
-                    this.Update = new Update{FileUrl = firstUpdate.FileUrl,Title = firstUpdate.Title,Version = firstUpdateVers};
+                    this.Update = new Update { FileUrl = firstUpdate.FileUrl, Title = firstUpdate.Title, Version = firstUpdateVers };
 
                     return true;
                 }

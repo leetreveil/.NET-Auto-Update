@@ -107,7 +107,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetName).exe "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\bin\Debug"
-copy Ionic.Zip.Reduced.dll "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\bin\Debug"</PostBuildEvent>
+    <PostBuildEvent>copy Ionic.Zip.Reduced.dll "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\bin\Debug"
+copy updater.pdb "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\bin\Debug"</PostBuildEvent>
   </PropertyGroup>
 </Project>
