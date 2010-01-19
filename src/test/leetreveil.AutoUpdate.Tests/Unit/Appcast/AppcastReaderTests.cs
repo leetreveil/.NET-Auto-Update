@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using leetreveil.AutoUpdate.Core.Appcast;
 using NUnit.Framework;
 
@@ -39,8 +36,5 @@ namespace leetreveil.AutoUpdate.Tests.Unit.Appcast
 
             Assert.That(update.FileUrl, Is.EqualTo("http://cloud.github.com/downloads/leetreveil/Zune-Social-Tagger/Zune_Social_Tagger_1.2.zip"));
         }
-
-
-
     }
 }

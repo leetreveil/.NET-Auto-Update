@@ -60,9 +60,9 @@ namespace leetreveil.AutoUpdate.SampleApp.Properties {
             }
         }
         
-        internal static byte[] updater {
+        internal static byte[] ltupdater {
             get {
-                object obj = ResourceManager.GetObject("updater", resourceCulture);
+                object obj = ResourceManager.GetObject("ltupdater", resourceCulture);
                 return ((byte[])(obj));
             }
         }
