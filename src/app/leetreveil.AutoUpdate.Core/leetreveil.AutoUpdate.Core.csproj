@@ -42,10 +42,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Appcast\AppcastItem.cs" />
     <Compile Include="Appcast\AppcastReader.cs" />
+    <Compile Include="Appcast\IUpdateFeedSource.cs" />
     <Compile Include="FileDownload\FileDownloader.cs" />
-    <Compile Include="UpdateCheck\Update.cs" />
+    <Compile Include="Update.cs" />
     <Compile Include="UpdateCheck\UpdateChecker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

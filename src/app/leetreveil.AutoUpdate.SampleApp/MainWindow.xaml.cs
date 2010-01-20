@@ -1,19 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using leetreveil.AutoUpdate.Core.UpdateCheck;
 using Path=System.IO.Path;
+using leetreveil.AutoUpdate.Core.Appcast;
+using leetreveil.AutoUpdate.Core;
 
 namespace leetreveil.AutoUpdate.SampleApp
 {
@@ -22,17 +15,15 @@ namespace leetreveil.AutoUpdate.SampleApp
     /// </summary>
     public partial class MainWindow : Window
     {
+        public string AppVersion { get { return Assembly.GetExecutingAssembly().GetName().Version.ToString(); } }
+        private readonly string updaterPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                  "ltupdater.exe");
+
         public MainWindow()
         {
             InitializeComponent();
-
             this.DataContext = this;
         }
-
-        public string AppVersion { get { return Assembly.GetExecutingAssembly().GetName().Version.ToString(); } }
-
-        private string updaterPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                                  "ltupdater.exe");
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -46,14 +37,16 @@ namespace leetreveil.AutoUpdate.SampleApp
 
             try
             {
-                //TODO: check for update asyncronously
-                var updateChecker = new UpdateChecker();
+                ////TODO: check for update asyncronously
+                ////TODO: fix it so we dont have to download file updates from the internet and just point to a file on disk in the xml file (easier to test)
+                var results = new AppcastReader().Read("sampleappupdatefeed.xml");
+                Update update = results.First();
 
-                //TODO: fix it so we dont have to download file updates from the internet and just point to a file on disk in the xml file (easier to test)
-                if (updateChecker.CheckForUpdate("sampleappupdatefeed.xml"))
+
+                if (UpdateChecker.CheckForUpdate(Assembly.GetEntryAssembly().GetName().Version,update.Version))
                 {
                     //ask user if he wants to update or not
-                    new UpdateWindow(updateChecker.Update).Show();
+                    new UpdateWindow(update).Show();
                 }
             }
             catch  {}

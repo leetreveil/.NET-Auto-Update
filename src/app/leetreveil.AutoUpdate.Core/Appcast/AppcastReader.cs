@@ -1,27 +1,23 @@
+using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
 using System.Linq;
 
 namespace leetreveil.AutoUpdate.Core.Appcast
 {
-    public class AppcastReader
+    public class AppcastReader : IUpdateFeedSource
     {
-        private readonly XDocument _appcastDoc;
-
-        public AppcastReader(string url)
+        public IEnumerable<Update> Read(string url)
         {
-            _appcastDoc = XDocument.Load(url);
-        }
+            var document = XDocument.Load(url);
 
-        public IEnumerable<AppcastItem> Read()
-        {
             XNamespace ns = "http://www.adobe.com/xml-namespaces/appcast/1.0";
 
-            return _appcastDoc.Descendants("channel").Descendants("item").Select(
-                item => new AppcastItem
+            return document.Descendants("channel").Descendants("item").Select(
+                item => new Update
                             {
                                 Title = item.Element("title").Value,
-                                Version = item.Element(ns + "version").Value,
+                                Version = new Version(item.Element(ns + "version").Value),
                                 FileUrl = item.Element("enclosure").Attribute("url").Value
                             });
         }

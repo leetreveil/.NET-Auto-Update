@@ -1,6 +1,6 @@
 using System;
 
-namespace leetreveil.AutoUpdate.Core.UpdateCheck
+namespace leetreveil.AutoUpdate.Core
 {
     public class Update
     {

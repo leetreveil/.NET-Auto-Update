@@ -50,6 +50,7 @@
     <Compile Include="Integration\Updater\Zip\ZipFileExtractorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\Appcast\AppcastReaderTests.cs" />
+    <Compile Include="Unit\UpdateCheck\UpdateCheckerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Samples\zunesocialtagger.xml">

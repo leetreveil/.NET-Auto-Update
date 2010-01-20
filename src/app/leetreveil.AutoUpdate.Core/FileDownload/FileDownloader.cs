@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 
 namespace leetreveil.AutoUpdate.Core.FileDownload
@@ -15,7 +16,9 @@ namespace leetreveil.AutoUpdate.Core.FileDownload
         {
             var client = new WebClient();
 
-            return client.DownloadData(_url);
+            var downloadedData = client.DownloadData(new Uri(_url));
+
+            return downloadedData;
         }
     }
 }
