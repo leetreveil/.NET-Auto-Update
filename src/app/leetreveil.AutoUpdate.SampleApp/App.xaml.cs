@@ -1,5 +1,6 @@
-﻿using System.Windows;
-using leetreveil.AutoUpdate.Core.UpdateCheck;
+﻿using System;
+using System.IO;
+using System.Windows;
 
 namespace leetreveil.AutoUpdate.SampleApp
 {
@@ -8,9 +9,5 @@ namespace leetreveil.AutoUpdate.SampleApp
     /// </summary>
     public partial class App : Application
     {
-        public App()
-        {
-
-        }
     }
 }

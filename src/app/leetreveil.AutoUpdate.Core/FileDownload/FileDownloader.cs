@@ -1,6 +1,4 @@
-using System;
 using System.Net;
-using System.IO;
 
 namespace leetreveil.AutoUpdate.Core.FileDownload
 {
@@ -13,25 +11,11 @@ namespace leetreveil.AutoUpdate.Core.FileDownload
             _url = url;
         }
 
-        public string Download()
+        public byte[] Download()
         {
-            try
-            {
-                var client = new WebClient();
+            var client = new WebClient();
 
-                //gets the filename from the end of the url
-                var fileNameToSaveAs = Path.GetFileName(_url);
-
-                client.DownloadFile(_url, fileNameToSaveAs);
-
-                return fileNameToSaveAs;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-
-                return String.Empty;
-            }
+            return client.DownloadData(_url);
         }
     }
 }

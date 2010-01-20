@@ -1,4 +1,3 @@
-using System.IO;
 using leetreveil.AutoUpdate.Core.FileDownload;
 using NUnit.Framework;
 
@@ -12,12 +11,9 @@ namespace leetreveil.AutoUpdate.Tests.Integration.FileDownload
         {
             var fileDownloader = new FileDownloader("http://www.google.co.uk/intl/en_uk/images/logo.gif");
 
-            if (File.Exists("logo.gif"))
-                File.Delete("logo.gif");
+            byte[] fileData = fileDownloader.Download();
 
-            string filePath = fileDownloader.Download();
-
-            Assert.That(File.Exists(filePath),Is.True);
+            Assert.That(fileData.Length,Is.GreaterThan(0));
         }
 
     }

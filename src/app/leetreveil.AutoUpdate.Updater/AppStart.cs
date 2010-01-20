@@ -2,67 +2,102 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Mime;
-using System.Text;
+using System.Net.Sockets;
 using System.Windows.Forms;
 using leetreveil.AutoUpdate.Updater.Zip;
-using Winterdom.IO.FileMap;
 
 namespace leetreveil.AutoUpdate.Updater
 {
-    static class AppStart
+    internal static class AppStart
     {
-
-        static void Main()
+        private static void Main()
         {
-            var mappedFile = MemoryMappedFile.Open(MapAccess.FileMapRead, @"Local\MyMappedFile");
-
-            var stream = mappedFile.MapView(MapAccess.FileMapRead, 0, 6);
-
-            byte[] messageBytes = new byte[6];
-
-            stream.Read(messageBytes, 0, 6);
-
-            MessageBox.Show("From the updater! " + Encoding.ASCII.GetString(messageBytes));
-
-            stream.Close();
-
-            Debugger.Launch();
+            //Debugger.Launch();
 
             string[] args = Environment.GetCommandLineArgs();
 
             var appPath = args[1];
 
-            //if (!File.Exists(compressedUpdateFile))
-            //    throw new FileNotFoundException("could not find the update file, did it download correctly? " +
-            //                                    compressedUpdateFile);
+            TcpClient client = new TcpClient("localhost",13001);
 
-            if (!File.Exists(appPath))
-                throw new FileNotFoundException("could not find the application file " + appPath);
+            var stream = client.GetStream();
+
+            byte[] fileDataLength = new byte[4];
+            stream.Read(fileDataLength, 0, 4);
+            int fileLength = BitConverter.ToInt32(fileDataLength, 0);
 
 
-            //TODO: wrap in try catch because of potential violations
+
+            var fileData = new List<byte>();
+
+            while (fileData.Count < fileLength)
+            {
+                byte[] someMessage = new byte[client.Available];
+                stream.Read(someMessage, 0, someMessage.Length);
+                fileData.AddRange(someMessage);
+            }
+
+
+            stream.Close();
+            client.Close();
+
+
             foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(appPath)))
                 process.WaitForExit();
 
-           ExtractAndStartApplication(appPath);
+            ExtractAndStartApplication(appPath,fileData.ToArray());
 
-            ////TODO: wrap in try catch as it could fail if we do not have access rights
-            //if (File.Exists(compressedUpdateFile))
-            //    File.Delete(compressedUpdateFile);
 
             Application.Exit();
         }
 
 
-
-        private static void ExtractAndStartApplication(string applicationFilePath)
+        private static void ExtractAndStartApplication(string applicationFilePath, byte[] updateData)
         {
-            //var extractor = new ZipFileExtractor(updateFilePath);
-            //extractor.ExtractTo(Environment.CurrentDirectory);
+            var extractor = new ZipFileExtractor(updateData);
+            extractor.ExtractTo(Environment.CurrentDirectory);
 
             Process.Start(applicationFilePath);
         }
     }
-    
+
+
+
+    //using (StreamReader sr = new StreamReader(new AnonymousPipeClientStream(PipeDirection.In,args[2])))
+    //{
+    //        string line;
+    //        while ((line = sr.ReadLine()) != null)
+    //        {
+    //            Console.WriteLine("Echo: {0}", line);
+    //            MessageBox.Show(line);
+    //        }
+    //}
+
+    //using (var pipeClient = new NamedPipeClientStream(".", "autoUpdatePipe", PipeDirection.In))
+    //{
+
+    //    // Connect to the pipe or wait until the pipe is available.
+    //    Console.Write("Attempting to connect to pipe...");
+    //    pipeClient.Connect();
+
+    //    Console.WriteLine("Connected to pipe.");
+    //    Console.WriteLine("There are currently {0} pipe server instances open.",
+    //       pipeClient.NumberOfServerInstances);
+
+    //    using (BinaryReader rdr = new BinaryReader(pipeClient))
+    //    {
+    //        byte[] bytes = new byte[rdr.BaseStream.Length];
+
+    //        var readBytes = rdr.ReadBytes((int)rdr.BaseStream.Length);
+    //    }
+
+    //    if (!File.Exists(appPath))
+    //        throw new FileNotFoundException("could not find the application file " + appPath);
+
+
+    //    foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(appPath)))
+    //        process.WaitForExit();
+
+    //    ExtractAndStartApplication(appPath, pipeClient);
+    //}
 }

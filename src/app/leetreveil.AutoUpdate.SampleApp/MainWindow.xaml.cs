@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using leetreveil.AutoUpdate.Core.UpdateCheck;
+using Path=System.IO.Path;
 
 namespace leetreveil.AutoUpdate.SampleApp
 {
@@ -30,17 +31,22 @@ namespace leetreveil.AutoUpdate.SampleApp
 
         public string AppVersion { get { return Assembly.GetExecutingAssembly().GetName().Version.ToString(); } }
 
+        private string updaterPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                  "ltupdater.exe");
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             try
             {
                 //clean up updater after its been extracted
-                if (File.Exists("updater.exe"))
-                    File.Delete("updater.exe");
+                if (File.Exists(updaterPath))
+                    File.Delete(updaterPath);
+            }
+            catch{ }
 
+            try
+            {
                 //TODO: check for update asyncronously
-                //TODO: move the update checking to somewhere after the app has started, i.e main window
-                //TODO: make this code asyncronous
                 var updateChecker = new UpdateChecker();
 
                 //TODO: fix it so we dont have to download file updates from the internet and just point to a file on disk in the xml file (easier to test)
@@ -50,10 +56,7 @@ namespace leetreveil.AutoUpdate.SampleApp
                     new UpdateWindow(updateChecker.Update).Show();
                 }
             }
-            catch (Exception)
-            {
-            }
-
+            catch  {}
         }
     }
 }

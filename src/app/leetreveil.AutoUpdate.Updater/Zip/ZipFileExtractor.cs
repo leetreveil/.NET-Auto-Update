@@ -1,22 +1,20 @@
+using System.IO;
 using Ionic.Zip;
 
 namespace leetreveil.AutoUpdate.Updater.Zip
 {
     public class ZipFileExtractor
     {
-        private readonly string _filePath;
+        private readonly byte[] _updateData;
 
-        public ZipFileExtractor(string filePath)
+        public ZipFileExtractor(byte[] updateData)
         {
-            _filePath = filePath;
+            _updateData = updateData;
         }
 
         public void ExtractTo(string folderPath)
         {
-            if (!ZipFile.IsZipFile(_filePath))
-                return;
-
-            using (ZipFile extractedFiles = ZipFile.Read(_filePath))
+            using (ZipFile extractedFiles = ZipFile.Read(_updateData))
             {
                 foreach (var file in extractedFiles)
                     file.Extract(folderPath, ExtractExistingFileAction.OverwriteSilently);
