@@ -35,56 +35,66 @@ namespace leetreveil.AutoUpdate.SampleApp
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
         {
-            var fDownloader = new FileDownloader(_newUpdate.FileUrl);
+            try
+            {
+                UpdateStarter.Start(_newUpdate.FileUrl);
+            }
+            catch (Exception exception)
+            {
+                //error downloading or extracting update, notify user
+            }
+        }
+    }
+
+    public static class UpdateStarter
+    {
+        private static string updaterPath =
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                         "ltupdater.exe");
+
+        public static void Start(string updatePackageUrl)
+        {
+            var fDownloader = new FileDownloader(updatePackageUrl);
 
             byte[] fileData = fDownloader.Download();
-            byte[] fileDataLength = BitConverter.GetBytes(fileData.Length);
 
-            ExtractExecutableFromResource();
+            ExtractExecutableFromResource(updaterPath);
 
             //TODO: if the user does not accept elevation prompt we get an error
             Process.Start(updaterPath, String.Format(@"""{0}""", Process.GetCurrentProcess().MainModule.FileName));
 
-
-            // Set the TcpListener on port 13000.
-            IPAddress localAddr = IPAddress.Any;
-
-            // TcpListener server = new TcpListener(port);
-            var server = new TcpListener(localAddr, 13001);
-
-            // Start listening for client requests.
-            server.Start();
-
-
-            Console.Write("Waiting for a connection... ");
-
-            // Perform a blocking call to accept requests.
-            // You could also user server.AcceptSocket() here.
-            TcpClient client = server.AcceptTcpClient();
-            Console.WriteLine("Connected!");
-
-
-            // Get a stream object for reading and writing
-            NetworkStream stream = client.GetStream();
-
-            stream.Write(fileDataLength, 0, fileDataLength.Length);
-            stream.Write(fileData, 0, fileData.Length);
-
-
-            // Shutdown and end connection
-            client.Close();
-            server.Stop();
+            SendUpdatePackageToUpdateExecutable(fileData);
 
             Application.Current.Shutdown();
         }
 
-        private void ExtractExecutableFromResource()
+        private static void SendUpdatePackageToUpdateExecutable(byte[] fileData)
         {
-            //store the updater temporarily in the appdata folder
-            using (var writer = new BinaryWriter(File.Open(updaterPath, FileMode.Create)))
-                writer.Write(Properties.Resources.ltupdater);
+            var server = new TcpListener(IPAddress.Any, 13001);
+            server.Start();
+
+            //wait for the updater to start and attempt to connect
+            TcpClient client = server.AcceptTcpClient();
+
+            NetworkStream stream = client.GetStream();
+
+            var fileDataLength = BitConverter.GetBytes(fileData.Length);
+            //send the size of the update package as the first 4 bytes
+            stream.Write(fileDataLength, 0, 4);
+            //send the rest of the file
+            stream.Write(fileData, 0, fileData.Length);
+
+            // Shutdown and end connection
+            client.Close();
+            //stop listening for connections
+            server.Stop();
         }
 
- 
+        private static void ExtractExecutableFromResource(string updateExecutablePath)
+        {
+            //store the updater temporarily in the appdata folder
+            using (var writer = new BinaryWriter(File.Open(updateExecutablePath, FileMode.Create)))
+                writer.Write(Properties.Resources.ltupdater);
+        }
     }
 }
