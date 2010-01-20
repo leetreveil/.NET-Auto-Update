@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace leetreveil.AutoUpdate.Core.Appcast
+namespace leetreveil.AutoUpdate.Framework
 {
     public interface IUpdateFeedSource
     {

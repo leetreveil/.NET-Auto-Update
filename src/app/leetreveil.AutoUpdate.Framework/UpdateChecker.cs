@@ -1,9 +1,6 @@
 using System;
-using System.Reflection;
-using System.Linq;
-using leetreveil.AutoUpdate.Core.Appcast;
 
-namespace leetreveil.AutoUpdate.Core.UpdateCheck
+namespace leetreveil.AutoUpdate.Framework
 {
     public static class UpdateChecker
     {

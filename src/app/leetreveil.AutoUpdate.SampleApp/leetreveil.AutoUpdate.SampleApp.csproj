@@ -108,16 +108,16 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\leetreveil.AutoUpdate.Core\leetreveil.AutoUpdate.Core.csproj">
-      <Project>{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}</Project>
-      <Name>leetreveil.AutoUpdate.Core</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\ltupdater.exe" />
     <Content Include="sampleappupdatefeed.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\leetreveil.AutoUpdate.Framework\leetreveil.AutoUpdate.Framework.csproj">
+      <Project>{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}</Project>
+      <Name>leetreveil.AutoUpdate.Framework</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

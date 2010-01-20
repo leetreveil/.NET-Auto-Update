@@ -1,7 +1,7 @@
-using leetreveil.AutoUpdate.Core.FileDownload;
+using leetreveil.AutoUpdate.Framework;
 using NUnit.Framework;
 
-namespace leetreveil.AutoUpdate.Tests.Integration.FileDownload
+namespace leetreveil.AutoUpdate.Tests.Integration
 {
     [TestFixture]
     public class FileDownloaderTests

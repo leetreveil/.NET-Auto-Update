@@ -1,7 +1,7 @@
 using System.IO;
 using Ionic.Zip;
 
-namespace leetreveil.AutoUpdate.Updater.Zip
+namespace leetreveil.AutoUpdate.Updater
 {
     public class ZipFileExtractor
     {

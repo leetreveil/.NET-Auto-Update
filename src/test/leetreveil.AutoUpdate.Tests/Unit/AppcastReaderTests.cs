@@ -1,9 +1,8 @@
-﻿using System.Linq;
-using leetreveil.AutoUpdate.Core;
-using leetreveil.AutoUpdate.Core.Appcast;
+using System.Linq;
+using leetreveil.AutoUpdate.Framework;
 using NUnit.Framework;
 
-namespace leetreveil.AutoUpdate.Tests.Unit.Appcast
+namespace leetreveil.AutoUpdate.Tests.Unit
 {
     [TestFixture]
     public class AppcastReaderTests

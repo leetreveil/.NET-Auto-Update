@@ -1,8 +1,8 @@
 using System;
+using leetreveil.AutoUpdate.Framework;
 using NUnit.Framework;
-using leetreveil.AutoUpdate.Core.UpdateCheck;
 
-namespace leetreveil.AutoUpdate.Tests.Unit.UpdateCheck
+namespace leetreveil.AutoUpdate.Tests.Unit
 {
     [TestFixture]
     public class UpdateCheckerTests

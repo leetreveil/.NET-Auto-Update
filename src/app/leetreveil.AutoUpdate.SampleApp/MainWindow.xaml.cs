@@ -3,10 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
-using leetreveil.AutoUpdate.Core.UpdateCheck;
+using leetreveil.AutoUpdate.Framework;
 using Path=System.IO.Path;
-using leetreveil.AutoUpdate.Core.Appcast;
-using leetreveil.AutoUpdate.Core;
 
 namespace leetreveil.AutoUpdate.SampleApp
 {

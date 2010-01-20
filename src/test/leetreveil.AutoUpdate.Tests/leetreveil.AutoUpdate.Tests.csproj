@@ -47,7 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Integration\FileDownload\FileDownloaderTests.cs" />
-    <Compile Include="Integration\Updater\Zip\ZipFileExtractorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\Appcast\AppcastReaderTests.cs" />
     <Compile Include="Unit\UpdateCheck\UpdateCheckerTests.cs" />
@@ -58,22 +57,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\app\leetreveil.AutoUpdate.Core\leetreveil.AutoUpdate.Core.csproj">
+    <ProjectReference Include="..\..\app\leetreveil.AutoUpdate.Framework\leetreveil.AutoUpdate.Framework.csproj">
       <Project>{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}</Project>
-      <Name>leetreveil.AutoUpdate.Core</Name>
+      <Name>leetreveil.AutoUpdate.Framework</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\app\leetreveil.AutoUpdate.Updater\leetreveil.AutoUpdate.Updater.csproj">
-      <Project>{7D4D18D4-DBD2-4ADC-9D82-397D6C5E9F40}</Project>
-      <Name>leetreveil.AutoUpdate.Updater</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Samples\zipfilewithnofiles.zip">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Samples\zipfilewithonefile.zip">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

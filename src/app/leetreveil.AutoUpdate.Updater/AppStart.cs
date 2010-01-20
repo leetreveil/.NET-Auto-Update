@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Windows.Forms;
-using leetreveil.AutoUpdate.Updater.Zip;
 
 namespace leetreveil.AutoUpdate.Updater
 {

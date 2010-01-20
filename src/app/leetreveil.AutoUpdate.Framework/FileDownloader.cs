@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 
-namespace leetreveil.AutoUpdate.Core.FileDownload
+namespace leetreveil.AutoUpdate.Framework
 {
     public class FileDownloader
     {

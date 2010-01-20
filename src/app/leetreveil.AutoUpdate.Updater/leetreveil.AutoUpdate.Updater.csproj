@@ -64,7 +64,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Zip\ZipFileExtractor.cs" />
+    <Compile Include="ZipFileExtractor.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -85,7 +85,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)tools/ilmerge/ilmerge.exe" /out:ltupdater.exe "$(TargetDir)updater.exe" "$(TargetDir)Ionic.Zip.Reduced.dll" "$(TargetDir)Winterdom.IO.FileMap.dll"
+    <PostBuildEvent>"$(SolutionDir)tools/ilmerge/ilmerge.exe" /out:ltupdater.exe "$(TargetDir)updater.exe" "$(TargetDir)Ionic.Zip.Reduced.dll"
 copy ltupdater.exe "$(SolutionDir)src\app\leetreveil.AutoUpdate.SampleApp\Resources"</PostBuildEvent>
   </PropertyGroup>
 </Project>

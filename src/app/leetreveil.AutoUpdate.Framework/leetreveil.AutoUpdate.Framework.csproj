@@ -8,8 +8,8 @@
     <ProjectGuid>{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>leetreveil.AutoUpdate.Core</RootNamespace>
-    <AssemblyName>leetreveil.AutoUpdate.Core</AssemblyName>
+    <RootNamespace>leetreveil.AutoUpdate.Framework</RootNamespace>
+    <AssemblyName>leetreveil.AutoUpdate.Framework</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -35,18 +35,17 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Appcast\AppcastReader.cs" />
-    <Compile Include="Appcast\IUpdateFeedSource.cs" />
-    <Compile Include="FileDownload\FileDownloader.cs" />
+    <Compile Include="AppcastReader.cs" />
+    <Compile Include="IUpdateFeedSource.cs" />
+    <Compile Include="FileDownloader.cs" />
     <Compile Include="Update.cs" />
-    <Compile Include="UpdateCheck\UpdateChecker.cs" />
+    <Compile Include="UpdateChecker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
