@@ -25,29 +25,12 @@ namespace leetreveil.AutoUpdate.SampleApp
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                //clean up updater after its been extracted
-                if (File.Exists(updaterPath))
-                    File.Delete(updaterPath);
-            }
-            catch{ }
+            UpdateManager.UpdateExePath = updaterPath;
+            UpdateManager.AppFeedUrl = "sampleappupdatefeed.xml";
+            UpdateManager.UpdateExe = Properties.Resources.ltupdater;
 
-            try
-            {
-                ////TODO: check for update asyncronously
-                ////TODO: fix it so we dont have to download file updates from the internet and just point to a file on disk in the xml file (easier to test)
-                var results = new AppcastReader().Read("sampleappupdatefeed.xml");
-                Update update = results.First();
-
-
-                if (UpdateChecker.CheckForUpdate(Assembly.GetEntryAssembly().GetName().Version,update.Version))
-                {
-                    //ask user if he wants to update or not
-                    new UpdateWindow(update).Show();
-                }
-            }
-            catch  {}
+            UpdateManager.CleanUp();
+            UpdateManager.CheckForUpdate(update => new UpdateWindow(update).Show());
         }
     }
 }

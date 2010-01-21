@@ -8,7 +8,7 @@
 
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                 <TextBlock FontSize="20" Text="SampleApp v"/>
-                <TextBlock FontSize="20" Text="{Binding UpdateVersion}"/>
+                <TextBlock FontSize="20" Text="{Binding Update.Version}"/>
             </StackPanel>
             <Line Margin="0,10,0,0"/>
         </StackPanel>
