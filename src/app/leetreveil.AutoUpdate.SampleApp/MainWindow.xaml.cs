@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Windows;
 using leetreveil.AutoUpdate.Framework;
@@ -25,12 +23,17 @@ namespace leetreveil.AutoUpdate.SampleApp
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            //update configuration
             UpdateManager.UpdateExePath = updaterPath;
-            UpdateManager.AppFeedUrl = "sampleappupdatefeed.xml";
+            UpdateManager.AppFeedUrl = "sampleappupdatefeedx.xml";
             UpdateManager.UpdateExe = Properties.Resources.ltupdater;
 
+
+            //always clean up at the beginning of the exe because we cant do it at the end
             UpdateManager.CleanUp();
-            UpdateManager.CheckForUpdate(update => new UpdateWindow(update).Show());
+
+            //if an update is available then show the update window
+            UpdateManager.CheckForUpdate(update => Dispatcher.Invoke(new Action(() => new UpdateWindow(update).Show())));
         }
     }
 }

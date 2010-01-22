@@ -7,12 +7,12 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("leetreveil.AutoUpdate.Updater")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle(".NET Application Updater")]
+[assembly: AssemblyDescription("Update executable for updating WPF applications")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("leetreveil")]
 [assembly: AssemblyProduct("leetreveil.AutoUpdate.Updater")]
-[assembly: AssemblyCopyright("Copyright ©  2010")]
+[assembly: AssemblyCopyright("Copyright ©  2010 Lee Treveil")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

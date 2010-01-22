@@ -3,6 +3,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
+using System.Threading;
+using System.Windows.Threading;
 
 namespace leetreveil.AutoUpdate.Framework
 {
@@ -40,20 +42,31 @@ namespace leetreveil.AutoUpdate.Framework
             }
             else
             {
-                try
-                {
-                    ////TODO: check for update asyncronously
-                    var results = new AppcastReader().Read(AppFeedUrl);
-                    Update update = results.First();
+      
+                    ThreadPool.QueueUserWorkItem(wcb =>
+                         {
+                             try
+                             {
+                                 var results = new AppcastReader().Read(AppFeedUrl);
+                                 Update update = results.First();
 
 
-                    if (UpdateChecker.CheckForUpdate(Assembly.GetEntryAssembly().GetName().Version, update.Version))
-                    {
-                        _updatePackageUrl = update.FileUrl;
-                        actionToPerformIfUpdateIsAvailable(update);
-                    }
-                }
-                catch { }
+                                 if (
+                                     UpdateChecker.CheckForUpdate(
+                                         Assembly.GetEntryAssembly().GetName().Version,
+                                         update.Version))
+                                 {
+                                     _updatePackageUrl = update.FileUrl;
+                                     actionToPerformIfUpdateIsAvailable(update);
+                                 }
+                             }
+                             catch (Exception e)
+                             {
+                                 Console.WriteLine(e);
+                             }
+                         });
+
+     
             }
         }
 
@@ -70,7 +83,7 @@ namespace leetreveil.AutoUpdate.Framework
                     new UpdateStarter(UpdateExePath, UpdateExe).Start(_updatePackageUrl);
                     Application.Current.Shutdown();
                 }
-                catch (Exception exception)
+                catch
                 {
                     //error downloading or extracting update, notify user
                 }
