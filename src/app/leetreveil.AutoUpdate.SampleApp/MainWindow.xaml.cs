@@ -32,8 +32,11 @@ namespace leetreveil.AutoUpdate.SampleApp
             //always clean up at the beginning of the exe because we cant do it at the end
             UpdateManager.CleanUp();
 
-            //if an update is available then show the update window
-            UpdateManager.CheckForUpdate(update => Dispatcher.Invoke(new Action(() => new UpdateWindow(update).Show())));
+
+            Update newUpd;
+            if (UpdateManager.CheckForUpdate(out newUpd))
+                if (newUpd != null)
+                    new UpdateWindow(newUpd).Show();
         }
     }
 }

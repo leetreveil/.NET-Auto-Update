@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Threading;
-using System.Windows.Threading;
 
 namespace leetreveil.AutoUpdate.Framework
 {
@@ -30,11 +29,13 @@ namespace leetreveil.AutoUpdate.Framework
                     if (File.Exists(UpdateExePath))
                         File.Delete(UpdateExePath);
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
 
-        public static void CheckForUpdate(Action<Update> actionToPerformIfUpdateIsAvailable)
+        public static bool CheckForUpdate(out Update availableUpdate)
         {
             if (String.IsNullOrEmpty(AppFeedUrl))
             {
@@ -42,32 +43,29 @@ namespace leetreveil.AutoUpdate.Framework
             }
             else
             {
-      
-                    ThreadPool.QueueUserWorkItem(wcb =>
-                         {
-                             try
-                             {
-                                 var results = new AppcastReader().Read(AppFeedUrl);
-                                 Update update = results.First();
+                try
+                {
+                    var results = new AppcastReader().Read(AppFeedUrl);
+                    Update update = results.First();
 
 
-                                 if (
-                                     UpdateChecker.CheckForUpdate(
-                                         Assembly.GetEntryAssembly().GetName().Version,
-                                         update.Version))
-                                 {
-                                     _updatePackageUrl = update.FileUrl;
-                                     actionToPerformIfUpdateIsAvailable(update);
-                                 }
-                             }
-                             catch (Exception e)
-                             {
-                                 Console.WriteLine(e);
-                             }
-                         });
+                    var assemblyVersion = Assembly.GetEntryAssembly().GetName().Version;
 
-     
+                    if (UpdateChecker.CheckForUpdate(assemblyVersion,update.Version))
+                    {
+                        _updatePackageUrl = update.FileUrl;
+                        availableUpdate = update;
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
+
+            availableUpdate = null;
+            return false;
         }
 
         public static void ApplyUpdate()
