@@ -11,15 +11,18 @@ namespace leetreveil.AutoUpdate.Framework
         #region Singleton Stuff
 
         private static readonly UpdateManager instance = new UpdateManager();
-        static UpdateManager(){}
-        UpdateManager(){}
+
+        static UpdateManager()
+        {
+        }
+
+        private UpdateManager()
+        {
+        }
 
         public static UpdateManager Instance
         {
-            get
-            {
-                return instance;
-            }
+            get { return instance; }
         }
 
         #endregion
@@ -31,6 +34,10 @@ namespace leetreveil.AutoUpdate.Framework
         public string UpdateExePath { get; set; }
         public Update NewUpdate { get; private set; }
 
+
+        /// <summary>
+        /// Removes the updater executable from the directory its in and fails silently
+        /// </summary>
         public void CleanUp()
         {
             if (String.IsNullOrEmpty(UpdateExePath))
@@ -51,7 +58,10 @@ namespace leetreveil.AutoUpdate.Framework
             }
         }
 
-
+        /// <summary>
+        /// Checks for the latest update and sets the NewUpdate property if one is available
+        /// </summary>
+        /// <returns></returns>
         public bool CheckForUpdate()
         {
             if (String.IsNullOrEmpty(AppFeedUrl))
@@ -60,29 +70,26 @@ namespace leetreveil.AutoUpdate.Framework
             }
             else
             {
-                try
-                {
-                    var results = new AppcastReader().Read(AppFeedUrl);
-                    Update update = results.First();
+                var results = new AppcastReader().Read(AppFeedUrl);
+                Update update = results.First();
 
-                    var assemblyVersion = Assembly.GetEntryAssembly().GetName().Version;
+                var assemblyVersion = Assembly.GetEntryAssembly().GetName().Version;
 
-                    if (UpdateChecker.CheckForUpdate(assemblyVersion,update.Version))
-                    {
-                        _updatePackageUrl = update.FileUrl;
-                        NewUpdate = update;
-                        return true;
-                    }
-                }
-                catch (Exception e)
+                if (UpdateChecker.CheckForUpdate(assemblyVersion, update.Version))
                 {
-                    Console.WriteLine(e);
+                    _updatePackageUrl = update.FileUrl;
+                    NewUpdate = update;
+                    return true;
                 }
             }
 
             return false;
         }
 
+
+        /// <summary>
+        /// Downloads the update package and starts the updater executable
+        /// </summary>
         public void ApplyUpdate()
         {
             if (String.IsNullOrEmpty(UpdateExePath) || UpdateExe == null)
@@ -91,15 +98,8 @@ namespace leetreveil.AutoUpdate.Framework
             }
             else
             {
-                try
-                {
-                    new UpdateStarter(UpdateExePath, UpdateExe).Start(_updatePackageUrl);
-                    Application.Current.Shutdown();
-                }
-                catch
-                {
-                    //error downloading or extracting update, notify user
-                }
+                new UpdateStarter(UpdateExePath, UpdateExe).Start(_updatePackageUrl);
+                Application.Current.Shutdown();
             }
         }
     }
