@@ -32,11 +32,9 @@ namespace leetreveil.AutoUpdate.SampleApp
             //always clean up at the beginning of the exe because we cant do it at the end
             UpdateManager.CleanUp();
 
-
-            Update newUpd;
-            if (UpdateManager.CheckForUpdate(out newUpd))
-                if (newUpd != null)
-                    new UpdateWindow(newUpd).Show();
+            if (UpdateManager.CheckForUpdate())
+                if (UpdateManager.NewUpdate != null)
+                    new UpdateWindow(UpdateManager.NewUpdate).Show();
         }
     }
 }

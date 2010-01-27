@@ -3,7 +3,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
-using System.Threading;
 
 namespace leetreveil.AutoUpdate.Framework
 {
@@ -14,6 +13,7 @@ namespace leetreveil.AutoUpdate.Framework
         public static string UpdateExePath;
         public static string AppFeedUrl;
         public static byte[] UpdateExe;
+        public static Update NewUpdate { get; private set; }
 
         public static void CleanUp()
         {
@@ -35,7 +35,8 @@ namespace leetreveil.AutoUpdate.Framework
             }
         }
 
-        public static bool CheckForUpdate(out Update availableUpdate)
+
+        public static bool CheckForUpdate()
         {
             if (String.IsNullOrEmpty(AppFeedUrl))
             {
@@ -48,13 +49,12 @@ namespace leetreveil.AutoUpdate.Framework
                     var results = new AppcastReader().Read(AppFeedUrl);
                     Update update = results.First();
 
-
                     var assemblyVersion = Assembly.GetEntryAssembly().GetName().Version;
 
                     if (UpdateChecker.CheckForUpdate(assemblyVersion,update.Version))
                     {
                         _updatePackageUrl = update.FileUrl;
-                        availableUpdate = update;
+                        NewUpdate = update;
                         return true;
                     }
                 }
@@ -64,7 +64,6 @@ namespace leetreveil.AutoUpdate.Framework
                 }
             }
 
-            availableUpdate = null;
             return false;
         }
 
