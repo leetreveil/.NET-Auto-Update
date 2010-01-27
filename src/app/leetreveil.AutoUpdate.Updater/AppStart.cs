@@ -11,7 +11,7 @@ namespace leetreveil.AutoUpdate.Updater
     {
         private static void Main()
         {
-            //Debugger.Launch
+            //Debugger.Launch();
             try
             {
                 string[] args = Environment.GetCommandLineArgs();

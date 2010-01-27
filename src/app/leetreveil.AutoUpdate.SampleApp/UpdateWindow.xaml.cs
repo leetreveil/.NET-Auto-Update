@@ -26,7 +26,7 @@ namespace leetreveil.AutoUpdate.SampleApp
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
         {   
-            UpdateManager.ApplyUpdate();
+            UpdateManager.Instance.ApplyUpdate();
         }
     }
 }

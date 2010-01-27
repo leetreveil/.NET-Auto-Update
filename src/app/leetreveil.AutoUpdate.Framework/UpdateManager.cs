@@ -6,16 +6,32 @@ using System.Windows;
 
 namespace leetreveil.AutoUpdate.Framework
 {
-    public static class UpdateManager
+    public sealed class UpdateManager
     {
-        private static string _updatePackageUrl;
+        #region Singleton Stuff
 
-        public static string UpdateExePath;
-        public static string AppFeedUrl;
-        public static byte[] UpdateExe;
-        public static Update NewUpdate { get; private set; }
+        private static readonly UpdateManager instance = new UpdateManager();
+        static UpdateManager(){}
+        UpdateManager(){}
 
-        public static void CleanUp()
+        public static UpdateManager Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
+
+        #endregion
+
+        private string _updatePackageUrl;
+
+        public byte[] UpdateExe { get; set; }
+        public string AppFeedUrl { get; set; }
+        public string UpdateExePath { get; set; }
+        public Update NewUpdate { get; private set; }
+
+        public void CleanUp()
         {
             if (String.IsNullOrEmpty(UpdateExePath))
             {
@@ -36,7 +52,7 @@ namespace leetreveil.AutoUpdate.Framework
         }
 
 
-        public static bool CheckForUpdate()
+        public bool CheckForUpdate()
         {
             if (String.IsNullOrEmpty(AppFeedUrl))
             {
@@ -67,7 +83,7 @@ namespace leetreveil.AutoUpdate.Framework
             return false;
         }
 
-        public static void ApplyUpdate()
+        public void ApplyUpdate()
         {
             if (String.IsNullOrEmpty(UpdateExePath) || UpdateExe == null)
             {
