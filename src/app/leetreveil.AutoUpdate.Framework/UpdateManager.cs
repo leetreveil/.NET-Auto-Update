@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System;
 using System.Linq;
@@ -56,8 +57,13 @@ namespace leetreveil.AutoUpdate.Framework
             if (String.IsNullOrEmpty(AppFeedUrl))
                 throw new ArgumentException("The AppFeedUrl has not been set");
 
-            var results = new AppcastReader().Read(AppFeedUrl);
+            IEnumerable<Update> results = new AppcastReader().Read(AppFeedUrl);
 
+            return GetLatestUpdateFromUpdates(results);
+        }
+
+        private bool GetLatestUpdateFromUpdates(IEnumerable<Update> results)
+        {
             if (results.Count() <= 0) return false;
 
             Update update = results.First();
@@ -71,6 +77,16 @@ namespace leetreveil.AutoUpdate.Framework
             }
 
             return false;
+        }
+
+        public bool CheckForUpdate(IUpdateFeedSource updateReader)
+        {
+            if (String.IsNullOrEmpty(AppFeedUrl))
+                throw new ArgumentException("The AppFeedUrl has not been set");
+
+            IEnumerable<Update> results = updateReader.Read(this.AppFeedUrl);
+
+            return GetLatestUpdateFromUpdates(results);
         }
 
         public void CheckForUpdateAsync(Action<bool> callback)
