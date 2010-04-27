@@ -6,29 +6,36 @@ using System.Net.Sockets;
 
 namespace leetreveil.AutoUpdate.Framework
 {
+    /// <summary>
+    /// Downloads and starts the update process
+    /// </summary>
     public class UpdateStarter
     {
-        private readonly string _updaterExePath;
+        private readonly string _updaterExeExeShouldBeCreated;
         private readonly byte[] _updateExe;
+        private readonly byte[] _updateData;
 
-        public UpdateStarter(string updatePath, byte[] updateExe)
+        public UpdateStarter(string pathWhereUpdateExeShouldBeCreated, byte[] updateExe, byte[] updateData)
         {
-            _updaterExePath = updatePath;
+            _updaterExeExeShouldBeCreated = pathWhereUpdateExeShouldBeCreated;
             _updateExe = updateExe;
+            _updateData = updateData;
         }
 
-        public void Start(string updatePackageUrl)
+        public void Start()
         {
-            var fDownloader = new FileDownloader(updatePackageUrl);
+            ExtractExecutableFromResource(); //take the update executable and extract it to the path where it should be created
 
-            byte[] fileData = fDownloader.Download();
-
-            ExtractExecutableFromResource();
-
-            //TODO: if the user does not accept elevation prompt we get an error
-            Process.Start(_updaterExePath, String.Format(@"""{0}""", Process.GetCurrentProcess().MainModule.FileName));
-
-            SendUpdatePackageToUpdateExecutable(fileData);
+            try
+            {
+                //TODO: allow custom port or randomise instead of using a default
+                Process.Start(_updaterExeExeShouldBeCreated, String.Format(@"""{0}""", Process.GetCurrentProcess().MainModule.FileName));
+                SendUpdatePackageToUpdateExecutable(_updateData);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         private static void SendUpdatePackageToUpdateExecutable(byte[] fileData)
@@ -56,7 +63,7 @@ namespace leetreveil.AutoUpdate.Framework
         private void ExtractExecutableFromResource()
         {
             //store the updater temporarily in the appdata folder
-            using (var writer = new BinaryWriter(File.Open(_updaterExePath, FileMode.Create)))
+            using (var writer = new BinaryWriter(File.Open(_updaterExeExeShouldBeCreated, FileMode.Create)))
                 writer.Write(_updateExe);
         }
     }

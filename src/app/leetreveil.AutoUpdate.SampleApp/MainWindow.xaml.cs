@@ -23,18 +23,18 @@ namespace leetreveil.AutoUpdate.SampleApp
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var updManager = UpdateManager.Instance;
+            UpdateManager updManager = UpdateManager.Instance;
 
             //update configuration
             updManager.UpdateExePath = updaterPath;
             updManager.AppFeedUrl = "sampleappupdatefeed.xml";
-            updManager.UpdateExe = Properties.Resources.ltupdater;
+            updManager.UpdateExeBinary = Properties.Resources.ltupdater;
+
             //always clean up at the beginning of the exe because we cant do it at the end
             updManager.CleanUp();
 
             if (updManager.CheckForUpdate())
-                if (updManager.NewUpdate != null)
-                    new UpdateWindow(updManager.NewUpdate).Show();
+                    new UpdateWindow(updManager).Show();
         }
     }
 }

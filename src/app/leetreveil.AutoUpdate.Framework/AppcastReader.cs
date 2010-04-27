@@ -18,7 +18,8 @@ namespace leetreveil.AutoUpdate.Framework
                             {
                                 Title = item.Element("title").Value,
                                 Version = new Version(item.Element(ns + "version").Value),
-                                FileUrl = item.Element("enclosure").Attribute("url").Value
+                                FileUrl = item.Element("enclosure").Attribute("url").Value,
+                                FileLength = Convert.ToInt64(item.Element("enclosure").Attribute("length").Value)
                             });
         }
     }

@@ -5,20 +5,36 @@ namespace leetreveil.AutoUpdate.Framework
 {
     public class FileDownloader
     {
-        private readonly string _url;
+        private readonly Uri _uri;
 
         public FileDownloader(string url)
         {
-            _url = url;
+            _uri = new Uri(url);
         }
 
         public byte[] Download()
         {
-            var client = new WebClient();
+            using (var client = new WebClient())
+                return client.DownloadData(_uri);
+        }
 
-            var downloadedData = client.DownloadData(new Uri(_url));
+        public void DownloadAsync(Action<byte[]> callback)
+        {
+            using (var client = new WebClient())
+            {
+                client.DownloadDataCompleted += (sender, args) => callback(args.Result);
+                client.DownloadDataAsync(_uri);
+            }
+        }
 
-            return downloadedData;
+        public void DownloadAsync(Action<byte[]> finishedCallback, Action<long ,long > progressChangedCallback)
+        {
+            using (var client = new WebClient())
+            {
+                client.DownloadProgressChanged += (sender, args) => progressChangedCallback(args.BytesReceived,args.TotalBytesToReceive);
+                client.DownloadDataCompleted += (sender, args) => finishedCallback(args.Result);
+                client.DownloadDataAsync(_uri);
+            }
         }
     }
 }

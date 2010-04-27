@@ -1,4 +1,4 @@
-using System;
+using System.ComponentModel;
 using System.Windows;
 using leetreveil.AutoUpdate.Framework;
 
@@ -7,13 +7,14 @@ namespace leetreveil.AutoUpdate.SampleApp
     /// <summary>
     /// Interaction logic for UpdateWindow.xaml
     /// </summary>
-    public partial class UpdateWindow : Window
+    public partial class UpdateWindow : Window, INotifyPropertyChanged
     {
-        private readonly Update _newUpdate;
+        private readonly UpdateManager _updateManager;
+        private int _downloadProgress;
 
-        public UpdateWindow(Update newUpdate)
+        public UpdateWindow(UpdateManager updateManager)
         {
-            _newUpdate = newUpdate;
+            _updateManager = updateManager;
             InitializeComponent();
 
             this.DataContext = this;
@@ -21,12 +22,38 @@ namespace leetreveil.AutoUpdate.SampleApp
 
         public Update Update
         {
-            get { return _newUpdate; }
+            get { return _updateManager.NewUpdate; }
+        }
+
+        public int DownloadProgress
+        {
+            get { return _downloadProgress; }
+            set
+            {
+                _downloadProgress = value;
+                InvokePropertyChanged("DownloadProgress");
+            }
         }
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
-        {   
-            UpdateManager.Instance.ApplyUpdate();
+        {
+            _updateManager.DownloadUpdateAsync(finished =>
+                                                   {
+                                                       if (finished)
+                                                           _updateManager.ApplyUpdate();
+                                                   },
+                                               progressPercent =>
+                                                   {
+                                                       this.DownloadProgress = progressPercent;
+                                                   });
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void InvokePropertyChanged(string propertyName)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
