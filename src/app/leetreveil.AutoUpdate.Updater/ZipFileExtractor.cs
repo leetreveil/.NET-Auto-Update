@@ -1,4 +1,3 @@
-using System.IO;
 using Ionic.Zip;
 
 namespace leetreveil.AutoUpdate.Updater

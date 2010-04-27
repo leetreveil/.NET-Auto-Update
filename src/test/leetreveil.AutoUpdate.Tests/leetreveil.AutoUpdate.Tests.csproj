@@ -49,7 +49,6 @@
     <Compile Include="Integration\FileDownloaderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\AppcastReaderTests.cs" />
-    <Compile Include="Unit\UpdateCheckerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Samples\zunesocialtagger.xml">

@@ -70,7 +70,7 @@ namespace leetreveil.AutoUpdate.Framework
 
             var assemblyVersion = Assembly.GetEntryAssembly().GetName().Version;
 
-            if (UpdateChecker.CheckForUpdate(assemblyVersion, update.Version))
+            if (update.Version > assemblyVersion)
             {
                 NewUpdate = update;
                 return true;
