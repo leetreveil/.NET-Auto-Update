@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 
-namespace leetreveil.AutoUpdate.Framework
+namespace leetreveil.AutoUpdate.Framework.Utils
 {
     public class FileDownloader
     {
@@ -18,20 +18,18 @@ namespace leetreveil.AutoUpdate.Framework
                 return client.DownloadData(_uri);
         }
 
-        public void DownloadAsync(Action<byte[]> callback)
+        public void DownloadAsync(Action<byte[]> finishedCallback)
         {
-            using (var client = new WebClient())
-            {
-                client.DownloadDataCompleted += (sender, args) => callback(args.Result);
-                client.DownloadDataAsync(_uri);
-            }
+            DownloadAsync(finishedCallback, null);
         }
 
-        public void DownloadAsync(Action<byte[]> finishedCallback, Action<long ,long > progressChangedCallback)
+        public void DownloadAsync(Action<byte[]> finishedCallback, Action<long, long> progressChangedCallback)
         {
             using (var client = new WebClient())
             {
-                client.DownloadProgressChanged += (sender, args) => progressChangedCallback(args.BytesReceived,args.TotalBytesToReceive);
+                if (progressChangedCallback != null)
+                    client.DownloadProgressChanged += (sender, args) => progressChangedCallback(args.BytesReceived, args.TotalBytesToReceive);
+
                 client.DownloadDataCompleted += (sender, args) => finishedCallback(args.Result);
                 client.DownloadDataAsync(_uri);
             }

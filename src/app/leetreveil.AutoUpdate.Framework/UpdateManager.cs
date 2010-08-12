@@ -6,6 +6,12 @@ using System.Reflection;
 using System.Windows;
 using System.Threading;
 
+using leetreveil.AutoUpdate.Framework.Utils;
+using leetreveil.AutoUpdate.Framework.Conditions;
+using leetreveil.AutoUpdate.Framework.FeedReaders;
+using leetreveil.AutoUpdate.Framework.Sources;
+using leetreveil.AutoUpdate.Framework.Tasks;
+
 namespace leetreveil.AutoUpdate.Framework
 {
     public sealed class UpdateManager
@@ -14,9 +20,30 @@ namespace leetreveil.AutoUpdate.Framework
 
         private static readonly UpdateManager instance = new UpdateManager();
 
-        static UpdateManager(){}
+        //static UpdateManager(){}
 
-        private UpdateManager() {}
+        private UpdateManager()
+        {
+            foreach (Type t in this.GetType().Assembly.GetTypes())
+            {
+                if (t is IUpdateTask && !t.IsInterface)
+                {
+                    UpdateTaskAliasAttribute[] tasksAliases = (UpdateTaskAliasAttribute[])t.GetCustomAttributes(typeof(UpdateTaskAliasAttribute), false);
+                    foreach (UpdateTaskAliasAttribute alias in tasksAliases)
+                    {
+                        _updateTasks.Add(alias.Alias, t);
+                    }
+                }
+                else if (t is IUpdateCondition && !t.IsInterface)
+                {
+                    UpdateConditionAliasAttribute[] tasksAliases = (UpdateConditionAliasAttribute[])t.GetCustomAttributes(typeof(UpdateTaskAliasAttribute), false);
+                    foreach (UpdateConditionAliasAttribute alias in tasksAliases)
+                    {
+                        _updateConditions.Add(alias.Alias, t);
+                    }
+                }
+            }
+        }
 
         public static UpdateManager Instance
         {
@@ -30,6 +57,40 @@ namespace leetreveil.AutoUpdate.Framework
         public string UpdateExePath { get; set; }
         public Update NewUpdate { get; private set; }
         public byte[] UpdateData { get; private set; }
+
+        internal Dictionary<string, Type> _updateConditions { get; private set; }
+        internal Dictionary<string, Type> _updateTasks { get; private set; }
+        internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
+        
+        public IUpdateSource UpdateSource { get; set; }
+        public IUpdateFeedReader UpdateFeedReader { get; set; }
+
+        public void CheckForUpdates()
+        {
+            CheckForUpdates(UpdateSource);
+        }
+
+        public bool CheckForUpdates(IUpdateSource source)
+        {
+            if (UpdateFeedReader == null)
+                throw new ArgumentException("An update feed reader is required; please set one before checking for updates");
+
+            if (source == null)
+                throw new ArgumentException("An update source was not specified");
+
+            UpdatesToApply.Clear();
+            IEnumerable<IUpdateTask> tasks = UpdateFeedReader.Read(this, source.GetUpdatesFeed());
+            foreach (IUpdateTask t in tasks)
+            {
+                if (t.UpdateConditions.IsFulfilled())
+                    UpdatesToApply.AddLast(t);
+            }
+            
+            if (UpdatesToApply.Count > 0)
+                return true;
+
+            return false;
+        }
 
         /// <summary>
         /// Removes the updater executable from the directory its in and fails silently
@@ -133,7 +194,7 @@ namespace leetreveil.AutoUpdate.Framework
                 this.UpdateData = downloadedData;
                 finishedCallback(true);
             },
-            (arg1, arg2) => progressPercentageCallback((int) (100 * (arg1) / arg2)));
+            (arg1, arg2) => progressPercentageCallback((int)(100 * (arg1) / arg2)));
         }
 
         private FileDownloader GetFileDownloader()

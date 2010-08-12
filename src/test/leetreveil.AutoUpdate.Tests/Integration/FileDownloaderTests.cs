@@ -1,5 +1,6 @@
 using leetreveil.AutoUpdate.Framework;
 using NUnit.Framework;
+using leetreveil.AutoUpdate.Framework.Utils;
 
 namespace leetreveil.AutoUpdate.Tests.Integration
 {
