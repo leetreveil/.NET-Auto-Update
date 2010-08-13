@@ -20,11 +20,6 @@ namespace NAppUpdate.SampleApp
             this.DataContext = this;
         }
 
-        public Update Update
-        {
-            get { return _updateManager.NewUpdate; }
-        }
-
         public int DownloadProgress
         {
             get { return _downloadProgress; }
@@ -37,15 +32,17 @@ namespace NAppUpdate.SampleApp
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
         {
+            /*
             _updateManager.DownloadUpdateAsync(finished =>
                                                    {
                                                        if (finished)
-                                                           _updateManager.ApplyUpdate();
+                                                           _updateManager.ApplyUpdates();
                                                    },
                                                progressPercent =>
                                                    {
                                                        this.DownloadProgress = progressPercent;
                                                    });
+             */
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

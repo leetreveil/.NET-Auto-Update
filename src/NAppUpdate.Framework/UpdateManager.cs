@@ -56,21 +56,21 @@ namespace NAppUpdate.Framework
         #endregion
 
         public byte[] UpdateExeBinary { get; set; }
-        public string AppFeedUrl { get; set; }
         public string UpdateExePath { get; set; }
-        public Update NewUpdate { get; private set; }
         public byte[] UpdateData { get; private set; }
 
         internal Dictionary<string, Type> _updateConditions { get; private set; }
         internal Dictionary<string, Type> _updateTasks { get; private set; }
+        
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
+        public bool UpdatesAvailable { get { return UpdatesToApply != null && UpdatesToApply.Count > 0; } }
         
         public IUpdateSource UpdateSource { get; set; }
         public IUpdateFeedReader UpdateFeedReader { get; set; }
 
-        public void CheckForUpdates()
+        public bool CheckForUpdates()
         {
-            CheckForUpdates(UpdateSource);
+            return CheckForUpdates(UpdateSource);
         }
 
         public bool CheckForUpdates(IUpdateSource source)
@@ -112,52 +112,12 @@ namespace NAppUpdate.Framework
             catch{}
         }
 
-        /// <summary>
-        /// Checks for the latest update and sets the NewUpdate property if one is available
-        /// </summary>
-        /// <returns></returns>
-        public bool CheckForUpdate()
-        {
-            if (String.IsNullOrEmpty(AppFeedUrl))
-                throw new ArgumentException("The AppFeedUrl has not been set");
-
-            IEnumerable<Update> results = new AppcastReader().Read(AppFeedUrl);
-
-            return GetLatestUpdateFromUpdates(results);
-        }
-
-        private bool GetLatestUpdateFromUpdates(IEnumerable<Update> results)
-        {
-            if (results.Count() <= 0) return false;
-
-            Update update = results.First();
-
-            var assemblyVersion = Assembly.GetEntryAssembly().GetName().Version;
-
-            if (update.Version > assemblyVersion)
-            {
-                NewUpdate = update;
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool CheckForUpdate(IUpdateFeedSource updateReader)
-        {
-            if (String.IsNullOrEmpty(AppFeedUrl))
-                throw new ArgumentException("The AppFeedUrl has not been set");
-
-            IEnumerable<Update> results = updateReader.Read(this.AppFeedUrl);
-
-            return GetLatestUpdateFromUpdates(results);
-        }
-
         public void CheckForUpdateAsync(Action<bool> callback)
         {
-            ThreadPool.QueueUserWorkItem(_ => CheckForUpdate());
+            ThreadPool.QueueUserWorkItem(_ => CheckForUpdates());
         }
 
+        /*
         public bool DownloadUpdate()
         {
             FileDownloader fileDownloader = GetFileDownloader();
@@ -202,25 +162,33 @@ namespace NAppUpdate.Framework
 
         private FileDownloader GetFileDownloader()
         {
-            if (NewUpdate == null)
-                throw new ArgumentException("NewUpdate has not been set");
+            if (!UpdatesAvailable)
+                throw new ArgumentException("There are no updates available at this time");
 
             if (String.IsNullOrEmpty(NewUpdate.FileUrl))
                 throw new ArgumentException("NewUpdate.FileUrl is not valid");
 
             return new FileDownloader(this.NewUpdate.FileUrl);
-        }
+        }*/
 
         /// <summary>
         /// Starts the updater executable and sends update data to it
         /// </summary>
-        public void ApplyUpdate()
+        public void ApplyUpdates()
         {
             if (String.IsNullOrEmpty(UpdateExePath))
                 throw new ArgumentException("The UpdateExePath has not been set");
 
             if (UpdateExeBinary == null || UpdateExeBinary.Length == 0)
                 throw new ArgumentException("UpdateExeBinary has not been set");
+
+            foreach (IUpdateTask task in UpdatesToApply)
+            {
+                if (!task.Execute())
+                {
+                    // TODO: notify about task execution failure
+                }
+            }
 
             new UpdateStarter(UpdateExePath, UpdateExeBinary, UpdateData).Start();
 

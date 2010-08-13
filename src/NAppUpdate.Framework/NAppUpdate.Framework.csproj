@@ -63,14 +63,13 @@
     <Compile Include="FeedReaders\IUpdateFeedReader.cs" />
     <Compile Include="FeedReaders\NauXmlFeedReader.cs" />
     <Compile Include="Sources\IUpdateSource.cs" />
+    <Compile Include="Sources\MemorySource.cs" />
     <Compile Include="Sources\SimpleWebSource.cs" />
     <Compile Include="Tasks\FileUpdateTask.cs" />
     <Compile Include="Tasks\IUpdateTask.cs" />
     <Compile Include="Tasks\UpdateTaskAliasAttribute.cs" />
     <Compile Include="UpdateManager.cs" />
-    <Compile Include="IUpdateFeedSource.cs" />
     <Compile Include="Utils\FileDownloader.cs" />
-    <Compile Include="Update.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UpdateStarter.cs" />
   </ItemGroup>

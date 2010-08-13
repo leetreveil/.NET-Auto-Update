@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Windows;
 using NAppUpdate.Framework;
 using Path=System.IO.Path;
+using System.IO;
 
 namespace NAppUpdate.SampleApp
 {
@@ -26,14 +27,16 @@ namespace NAppUpdate.SampleApp
             UpdateManager updManager = UpdateManager.Instance;
 
             //update configuration
+            updManager.UpdateFeedReader = new NAppUpdate.Framework.FeedReaders.AppcastReader();
+            //updManager.UpdateSource = new 
+
             updManager.UpdateExePath = updaterPath;
-            updManager.AppFeedUrl = "sampleappupdatefeed.xml";
             updManager.UpdateExeBinary = Properties.Resources.ltupdater;
 
             //always clean up at the beginning of the exe because we cant do it at the end
             updManager.CleanUp();
 
-            if (updManager.CheckForUpdate())
+            if (updManager.CheckForUpdates(new NAppUpdate.Framework.Sources.MemorySource(File.ReadAllText("sampleappupdatefeed.xml"))))
                     new UpdateWindow(updManager).Show();
         }
     }
