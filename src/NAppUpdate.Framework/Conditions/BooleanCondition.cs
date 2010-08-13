@@ -58,7 +58,7 @@ namespace NAppUpdate.Framework.Conditions
         }
 
         private LinkedList<ConditionItem> ChildConditions { get; set; }
-        public int ChildConditionsCount { get { return ChildConditions.Count; } }
+        public int ChildConditionsCount { get { if (ChildConditions != null) return ChildConditions.Count; return 0; } }
 
         public void AddCondition(IUpdateCondition cnd)
         {

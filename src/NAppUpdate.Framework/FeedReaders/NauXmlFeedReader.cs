@@ -16,12 +16,14 @@ namespace NAppUpdate.Framework.FeedReaders
         {
             List<IUpdateTask> ret = new List<IUpdateTask>();
 
-            // TODO: Version
-
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(feed);
 
-            XmlNodeList nl = doc.SelectNodes("/tasks/task");
+            // Support for different feed versions
+            XmlNode root = doc.SelectSingleNode(@"/feed[version=""1.0""] | /feed");
+            if (root == null) root = doc;
+
+            XmlNodeList nl = root.SelectNodes("./tasks/task");
             foreach (XmlNode node in nl)
             {
                 // Find the requested task type and create a new instance of it
@@ -39,7 +41,7 @@ namespace NAppUpdate.Framework.FeedReaders
                     task.Attributes.Add(att.Name, att.Value);
                 }
 
-                // TODO: Read description
+                task.Description = node["description"].InnerText;
 
                 // Read update conditions
                 IUpdateCondition conditionObject = ReadCondition(caller, node);
