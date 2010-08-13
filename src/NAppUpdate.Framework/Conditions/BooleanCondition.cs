@@ -52,6 +52,11 @@ namespace NAppUpdate.Framework.Conditions
             public ConditionType _ConditionType;
         }
 
+        public BooleanCondition()
+        {
+            Attributes = new Dictionary<string, string>();
+        }
+
         private LinkedList<ConditionItem> ChildConditions { get; set; }
         public int ChildConditionsCount { get { return ChildConditions.Count; } }
 
@@ -62,6 +67,7 @@ namespace NAppUpdate.Framework.Conditions
 
         public void AddCondition(IUpdateCondition cnd, ConditionType type)
         {
+            if (ChildConditions == null) ChildConditions = new LinkedList<ConditionItem>();
             ChildConditions.AddLast(new ConditionItem(cnd, type));
         }
 
@@ -71,6 +77,9 @@ namespace NAppUpdate.Framework.Conditions
 
         public bool IsFulfilled()
         {
+            if (ChildConditions == null)
+                return true;
+
             bool Passed = true, firstRun = true;
             foreach (ConditionItem item in ChildConditions)
             {

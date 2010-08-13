@@ -49,11 +49,6 @@
     <Compile Include="Unit\AppcastReaderTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Samples\zunesocialtagger.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\NAppUpdate.Framework\NAppUpdate.Framework.csproj">
       <Project>{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}</Project>
       <Name>NAppUpdate.Framework</Name>

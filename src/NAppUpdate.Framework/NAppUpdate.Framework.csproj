@@ -54,9 +54,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AppcastReader.cs" />
+    <Compile Include="FeedReaders\AppcastReader.cs" />
     <Compile Include="Conditions\BooleanCondition.cs" />
     <Compile Include="Conditions\FileExistsCondition.cs" />
+    <Compile Include="Conditions\FileVersionCondition.cs" />
     <Compile Include="Conditions\IUpdateCondition.cs" />
     <Compile Include="Conditions\UpdateConditionAliasAttribute.cs" />
     <Compile Include="FeedReaders\IUpdateFeedReader.cs" />
