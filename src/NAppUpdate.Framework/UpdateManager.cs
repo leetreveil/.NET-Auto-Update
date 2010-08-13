@@ -24,9 +24,12 @@ namespace NAppUpdate.Framework
 
         private UpdateManager()
         {
+            _updateConditions = new Dictionary<string, Type>();
+            _updateTasks = new Dictionary<string, Type>();
+
             foreach (Type t in this.GetType().Assembly.GetTypes())
             {
-                if (t is IUpdateTask && !t.IsInterface)
+                if (typeof(IUpdateTask).IsAssignableFrom(t))
                 {
                     UpdateTaskAliasAttribute[] tasksAliases = (UpdateTaskAliasAttribute[])t.GetCustomAttributes(typeof(UpdateTaskAliasAttribute), false);
                     foreach (UpdateTaskAliasAttribute alias in tasksAliases)
@@ -34,9 +37,9 @@ namespace NAppUpdate.Framework
                         _updateTasks.Add(alias.Alias, t);
                     }
                 }
-                else if (t is IUpdateCondition && !t.IsInterface)
+                else if (typeof(IUpdateCondition).IsAssignableFrom(t))
                 {
-                    UpdateConditionAliasAttribute[] tasksAliases = (UpdateConditionAliasAttribute[])t.GetCustomAttributes(typeof(UpdateTaskAliasAttribute), false);
+                    UpdateConditionAliasAttribute[] tasksAliases = (UpdateConditionAliasAttribute[])t.GetCustomAttributes(typeof(UpdateConditionAliasAttribute), false);
                     foreach (UpdateConditionAliasAttribute alias in tasksAliases)
                     {
                         _updateConditions.Add(alias.Alias, t);
