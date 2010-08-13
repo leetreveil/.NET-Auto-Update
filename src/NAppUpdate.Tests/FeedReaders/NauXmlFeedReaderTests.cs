@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NAppUpdate.Framework;
+using NAppUpdate.Framework.Tasks;
 
 namespace NAppUpdate.Tests.FeedReaders
 {
@@ -30,9 +30,9 @@ namespace NAppUpdate.Tests.FeedReaders
         public void TestNauReaderCanReadFeed()
         {
             var reader = new NAppUpdate.Framework.FeedReaders.NauXmlFeedReader();
-            var updates = reader.Read(UpdateManager.Instance, NauUpdateFeed);
+            IList<IUpdateTask> updates = reader.Read(UpdateManager.Instance, NauUpdateFeed);
 
-            Assert.IsTrue(updates.Count() > 0);
+            Assert.IsTrue(updates.Count > 0);
         }
     }
 }

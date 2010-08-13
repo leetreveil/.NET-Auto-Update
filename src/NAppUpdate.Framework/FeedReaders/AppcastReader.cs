@@ -1,10 +1,9 @@
 using System;
+using System.Xml;
 using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Linq;
+
 using NAppUpdate.Framework.FeedReaders;
 using NAppUpdate.Framework.Tasks;
-using System.Xml;
 using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.FeedReaders
@@ -15,7 +14,7 @@ namespace NAppUpdate.Framework.FeedReaders
 
         #region IUpdateFeedReader Members
 
-        public IEnumerable<IUpdateTask> Read(UpdateManager caller, string feed)
+        public IList<IUpdateTask> Read(UpdateManager caller, string feed)
         {
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(feed);

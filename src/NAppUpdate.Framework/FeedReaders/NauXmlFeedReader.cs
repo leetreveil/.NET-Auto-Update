@@ -12,7 +12,7 @@ namespace NAppUpdate.Framework.FeedReaders
     {
         #region IUpdateFeedReader Members
 
-        public IEnumerable<IUpdateTask> Read(UpdateManager caller, string feed)
+        public IList<IUpdateTask> Read(UpdateManager caller, string feed)
         {
             List<IUpdateTask> ret = new List<IUpdateTask>();
 

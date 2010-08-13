@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System;
-using System.Linq;
 using System.Reflection;
-using System.Windows;
 using System.Threading;
 
 using NAppUpdate.Framework.Utils;
@@ -174,7 +172,8 @@ namespace NAppUpdate.Framework
         /// <summary>
         /// Starts the updater executable and sends update data to it
         /// </summary>
-        public void ApplyUpdates()
+        /// <returns>true if a restart is required (the update process will wait for the application to quit)</returns>
+        public bool ApplyUpdates()
         {
             if (String.IsNullOrEmpty(UpdateExePath))
                 throw new ArgumentException("The UpdateExePath has not been set");
@@ -192,7 +191,8 @@ namespace NAppUpdate.Framework
 
             new UpdateStarter(UpdateExePath, UpdateExeBinary, UpdateData).Start();
 
-            Application.Current.Shutdown();
+            //Application.Current.Shutdown();
+            return true;
         }
     }
 }

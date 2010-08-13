@@ -18,6 +18,7 @@ namespace NAppUpdate.Framework.Utils
                 return client.DownloadData(_uri);
         }
 
+        /*
         public void DownloadAsync(Action<byte[]> finishedCallback)
         {
             DownloadAsync(finishedCallback, null);
@@ -33,6 +34,6 @@ namespace NAppUpdate.Framework.Utils
                 client.DownloadDataCompleted += (sender, args) => finishedCallback(args.Result);
                 client.DownloadDataAsync(_uri);
             }
-        }
+        }*/
     }
 }
