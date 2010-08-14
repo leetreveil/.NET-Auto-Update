@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<feed>
+  <tasks>
+    <task type="fileUpdate" localPath="htmlayout.dll" updateTo="file://c:/test/htmlayout.dll" apply="app-restart">
+      <condition check="version" what="below" version="3.3.2.10" />
+    </task>
+    <task type="fileUpdate" localPath="test.dll" updateTo="file://c:/test/test_rename.dll" apply="hot-swap" />
+  </tasks>
+</feed>

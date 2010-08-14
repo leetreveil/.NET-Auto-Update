@@ -28,7 +28,7 @@ namespace NAppUpdate.SampleApp
 
             //update configuration
             updManager.UpdateFeedReader = new NAppUpdate.Framework.FeedReaders.AppcastReader();
-            //updManager.UpdateSource = new 
+            updManager.UpdateSource = new NAppUpdate.Framework.Sources.SimpleWebSource();
 
             updManager.UpdateExePath = updaterPath;
             updManager.UpdateExeBinary = Properties.Resources.ltupdater;
