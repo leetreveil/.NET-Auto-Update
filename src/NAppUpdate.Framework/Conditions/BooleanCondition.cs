@@ -74,7 +74,7 @@ namespace NAppUpdate.Framework.Conditions
 
         public IDictionary<string, string> Attributes { get; private set; }
 
-        public bool IsFulfilled()
+        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
         {
             if (ChildConditions == null)
                 return true;
@@ -97,13 +97,13 @@ namespace NAppUpdate.Framework.Conditions
                 {
                     if ((item._ConditionType & ConditionType.OR) > 0)
                     {
-                        bool checkResult = item._Condition.IsFulfilled();
+                        bool checkResult = item._Condition.IsMet(task);
                         Passed = (item._ConditionType & ConditionType.NOT) > 0 ? checkResult : !checkResult;
                     }
                 }
                 else
                 {
-                    bool checkResult = item._Condition.IsFulfilled();
+                    bool checkResult = item._Condition.IsMet(task);
                     Passed = (item._ConditionType & ConditionType.NOT) > 0 ? checkResult : !checkResult;
                 }
             }

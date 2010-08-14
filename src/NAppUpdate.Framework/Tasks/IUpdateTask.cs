@@ -12,6 +12,7 @@ namespace NAppUpdate.Framework.Tasks
         string Description { get; set; }
         BooleanCondition UpdateConditions { get; set; }
 
+        bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source);
         bool Execute();
     }
 }

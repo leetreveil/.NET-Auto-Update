@@ -8,6 +8,12 @@ namespace NAppUpdate.Framework.Sources
 {
     public class SimpleWebSource : IUpdateSource
     {
+        public SimpleWebSource() { }
+        public SimpleWebSource(string feedUrl)
+        {
+            this.FeedUrl = feedUrl;
+        }
+
         public string FeedUrl { get; set; }
 
         #region IUpdateSource Members

@@ -21,6 +21,24 @@ namespace NAppUpdate.Framework.Tasks
 
         public NAppUpdate.Framework.Conditions.BooleanCondition UpdateConditions { get; set; }
 
+        public bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source)
+        {
+            if (!Attributes.ContainsKey("updateTo"))
+                return false;
+
+            byte[] newFileData;
+            try
+            {
+                newFileData = source.GetFile(Attributes["updateTo"]);
+            }
+            catch { return false; }
+
+            if (newFileData == null || newFileData.Length == 0)
+                return false;
+
+            return true;
+        }
+
         public bool Execute()
         {
             throw new NotImplementedException();

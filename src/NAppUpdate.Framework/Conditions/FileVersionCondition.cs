@@ -6,6 +6,7 @@ using System.Diagnostics;
 
 namespace NAppUpdate.Framework.Conditions
 {
+    [UpdateConditionAlias("version")]
     public class FileVersionCondition : IUpdateCondition
     {
         public FileVersionCondition()
@@ -17,11 +18,35 @@ namespace NAppUpdate.Framework.Conditions
 
         public IDictionary<string, string> Attributes { get; private set; }
 
-        public bool IsFulfilled()
+        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
         {
-            // TODO
-            FileVersionInfo version = FileVersionInfo.GetVersionInfo("path");
-            return new Version(Attributes["version"]) > new Version(version.FileVersion);
+            if (!Attributes.ContainsKey("version"))
+                return true;
+
+            string localPath = string.Empty;
+            if (Attributes.ContainsKey("localPath"))
+                localPath = Attributes["localPath"];
+            else if (task != null && task.Attributes.ContainsKey("localPath"))
+                localPath = task.Attributes["localPath"];
+
+            if (!System.IO.File.Exists(localPath))
+                return true;
+
+            string versionString = FileVersionInfo.GetVersionInfo(localPath).FileVersion.Replace(", ", ".");
+            Version localVersion = new Version(versionString);
+            Version updateVersion = new Version(Attributes["version"]);
+
+            if (Attributes.ContainsKey("what"))
+            {
+                switch (Attributes["what"])
+                {
+                    case "above":
+                        return updateVersion < localVersion;
+                    case "is":
+                        return updateVersion == localVersion;
+                }
+            }
+            return updateVersion > localVersion;
         }
 
         #endregion

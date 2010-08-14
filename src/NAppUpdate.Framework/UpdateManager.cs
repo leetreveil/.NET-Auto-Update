@@ -18,8 +18,6 @@ namespace NAppUpdate.Framework
 
         private static readonly UpdateManager instance = new UpdateManager();
 
-        //static UpdateManager(){}
-
         private UpdateManager()
         {
             _updateConditions = new Dictionary<string, Type>();
@@ -44,6 +42,9 @@ namespace NAppUpdate.Framework
                     }
                 }
             }
+
+            UpdatesToApply = new LinkedList<IUpdateTask>();
+            TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         }
 
         public static UpdateManager Instance
@@ -57,21 +58,30 @@ namespace NAppUpdate.Framework
         public string UpdateExePath { get; set; }
         public byte[] UpdateData { get; private set; }
 
+        public string TempFolder { get; set; }
+
         internal Dictionary<string, Type> _updateConditions { get; private set; }
         internal Dictionary<string, Type> _updateTasks { get; private set; }
         
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
-        public bool UpdatesAvailable { get { return UpdatesToApply != null && UpdatesToApply.Count > 0; } }
+        public int UpdatesAvailable { get { if (UpdatesToApply == null) return 0; return UpdatesToApply.Count; } }
         
         public IUpdateSource UpdateSource { get; set; }
         public IUpdateFeedReader UpdateFeedReader { get; set; }
 
+        #region Step 1 - Check for updates
+
         public bool CheckForUpdates()
         {
-            return CheckForUpdates(UpdateSource);
+            return CheckForUpdates(UpdateSource, null);
         }
 
         public bool CheckForUpdates(IUpdateSource source)
+        {
+            return CheckForUpdates(source, null);
+        }
+
+        public bool CheckForUpdates(IUpdateSource source, Action<int> callback)
         {
             if (UpdateFeedReader == null)
                 throw new ArgumentException("An update feed reader is required; please set one before checking for updates");
@@ -79,18 +89,101 @@ namespace NAppUpdate.Framework
             if (source == null)
                 throw new ArgumentException("An update source was not specified");
 
-            UpdatesToApply.Clear();
-            IEnumerable<IUpdateTask> tasks = UpdateFeedReader.Read(this, source.GetUpdatesFeed());
-            foreach (IUpdateTask t in tasks)
+            lock (UpdatesToApply)
             {
-                if (t.UpdateConditions.IsFulfilled())
-                    UpdatesToApply.AddLast(t);
+                UpdatesToApply.Clear();
+                IList<IUpdateTask> tasks = UpdateFeedReader.Read(this, source.GetUpdatesFeed());
+                foreach (IUpdateTask t in tasks)
+                {
+                    if (t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met
+                        UpdatesToApply.AddLast(t);
+                }
             }
-            
+
+            if (callback != null) callback(UpdatesToApply.Count);
+
             if (UpdatesToApply.Count > 0)
                 return true;
 
             return false;
+        }
+
+        public void CheckForUpdateAsync(Action<int> callback)
+        {
+            CheckForUpdateAsync(UpdateSource, callback);
+        }
+
+        public void CheckForUpdateAsync(IUpdateSource source, Action<int> callback)
+        {
+            ThreadPool.QueueUserWorkItem(cb => CheckForUpdates(source, callback));
+        }
+
+        #endregion
+
+        #region Step 2 - Prepare to execute update tasks
+
+        public bool PrepareUpdates()
+        {
+            return PrepareUpdates(null);
+        }
+
+        public bool PrepareUpdates(Action<bool> callback)
+        {
+            if (!Directory.Exists(TempFolder))
+                Directory.CreateDirectory(TempFolder);
+
+            lock (UpdatesToApply)
+            {
+                if (UpdatesToApply.Count == 0)
+                {
+                    if (callback != null) callback(false);
+                    return false;
+                }
+
+                foreach (IUpdateTask t in UpdatesToApply)
+                {
+                    t.Prepare(UpdateSource);
+                }
+            }
+
+            if (callback != null) callback(true);
+            return true;
+        }
+
+        public void PrepareUpdatesAsync(Action<bool> callback)
+        {
+            ThreadPool.QueueUserWorkItem(cb => PrepareUpdates(callback));
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Starts the updater executable and sends update data to it
+        /// </summary>
+        /// <returns>true if a restart is required (the update process will wait for the application to quit)</returns>
+        public bool ApplyUpdates()
+        {
+            /*if (String.IsNullOrEmpty(UpdateExePath))
+                throw new ArgumentException("The UpdateExePath has not been set");
+
+            if (UpdateExeBinary == null || UpdateExeBinary.Length == 0)
+                throw new ArgumentException("UpdateExeBinary has not been set");*/
+
+            foreach (IUpdateTask task in UpdatesToApply)
+            {
+                if (!task.Execute())
+                {
+                    // TODO: notify about task execution failure
+                }
+            }
+
+            new UpdateStarter(UpdateExePath, UpdateExeBinary, UpdateData).Start();
+
+            //Application.Current.Shutdown();
+            Environment.Exit(0);
+            // TODO: Use mutex / named-pipes notifications
+
+            return true;
         }
 
         /// <summary>
@@ -108,31 +201,15 @@ namespace NAppUpdate.Framework
                     File.Delete(UpdateExePath);
             }
             catch{}
-        }
 
-        public void CheckForUpdateAsync(Action<bool> callback)
-        {
-            ThreadPool.QueueUserWorkItem(_ => CheckForUpdates());
+            try
+            {
+                Directory.Delete(TempFolder);
+            }
+            catch { }
         }
 
         /*
-        public bool DownloadUpdate()
-        {
-            FileDownloader fileDownloader = GetFileDownloader();
-
-            byte[] update = fileDownloader.Download();
-
-            if (update == null)
-                return false;
-
-            if (update.Length == 0)
-                return false;
-
-            this.UpdateData = update;
-
-            return true;
-        }
-
         public void DownloadUpdateAsync(Action<bool> finishedCallback)
         {
             FileDownloader fileDownloader = GetFileDownloader();
@@ -157,42 +234,6 @@ namespace NAppUpdate.Framework
             },
             (arg1, arg2) => progressPercentageCallback((int)(100 * (arg1) / arg2)));
         }
-
-        private FileDownloader GetFileDownloader()
-        {
-            if (!UpdatesAvailable)
-                throw new ArgumentException("There are no updates available at this time");
-
-            if (String.IsNullOrEmpty(NewUpdate.FileUrl))
-                throw new ArgumentException("NewUpdate.FileUrl is not valid");
-
-            return new FileDownloader(this.NewUpdate.FileUrl);
-        }*/
-
-        /// <summary>
-        /// Starts the updater executable and sends update data to it
-        /// </summary>
-        /// <returns>true if a restart is required (the update process will wait for the application to quit)</returns>
-        public bool ApplyUpdates()
-        {
-            if (String.IsNullOrEmpty(UpdateExePath))
-                throw new ArgumentException("The UpdateExePath has not been set");
-
-            if (UpdateExeBinary == null || UpdateExeBinary.Length == 0)
-                throw new ArgumentException("UpdateExeBinary has not been set");
-
-            foreach (IUpdateTask task in UpdatesToApply)
-            {
-                if (!task.Execute())
-                {
-                    // TODO: notify about task execution failure
-                }
-            }
-
-            new UpdateStarter(UpdateExePath, UpdateExeBinary, UpdateData).Start();
-
-            //Application.Current.Shutdown();
-            return true;
-        }
+         */
     }
 }

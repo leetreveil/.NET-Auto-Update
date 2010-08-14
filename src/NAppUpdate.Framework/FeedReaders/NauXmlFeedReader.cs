@@ -41,16 +41,23 @@ namespace NAppUpdate.Framework.FeedReaders
                     task.Attributes.Add(att.Name, att.Value);
                 }
 
-                task.Description = node["description"].InnerText;
-
-                // Read update conditions
-                IUpdateCondition conditionObject = ReadCondition(caller, node);
-                if (conditionObject != null)
+                if (node.HasChildNodes)
                 {
-                    if (conditionObject is BooleanCondition)
-                        task.UpdateConditions = conditionObject as BooleanCondition;
-                    else
-                        task.UpdateConditions.AddCondition(conditionObject);
+                    if (node["description"] != null)
+                        task.Description = node["description"].InnerText;
+
+                    // Read update conditions
+                    if (node["condition"] != null)
+                    {
+                        IUpdateCondition conditionObject = ReadCondition(caller, node["condition"]);
+                        if (conditionObject != null)
+                        {
+                            if (conditionObject is BooleanCondition)
+                                task.UpdateConditions = conditionObject as BooleanCondition;
+                            else
+                                task.UpdateConditions.AddCondition(conditionObject);
+                        }
+                    }
                 }
 
                 ret.Add(task);
@@ -64,7 +71,7 @@ namespace NAppUpdate.Framework.FeedReaders
             if (cnd.ChildNodes.Count > 0)
             {
                 BooleanCondition bc = new BooleanCondition();
-                XmlNodeList conditionNodes = cnd.SelectNodes("/condition");
+                XmlNodeList conditionNodes = cnd.SelectNodes("./condition");
                 foreach (XmlNode child in conditionNodes)
                 {
                     IUpdateCondition childCondition = ReadCondition(caller, child);
@@ -76,7 +83,16 @@ namespace NAppUpdate.Framework.FeedReaders
             }
             else if (caller._updateConditions.ContainsKey(cnd.Attributes["check"].Value))
             {
-                conditionObject = (IUpdateCondition)Activator.CreateInstance(caller._updateTasks[cnd.Attributes["check"].Value]);
+                conditionObject = (IUpdateCondition)Activator.CreateInstance(caller._updateConditions[cnd.Attributes["check"].Value]);
+
+                // Store all other attributes, to be used by the condition object later
+                foreach (XmlAttribute att in cnd.Attributes)
+                {
+                    if ("type".Equals(att.Name))
+                        continue;
+
+                    conditionObject.Attributes.Add(att.Name, att.Value);
+                }
             }
             return conditionObject;
         }

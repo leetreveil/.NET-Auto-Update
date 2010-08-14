@@ -12,10 +12,15 @@ namespace NAppUpdate.Framework.Conditions
 
         public IDictionary<string, string> Attributes { get; private set; }
 
-        public bool IsFulfilled()
+        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
         {
-            string localPath = Attributes["localPath"];
-            return File.Exists(localPath);
+            string localPath = string.Empty;
+            if (Attributes.ContainsKey("localPath"))
+                localPath = Attributes["localPath"];
+            else if (task != null && task.Attributes.ContainsKey("localPath"))
+                localPath = task.Attributes["localPath"];
+
+            return System.IO.File.Exists(localPath);
         }
 
         #endregion

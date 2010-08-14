@@ -8,16 +8,16 @@ namespace NAppUpdate.Framework.Sources
     {
         public MemorySource(string feedXml)
         {
-            this._feedXml = feedXml;
+            this.FeedXml = feedXml;
         }
 
-        private string _feedXml;
+        public string FeedXml { get; set; }
 
         #region IUpdateSource Members
 
         public string GetUpdatesFeed()
         {
-            return _feedXml;
+            return FeedXml;
         }
 
         public byte[] GetFile(string url)

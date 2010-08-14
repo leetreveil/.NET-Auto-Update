@@ -7,6 +7,6 @@ namespace NAppUpdate.Framework.Conditions
     public interface IUpdateCondition
     {
         IDictionary<string, string> Attributes { get; }
-        bool IsFulfilled();
+        bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task);
     }
 }
