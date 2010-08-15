@@ -14,7 +14,7 @@ namespace NAppUpdate.Framework.FeedReaders
 
         #region IUpdateFeedReader Members
 
-        public IList<IUpdateTask> Read(UpdateManager caller, string feed)
+        public IList<IUpdateTask> Read(string feed)
         {
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(feed);

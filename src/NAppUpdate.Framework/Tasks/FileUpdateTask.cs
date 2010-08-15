@@ -51,7 +51,8 @@ namespace NAppUpdate.Framework.Tasks
             {
                 try
                 {
-                    using (FileStream fs = new FileStream(Path.Combine("appFolder", Attributes["localPath"]), FileMode.Create, FileAccess.Write))
+                    string appDirectory = Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+                    using (FileStream fs = new FileStream(Path.Combine(appDirectory, Attributes["localPath"]), FileMode.Create, FileAccess.Write))
                     {
                         fs.Write(fileBytes, 0, fileBytes.Length);
                     }

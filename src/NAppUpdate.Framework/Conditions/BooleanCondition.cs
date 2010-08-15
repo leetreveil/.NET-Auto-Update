@@ -70,6 +70,13 @@ namespace NAppUpdate.Framework.Conditions
             ChildConditions.AddLast(new ConditionItem(cnd, type));
         }
 
+        public IUpdateCondition Degrade()
+        {
+            if (ChildConditionsCount == 1)
+                return ChildConditions.First.Value._Condition;
+            return this;
+        }
+
         #region IUpdateCondition Members
 
         public IDictionary<string, string> Attributes { get; private set; }

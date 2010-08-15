@@ -20,29 +20,6 @@ namespace NAppUpdate.Framework
 
         private UpdateManager()
         {
-            _updateConditions = new Dictionary<string, Type>();
-            _updateTasks = new Dictionary<string, Type>();
-
-            foreach (Type t in this.GetType().Assembly.GetTypes())
-            {
-                if (typeof(IUpdateTask).IsAssignableFrom(t))
-                {
-                    UpdateTaskAliasAttribute[] tasksAliases = (UpdateTaskAliasAttribute[])t.GetCustomAttributes(typeof(UpdateTaskAliasAttribute), false);
-                    foreach (UpdateTaskAliasAttribute alias in tasksAliases)
-                    {
-                        _updateTasks.Add(alias.Alias, t);
-                    }
-                }
-                else if (typeof(IUpdateCondition).IsAssignableFrom(t))
-                {
-                    UpdateConditionAliasAttribute[] tasksAliases = (UpdateConditionAliasAttribute[])t.GetCustomAttributes(typeof(UpdateConditionAliasAttribute), false);
-                    foreach (UpdateConditionAliasAttribute alias in tasksAliases)
-                    {
-                        _updateConditions.Add(alias.Alias, t);
-                    }
-                }
-            }
-
             UpdatesToApply = new LinkedList<IUpdateTask>();
             TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             UpdateProcessName = "NAppUpdateProcess";
@@ -58,9 +35,6 @@ namespace NAppUpdate.Framework
         public string TempFolder { get; set; }
         public string UpdateProcessName { get; set; }
 
-        internal Dictionary<string, Type> _updateConditions { get; private set; }
-        internal Dictionary<string, Type> _updateTasks { get; private set; }
-        
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
         public int UpdatesAvailable { get { if (UpdatesToApply == null) return 0; return UpdatesToApply.Count; } }
         
@@ -90,7 +64,7 @@ namespace NAppUpdate.Framework
             lock (UpdatesToApply)
             {
                 UpdatesToApply.Clear();
-                IList<IUpdateTask> tasks = UpdateFeedReader.Read(this, source.GetUpdatesFeed());
+                IList<IUpdateTask> tasks = UpdateFeedReader.Read(source.GetUpdatesFeed());
                 foreach (IUpdateTask t in tasks)
                 {
                     if (t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met

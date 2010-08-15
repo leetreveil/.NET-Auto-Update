@@ -10,9 +10,40 @@ namespace NAppUpdate.Framework.FeedReaders
 {
     public class NauXmlFeedReader : IUpdateFeedReader
     {
+        private Dictionary<string, Type> _updateConditions { get; set; }
+        private Dictionary<string, Type> _updateTasks { get; set; }
+
+        public NauXmlFeedReader()
+        {
+            _updateConditions = new Dictionary<string, Type>();
+            _updateTasks = new Dictionary<string, Type>();
+
+            foreach (Type t in this.GetType().Assembly.GetTypes())
+            {
+                if (typeof(IUpdateTask).IsAssignableFrom(t))
+                {
+                    _updateTasks.Add(t.Name, t);
+                    UpdateTaskAliasAttribute[] tasksAliases = (UpdateTaskAliasAttribute[])t.GetCustomAttributes(typeof(UpdateTaskAliasAttribute), false);
+                    foreach (UpdateTaskAliasAttribute alias in tasksAliases)
+                    {
+                        _updateTasks.Add(alias.Alias, t);
+                    }
+                }
+                else if (typeof(IUpdateCondition).IsAssignableFrom(t))
+                {
+                    _updateConditions.Add(t.Name, t);
+                    UpdateConditionAliasAttribute[] tasksAliases = (UpdateConditionAliasAttribute[])t.GetCustomAttributes(typeof(UpdateConditionAliasAttribute), false);
+                    foreach (UpdateConditionAliasAttribute alias in tasksAliases)
+                    {
+                        _updateConditions.Add(alias.Alias, t);
+                    }
+                }
+            }
+        }
+
         #region IUpdateFeedReader Members
 
-        public IList<IUpdateTask> Read(UpdateManager caller, string feed)
+        public IList<IUpdateTask> Read(string feed)
         {
             List<IUpdateTask> ret = new List<IUpdateTask>();
 
@@ -20,17 +51,17 @@ namespace NAppUpdate.Framework.FeedReaders
             doc.LoadXml(feed);
 
             // Support for different feed versions
-            XmlNode root = doc.SelectSingleNode(@"/feed[version=""1.0""] | /feed");
+            XmlNode root = doc.SelectSingleNode(@"/Feed[version=""1.0""] | /Feed");
             if (root == null) root = doc;
 
-            XmlNodeList nl = root.SelectNodes("./tasks/task");
+            XmlNodeList nl = root.SelectNodes("./Tasks/*");
             foreach (XmlNode node in nl)
             {
                 // Find the requested task type and create a new instance of it
-                if (!caller._updateTasks.ContainsKey(node.Attributes["type"].Value))
+                if (!_updateTasks.ContainsKey(node.Name))
                     continue;
 
-                IUpdateTask task = (IUpdateTask)Activator.CreateInstance(caller._updateTasks[node.Attributes["type"].Value]);
+                IUpdateTask task = (IUpdateTask)Activator.CreateInstance(_updateTasks[node.Name]);
 
                 // Store all other task attributes, to be used by the task object later
                 foreach (XmlAttribute att in node.Attributes)
@@ -43,13 +74,13 @@ namespace NAppUpdate.Framework.FeedReaders
 
                 if (node.HasChildNodes)
                 {
-                    if (node["description"] != null)
-                        task.Description = node["description"].InnerText;
+                    if (node["Description"] != null)
+                        task.Description = node["Description"].InnerText;
 
                     // Read update conditions
-                    if (node["condition"] != null)
+                    if (node["Conditions"] != null)
                     {
-                        IUpdateCondition conditionObject = ReadCondition(caller, node["condition"]);
+                        IUpdateCondition conditionObject = ReadCondition(node["Conditions"]);
                         if (conditionObject != null)
                         {
                             if (conditionObject is BooleanCondition)
@@ -65,25 +96,24 @@ namespace NAppUpdate.Framework.FeedReaders
             return ret;
         }
 
-        private IUpdateCondition ReadCondition(UpdateManager caller, XmlNode cnd)
+        private IUpdateCondition ReadCondition(XmlNode cnd)
         {
             IUpdateCondition conditionObject = null;
-            if (cnd.ChildNodes.Count > 0)
+            if (cnd.ChildNodes.Count > 0 || "GroupCondition".Equals(cnd.Name))
             {
                 BooleanCondition bc = new BooleanCondition();
-                XmlNodeList conditionNodes = cnd.SelectNodes("./condition");
-                foreach (XmlNode child in conditionNodes)
+                foreach (XmlNode child in cnd.ChildNodes)
                 {
-                    IUpdateCondition childCondition = ReadCondition(caller, child);
+                    IUpdateCondition childCondition = ReadCondition(child);
                     if (childCondition != null)
-                        bc.AddCondition(conditionObject, BooleanCondition.ConditionTypeFromString(cnd.Attributes["type"].Value));
+                        bc.AddCondition(conditionObject, BooleanCondition.ConditionTypeFromString(child.Attributes["type"] == null ? null : child.Attributes["type"].Value));
                 }
                 if (bc.ChildConditionsCount > 0)
-                    conditionObject = bc;
+                    conditionObject = bc.Degrade();
             }
-            else if (caller._updateConditions.ContainsKey(cnd.Attributes["check"].Value))
+            else if (_updateConditions.ContainsKey(cnd.Name))
             {
-                conditionObject = (IUpdateCondition)Activator.CreateInstance(caller._updateConditions[cnd.Attributes["check"].Value]);
+                conditionObject = (IUpdateCondition)Activator.CreateInstance(_updateConditions[cnd.Name]);
 
                 // Store all other attributes, to be used by the condition object later
                 foreach (XmlAttribute att in cnd.Attributes)

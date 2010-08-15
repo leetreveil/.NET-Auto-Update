@@ -12,6 +12,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPFSampleApp", "src\Samples\WPFSampleApp\WPFSampleApp.csproj", "{D4321517-F941-4B1C-A9F7-9F63F5B86EE8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NAppUpdate.Framework", "src\NAppUpdate.Framework\NAppUpdate.Framework.csproj", "{5C07EBDF-D43F-4BE9-B560-D7A443C0EDCE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7D4D18D4-DBD2-4ADC-9D82-397D6C5E9F40} = {7D4D18D4-DBD2-4ADC-9D82-397D6C5E9F40}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{78F44777-F4E4-4154-A396-80DAD1E47065}"
 EndProject

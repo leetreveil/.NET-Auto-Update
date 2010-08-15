@@ -30,7 +30,7 @@ namespace NAppUpdate.Tests.FeedReaders
         public void TestNauReaderCanReadFeed()
         {
             var reader = new NAppUpdate.Framework.FeedReaders.NauXmlFeedReader();
-            IList<IUpdateTask> updates = reader.Read(UpdateManager.Instance, NauUpdateFeed);
+            IList<IUpdateTask> updates = reader.Read(NauUpdateFeed);
 
             Assert.IsTrue(updates.Count > 0);
         }

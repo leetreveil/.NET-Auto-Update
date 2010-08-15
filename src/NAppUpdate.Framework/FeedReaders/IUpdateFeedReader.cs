@@ -7,6 +7,6 @@ namespace NAppUpdate.Framework.FeedReaders
 {
     public interface IUpdateFeedReader
     {
-        IList<IUpdateTask> Read(UpdateManager caller, string feed);
+        IList<IUpdateTask> Read(string feed);
     }
 }

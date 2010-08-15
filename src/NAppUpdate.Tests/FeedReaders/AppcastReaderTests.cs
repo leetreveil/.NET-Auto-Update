@@ -30,7 +30,7 @@ namespace NAppUpdate.Tests.Unit
         public void Should_be_able_to_get_the_description_from_the_update()
         {
             var reader = new NAppUpdate.Framework.FeedReaders.AppcastReader();
-            var updates = reader.Read(null, ZuneUpdateFeed);
+            var updates = reader.Read(ZuneUpdateFeed);
 
             Assert.AreEqual(1, updates.Count());
             Assert.AreEqual(".WMA Support and other minor bug fixes", updates.First().Description);
