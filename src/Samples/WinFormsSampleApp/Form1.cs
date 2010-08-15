@@ -64,7 +64,7 @@ namespace WinFormsSampleApp
 
         private void btnInstallUpdates_Click(object sender, EventArgs e)
         {
-
+            UpdateManager.Instance.ApplyUpdates();
         }
 
         private void OnPrepareUpdatesCompleted(bool succeeded)
@@ -85,6 +85,7 @@ namespace WinFormsSampleApp
 
                 if (dr == DialogResult.Yes)
                 {
+                    updManager.ApplyUpdates();
                 }
             }
         }

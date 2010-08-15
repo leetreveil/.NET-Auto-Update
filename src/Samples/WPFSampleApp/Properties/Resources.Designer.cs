@@ -59,12 +59,5 @@ namespace NAppUpdate.SampleApp.Properties {
                 resourceCulture = value;
             }
         }
-        
-        internal static byte[] ltupdater {
-            get {
-                object obj = ResourceManager.GetObject("ltupdater", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }

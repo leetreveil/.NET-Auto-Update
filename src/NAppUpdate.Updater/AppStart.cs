@@ -1,53 +1,117 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Net.Sockets;
 using System.Windows.Forms;
+using System.Threading;
+
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+using System.Runtime.Serialization.Formatters.Binary;
+using NAppUpdate.Updater.Actions;
 
 namespace NAppUpdate.Updater
 {
     internal static class AppStart
     {
+        static readonly uint GENERIC_READ = (0x80000000);
+        //static readonly uint GENERIC_WRITE = (0x40000000);
+        static readonly uint OPEN_EXISTING = 3;
+        static readonly uint FILE_FLAG_OVERLAPPED = (0x40000000);
+        static readonly int BUFFER_SIZE = 4096;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern SafeFileHandle CreateFile(
+           String pipeName,
+           uint dwDesiredAccess,
+           uint dwShareMode,
+           IntPtr lpSecurityAttributes,
+           uint dwCreationDisposition,
+           uint dwFlagsAndAttributes,
+           IntPtr hTemplate);
+
         private static void Main()
         {
             //Debugger.Launch();
             try
             {
+                // Get the update process name, to be used to create a named pipe and to wait on the application
+                // to quit
                 string[] args = Environment.GetCommandLineArgs();
+                string syncProcessName = args[1];
 
-                var appPath = args[1];
+                if (string.IsNullOrEmpty(syncProcessName))
+                    Application.Exit();
 
-                var client = new TcpClient("localhost", 13001);
+                // Connect to the named pipe and retrieve the updates list
+                string PIPE_NAME = string.Format("\\\\.\\pipe\\{0}", syncProcessName);
+                object o = GetUpdates(PIPE_NAME);
 
-                var stream = client.GetStream();
-
-                byte[] fileDataLength = new byte[4];
-                stream.Read(fileDataLength, 0, 4);
-                int fileLength = BitConverter.ToInt32(fileDataLength, 0);
-
-
-                var fileData = new List<byte>();
-
-                while (fileData.Count < fileLength)
+                // Make sure we start updating only once the application has completely terminated
+                bool createdNew;
+                using (Mutex mutex = new Mutex(false, syncProcessName, out createdNew))
                 {
-                    byte[] someMessage = new byte[client.Available];
-                    stream.Read(someMessage, 0, someMessage.Length);
-                    fileData.AddRange(someMessage);
+                    try
+                    {
+                        if (!createdNew) mutex.WaitOne();
+                    }
+                    catch (AbandonedMutexException)
+                    {
+                        // An abandoned mutex is exactly what we are expecting...
+                    }
                 }
 
-                stream.Close();
-                client.Close();
+                string appPath, appDir, tempFolder;
+                {
+                    Dictionary<string, object> dict = null;
+                    if (o is Dictionary<string, object>)
+                        dict = o as Dictionary<string, object>;
 
+                    if (dict == null || dict.Count == 0)
+                        Application.Exit();
 
-                foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(appPath)))
-                    process.WaitForExit();
+                    // Get some required environment variables
+                    appPath = dict["ENV:AppPath"].ToString();
+                    appDir = Path.GetDirectoryName(appPath);
+                    tempFolder = dict["ENV:TempFolder"].ToString();
 
-                //overwrite the application files
-                ApplyUpdate(fileData.ToArray());
+                    // Perform the actual off-line update process
+                    Dictionary<string, object>.Enumerator en = dict.GetEnumerator();
+                    while (en.MoveNext())
+                    {
+                        if (en.Current.Key.StartsWith("ENV:"))
+                            continue;
+                        else
+                        {
+                            IUpdateAction a = null;
+                            if (en.Current.Value is string)
+                                a = new FileCopyAction(en.Current.Value.ToString(), Path.Combine(appDir, en.Current.Key));
+                            else if (en.Current.Value is byte[])
+                                a = new FileDumpAction(Path.Combine(appDir, en.Current.Key), (byte[])en.Current.Value);
 
-                //start the application
+                            if (a != null)
+                                a.Do();
+                        }
+                    }
+                }
+
+                // Start the application
                 Process.Start(appPath);
+
+                // Delete the updater EXE and the temp folder
+                try
+                {
+                    ProcessStartInfo Info = new ProcessStartInfo();
+                    Info.Arguments = string.Format("/C choice /C Y /N /D Y /T 3 & del {0} & rmdir {1}",
+                                   Application.ExecutablePath, tempFolder);
+                    Info.WindowStyle = ProcessWindowStyle.Hidden;
+                    Info.CreateNoWindow = true;
+                    Info.FileName = "cmd.exe";
+                    Process.Start(Info);
+                }
+                catch { /* ignore exceptions thrown while trying to clean up */ }
+
+                Application.Exit();
             }
             catch
             {
@@ -59,11 +123,26 @@ namespace NAppUpdate.Updater
             }
         }
 
-
-        private static void ApplyUpdate(byte[] updateData)
+        private static object GetUpdates(string PIPE_NAME)
         {
-            var extractor = new ZipFileExtractor(updateData);
-            extractor.ExtractTo(Environment.CurrentDirectory);
+            using (SafeFileHandle pipeHandle = CreateFile(
+                PIPE_NAME,
+                GENERIC_READ,
+                0,
+                IntPtr.Zero,
+                OPEN_EXISTING,
+                FILE_FLAG_OVERLAPPED,
+                IntPtr.Zero))
+            {
+
+                if (pipeHandle.IsInvalid)
+                    return null;
+
+                using (FileStream fStream = new FileStream(pipeHandle, FileAccess.Read, BUFFER_SIZE, true))
+                {
+                    return new BinaryFormatter().Deserialize(fStream);
+                }
+            }
         }
     }
 }

@@ -30,9 +30,6 @@ namespace NAppUpdate.SampleApp
             updManager.UpdateFeedReader = new NAppUpdate.Framework.FeedReaders.AppcastReader();
             updManager.UpdateSource = new NAppUpdate.Framework.Sources.SimpleWebSource();
 
-            updManager.UpdateExePath = updaterPath;
-            updManager.UpdateExeBinary = Properties.Resources.ltupdater;
-
             //always clean up at the beginning of the exe because we cant do it at the end
             updManager.CleanUp();
 

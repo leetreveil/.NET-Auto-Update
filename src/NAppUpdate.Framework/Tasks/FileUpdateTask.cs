@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
 
 namespace NAppUpdate.Framework.Tasks
 {
@@ -12,6 +13,8 @@ namespace NAppUpdate.Framework.Tasks
             Attributes = new Dictionary<string, string>();
             UpdateConditions = new NAppUpdate.Framework.Conditions.BooleanCondition();
         }
+
+        internal byte[] fileBytes = null;
 
         #region IUpdateTask Members
 
@@ -26,14 +29,13 @@ namespace NAppUpdate.Framework.Tasks
             if (!Attributes.ContainsKey("updateTo"))
                 return false;
 
-            byte[] newFileData;
             try
             {
-                newFileData = source.GetFile(Attributes["updateTo"]);
+                fileBytes = source.GetFile(Attributes["updateTo"]);
             }
             catch { return false; }
 
-            if (newFileData == null || newFileData.Length == 0)
+            if (fileBytes == null || fileBytes.Length == 0)
                 return false;
 
             return true;
@@ -41,7 +43,25 @@ namespace NAppUpdate.Framework.Tasks
 
         public bool Execute()
         {
-            throw new NotImplementedException();
+            if (!Attributes.ContainsKey("localPath"))
+                return true;
+
+            // Only enable execution if the apply attribute was set to hot-swap
+            if (Attributes.ContainsKey("apply") && "hot-swap".Equals(Attributes["apply"]))
+            {
+                try
+                {
+                    using (FileStream fs = new FileStream(Path.Combine("appFolder", Attributes["localPath"]), FileMode.Create, FileAccess.Write))
+                    {
+                        fs.Write(fileBytes, 0, fileBytes.Length);
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         #endregion

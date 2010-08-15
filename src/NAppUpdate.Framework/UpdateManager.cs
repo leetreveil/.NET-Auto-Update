@@ -45,6 +45,7 @@ namespace NAppUpdate.Framework
 
             UpdatesToApply = new LinkedList<IUpdateTask>();
             TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            UpdateProcessName = "NAppUpdateProcess";
         }
 
         public static UpdateManager Instance
@@ -54,11 +55,8 @@ namespace NAppUpdate.Framework
 
         #endregion
 
-        public byte[] UpdateExeBinary { get; set; }
-        public string UpdateExePath { get; set; }
-        public byte[] UpdateData { get; private set; }
-
         public string TempFolder { get; set; }
+        public string UpdateProcessName { get; set; }
 
         internal Dictionary<string, Type> _updateConditions { get; private set; }
         internal Dictionary<string, Type> _updateTasks { get; private set; }
@@ -160,48 +158,54 @@ namespace NAppUpdate.Framework
         /// <summary>
         /// Starts the updater executable and sends update data to it
         /// </summary>
-        /// <returns>true if a restart is required (the update process will wait for the application to quit)</returns>
         public bool ApplyUpdates()
         {
-            /*if (String.IsNullOrEmpty(UpdateExePath))
-                throw new ArgumentException("The UpdateExePath has not been set");
-
-            if (UpdateExeBinary == null || UpdateExeBinary.Length == 0)
-                throw new ArgumentException("UpdateExeBinary has not been set");*/
-
+            Dictionary<string, object> executeOnAppRestart = new Dictionary<string, object>();
             foreach (IUpdateTask task in UpdatesToApply)
             {
                 if (!task.Execute())
                 {
-                    // TODO: notify about task execution failure
+                    // TODO: notify about task execution failure using exceptions
+                }
+
+                // This is the only place where we have non-generalized code in UpdateManager.
+                // The reason for that is the updater currently only supports replacing bytes by path, which
+                // only FileUpdaterTask does - so there's no reason to generalize this portion too.
+                else if (task is FileUpdateTask && task.Attributes.ContainsKey("localPath"))
+                {
+                    if (task.Attributes.ContainsKey("apply") && "app-restart".Equals(task.Attributes["apply"]))
+                    {
+                        FileUpdateTask fut = (FileUpdateTask)task;
+                        executeOnAppRestart[task.Attributes["localPath"]] = fut.fileBytes;
+                    }
                 }
             }
 
-            new UpdateStarter(UpdateExePath, UpdateExeBinary, UpdateData).Start();
+            // If an application restart is required
+            if (executeOnAppRestart.Count > 0)
+            {
+                // Add some environment variables to the dictionary object which will be passed to the updater
+                executeOnAppRestart["ENV:AppPath"] = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                executeOnAppRestart["ENV:TempFolder"] = TempFolder;
 
-            //Application.Current.Shutdown();
-            Environment.Exit(0);
-            // TODO: Use mutex / named-pipes notifications
+                UpdateStarter updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
+                bool createdNew;
+                using (Mutex mutex = new Mutex(true, UpdateProcessName, out createdNew))
+                {
+                    updStarter.Start();
+
+                    Environment.Exit(0);
+                }
+            }
 
             return true;
         }
 
         /// <summary>
-        /// Removes the updater executable from the directory its in and fails silently
+        /// Delete the temp folder as a whole and fails silently
         /// </summary>
         public void CleanUp()
         {
-            if (String.IsNullOrEmpty(UpdateExePath))
-                throw new ArgumentException("The UpdateExePath has not been set");
-
-            try
-            {
-                //clean up updater after it has been extracted (if it has)
-                if (File.Exists(UpdateExePath))
-                    File.Delete(UpdateExePath);
-            }
-            catch{}
-
             try
             {
                 Directory.Delete(TempFolder);

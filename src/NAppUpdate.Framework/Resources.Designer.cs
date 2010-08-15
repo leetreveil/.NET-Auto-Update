@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace NAppUpdate.Updater.Properties {
+namespace NAppUpdate.Framework {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace NAppUpdate.Updater.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NAppUpdate.Updater.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NAppUpdate.Framework.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -57,6 +57,13 @@ namespace NAppUpdate.Updater.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        internal static byte[] updater {
+            get {
+                object obj = ResourceManager.GetObject("updater", resourceCulture);
+                return ((byte[])(obj));
             }
         }
     }

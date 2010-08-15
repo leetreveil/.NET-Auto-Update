@@ -25,3 +25,4 @@ Thumbs.db
 *.suo
 *.cache
 *\TestResults
+*\updater.exe
