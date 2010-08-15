@@ -176,13 +176,13 @@ namespace NAppUpdate.Framework
         }
 
         /// <summary>
-        /// Delete the temp folder as a whole and fails silently
+        /// Delete the temp folder as a whole and fail silently
         /// </summary>
         public void CleanUp()
         {
             try
             {
-                Directory.Delete(TempFolder);
+                Directory.Delete(TempFolder, true);
             }
             catch { }
         }

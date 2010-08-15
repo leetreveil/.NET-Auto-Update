@@ -102,8 +102,9 @@ namespace NAppUpdate.Updater
                 try
                 {
                     ProcessStartInfo Info = new ProcessStartInfo();
-                    Info.Arguments = string.Format("/C choice /C Y /N /D Y /T 3 & del {0} & rmdir {1}",
-                                   Application.ExecutablePath, tempFolder);
+                    //Application.ExecutablePath
+                    Info.Arguments = string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}"""
+                                   , tempFolder);
                     Info.WindowStyle = ProcessWindowStyle.Hidden;
                     Info.CreateNoWindow = true;
                     Info.FileName = "cmd.exe";
