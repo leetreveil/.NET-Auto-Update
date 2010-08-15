@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using NAppUpdate.Framework.Utils;
+using System.Net;
 
 namespace NAppUpdate.Framework.Sources
 {
@@ -16,25 +17,23 @@ namespace NAppUpdate.Framework.Sources
 
         public string FeedUrl { get; set; }
 
+        private readonly string _byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
+
         #region IUpdateSource Members
 
         public string GetUpdatesFeed()
         {
-            FileDownloader fd = new FileDownloader(FeedUrl);
-            byte[] data = fd.Download();
+            string data;
+            using (var client = new WebClient())
+            {
+                client.Encoding = Encoding.UTF8;
+                data = client.DownloadString(FeedUrl);
+            }
 
-            if (data == null || data.Length == 0)
-                return string.Empty;
+            if (data.StartsWith(_byteOrderMarkUtf8))
+                data = data.Remove(0, _byteOrderMarkUtf8.Length);
 
-            int charsCount = Encoding.UTF8.GetCharCount(data);
-
-            char[] chars = new char[charsCount];
-            int bytesUsed, charsUsed;
-            bool completed;
-            Encoding.UTF8.GetDecoder().Convert(data, 0, data.Length, chars, 0, charsCount, true,
-                out bytesUsed, out charsUsed, out completed);
-
-            return new string(chars);
+            return data;
         }
 
         public byte[] GetFile(string url)
