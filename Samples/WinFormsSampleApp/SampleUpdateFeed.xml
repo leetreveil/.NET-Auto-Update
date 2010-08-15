@@ -5,6 +5,18 @@
       <Description>Fixes several bugs with the display</Description>
       <Conditions>
         <FileVersionCondition what="below" version="3.3.2.10" />
+        <OSCondition type="and-not" bit="64" />
+        <FileSizeCondition type="and" what="above" version="1000" />
+        <FileDateCondition type="or" what="is" version="20091010T000000" />
+      </Conditions>
+    </FileUpdateTask>
+    <FileUpdateTask localPath="htmlayout64.dll" updateTo="file://c:/test/htmlayout64.dll">
+      <Description>Fixes several bugs with the display (for 64 bit platforms)</Description>
+      <Conditions>
+        <FileVersionCondition what="below" version="3.3.2.10" />
+        <OSCondition type="and" bit="64" />
+        <FileSizeCondition type="and-not" what="below" version="1000" />
+        <FileExistsCondition type="or" />
       </Conditions>
     </FileUpdateTask>
     <FileUpdateTask apply="hot-swap" localPath="test.dll" updateTo="file://c:/test/test_rename.dll" />
