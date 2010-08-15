@@ -8,6 +8,11 @@ namespace NAppUpdate.Framework.Conditions
     [UpdateConditionAlias("exists")]
     public class FileExistsCondition : IUpdateCondition
     {
+        public FileExistsCondition()
+        {
+            Attributes = new Dictionary<string, string>();
+        }
+
         #region IUpdateCondition Members
 
         public IDictionary<string, string> Attributes { get; private set; }

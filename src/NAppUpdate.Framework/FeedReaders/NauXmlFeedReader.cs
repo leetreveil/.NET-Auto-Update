@@ -106,7 +106,7 @@ namespace NAppUpdate.Framework.FeedReaders
                 {
                     IUpdateCondition childCondition = ReadCondition(child);
                     if (childCondition != null)
-                        bc.AddCondition(conditionObject, BooleanCondition.ConditionTypeFromString(child.Attributes["type"] == null ? null : child.Attributes["type"].Value));
+                        bc.AddCondition(childCondition, BooleanCondition.ConditionTypeFromString(child.Attributes["type"] == null ? null : child.Attributes["type"].Value));
                 }
                 if (bc.ChildConditionsCount > 0)
                     conditionObject = bc.Degrade();

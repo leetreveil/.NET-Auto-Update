@@ -13,7 +13,7 @@ namespace NAppUpdate.Framework.Conditions
         {
             AND = 1,
             OR = 2,
-            NOT = 3,
+            NOT = 4,
         }
 
         public static ConditionType ConditionTypeFromString(string type)
@@ -105,13 +105,13 @@ namespace NAppUpdate.Framework.Conditions
                     if ((item._ConditionType & ConditionType.OR) > 0)
                     {
                         bool checkResult = item._Condition.IsMet(task);
-                        Passed = (item._ConditionType & ConditionType.NOT) > 0 ? checkResult : !checkResult;
+                        Passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
                     }
                 }
                 else
                 {
                     bool checkResult = item._Condition.IsMet(task);
-                    Passed = (item._ConditionType & ConditionType.NOT) > 0 ? checkResult : !checkResult;
+                    Passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
                 }
             }
 
