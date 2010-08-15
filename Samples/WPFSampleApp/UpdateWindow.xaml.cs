@@ -32,17 +32,17 @@ namespace NAppUpdate.SampleApp
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
         {
-            /*
-            _updateManager.DownloadUpdateAsync(finished =>
+            _updateManager.PrepareUpdatesAsync(finished =>
                                                    {
                                                        if (finished)
                                                            _updateManager.ApplyUpdates();
-                                                   },
-                                               progressPercent =>
+                                                       else
+                                                           _updateManager.CleanUp();
+                                                   });
+                                                /*progressPercent =>
                                                    {
                                                        this.DownloadProgress = progressPercent;
-                                                   });
-             */
+                                                   }*/
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

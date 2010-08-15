@@ -53,7 +53,7 @@ namespace NAppUpdate.Framework
             return CheckForUpdates(source, null);
         }
 
-        public bool CheckForUpdates(IUpdateSource source, Action<int> callback)
+        private bool CheckForUpdates(IUpdateSource source, Action<int> callback)
         {
             if (UpdateFeedReader == null)
                 throw new ArgumentException("An update feed reader is required; please set one before checking for updates");
@@ -99,8 +99,10 @@ namespace NAppUpdate.Framework
             return PrepareUpdates(null);
         }
 
-        public bool PrepareUpdates(Action<bool> callback)
+        private bool PrepareUpdates(Action<bool> callback)
         {
+            // TODO: Support progress updates
+
             if (!Directory.Exists(TempFolder))
                 Directory.CreateDirectory(TempFolder);
 

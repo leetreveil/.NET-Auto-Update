@@ -13,8 +13,6 @@ namespace NAppUpdate.SampleApp
     public partial class MainWindow : Window
     {
         public string AppVersion { get { return Assembly.GetExecutingAssembly().GetName().Version.ToString(); } }
-        private readonly string updaterPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                                  "ltupdater.exe");
 
         public MainWindow()
         {
@@ -30,11 +28,12 @@ namespace NAppUpdate.SampleApp
             updManager.UpdateFeedReader = new NAppUpdate.Framework.FeedReaders.AppcastReader();
             updManager.UpdateSource = new NAppUpdate.Framework.Sources.SimpleWebSource();
 
-            //always clean up at the beginning of the exe because we cant do it at the end
-            updManager.CleanUp();
-
-            if (updManager.CheckForUpdates(new NAppUpdate.Framework.Sources.MemorySource(File.ReadAllText("sampleappupdatefeed.xml"))))
-                    new UpdateWindow(updManager).Show();
+            updManager.CheckForUpdateAsync(new NAppUpdate.Framework.Sources.MemorySource(File.ReadAllText("sampleappupdatefeed.xml"))
+                , updatesCount =>
+                {
+                    if (updatesCount > 0)
+                        new UpdateWindow(updManager).Show();
+                });
         }
     }
 }
