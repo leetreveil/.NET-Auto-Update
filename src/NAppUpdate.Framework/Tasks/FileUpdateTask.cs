@@ -38,6 +38,13 @@ namespace NAppUpdate.Framework.Tasks
             if (fileBytes == null || fileBytes.Length == 0)
                 return false;
 
+            if (Attributes.ContainsKey("sha256-checksum"))
+            {
+                string checksum = Utils.FileChecksum.GetSHA256Checksum(fileBytes);
+                if (!checksum.Equals(Attributes["sha256-checksum"]))
+                    return false;
+            }
+
             return true;
         }
 
