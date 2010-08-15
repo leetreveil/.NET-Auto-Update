@@ -15,16 +15,18 @@ namespace NAppUpdate.Tests.FeedReaders
     {
         const string NauUpdateFeed =
                 @"<?xml version=""1.0"" encoding=""utf-8""?>
-<feed>
-  <title>My application</title>
-  <link>http://myapp.com/</link>
-  <tasks>
-    <task type=""fileUpdate"">
-      <description>update details</description>
-      <condition check=""exists"" localPath=""c:\test.txt"" />
-    </task>
-  </tasks>
-</feed>";
+<Feed>
+  <Title>My application</Title>
+  <Link>http://myapp.com/</Link>
+  <Tasks>
+    <FileUpdateTask localPath=""test.dll"" updateTo=""remoteFile.dll"">
+      <Description>update details</Description>
+      <Conditions>
+        <FileExistsCondition localPath=""otherFile.dll"" />
+      </Conditions>
+    </FileUpdateTask>
+  </Tasks>
+</Feed>";
 
         [TestMethod]
         public void TestNauReaderCanReadFeed()
