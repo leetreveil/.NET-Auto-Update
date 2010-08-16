@@ -7,6 +7,6 @@ namespace NAppUpdate.Framework.Sources
     public interface IUpdateSource
     {
         string GetUpdatesFeed();
-        byte[] GetFile(string url);
+        byte[] GetFile(string filePath, string basePath);
     }
 }

@@ -34,7 +34,8 @@ namespace NAppUpdate.Framework
 
         public string TempFolder { get; set; }
         public string UpdateProcessName { get; set; }
-
+        
+        internal string BaseUrl { get; set; }
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
         public int UpdatesAvailable { get { if (UpdatesToApply == null) return 0; return UpdatesToApply.Count; } }
         

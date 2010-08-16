@@ -20,7 +20,7 @@ namespace NAppUpdate.Framework.Sources
             return FeedXml;
         }
 
-        public byte[] GetFile(string url)
+        public byte[] GetFile(string filePath, string basePath)
         {
             throw new NotImplementedException();
         }

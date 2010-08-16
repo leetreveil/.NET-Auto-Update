@@ -31,7 +31,7 @@ namespace NAppUpdate.Framework.Tasks
 
             try
             {
-                fileBytes = source.GetFile(Attributes["updateTo"]);
+                fileBytes = source.GetFile(Attributes["updateTo"], UpdateManager.Instance.BaseUrl);
             }
             catch { return false; }
 

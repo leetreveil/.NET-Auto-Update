@@ -36,9 +36,13 @@ namespace NAppUpdate.Framework.Sources
             return data;
         }
 
-        public byte[] GetFile(string url)
+        public byte[] GetFile(string url, string baseUrl)
         {
-            return new FileDownloader(url).Download();
+            if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                return new FileDownloader(url).Download();
+            else if (!string.IsNullOrEmpty(baseUrl))
+                return new FileDownloader(new Uri(new Uri(baseUrl, UriKind.Absolute), url)).Download();
+            return null;
         }
 
         #endregion

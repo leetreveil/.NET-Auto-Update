@@ -54,6 +54,9 @@ namespace NAppUpdate.Framework.FeedReaders
             XmlNode root = doc.SelectSingleNode(@"/Feed[version=""1.0""] | /Feed");
             if (root == null) root = doc;
 
+            if (root.Attributes["BaseUrl"] != null && !string.IsNullOrEmpty(root.Attributes["BaseUrl"].Value))
+                UpdateManager.Instance.BaseUrl = root.Attributes["BaseUrl"].Value;
+
             XmlNodeList nl = root.SelectNodes("./Tasks/*");
             foreach (XmlNode node in nl)
             {

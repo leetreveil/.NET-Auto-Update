@@ -3,13 +3,18 @@ using System.Net;
 
 namespace NAppUpdate.Framework.Utils
 {
-    public class FileDownloader
+    public sealed class FileDownloader
     {
         private readonly Uri _uri;
 
         public FileDownloader(string url)
         {
             _uri = new Uri(url);
+        }
+
+        public FileDownloader(Uri uri)
+        {
+            _uri = uri;
         }
 
         public byte[] Download()
