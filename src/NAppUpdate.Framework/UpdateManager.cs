@@ -191,6 +191,8 @@ namespace NAppUpdate.Framework
                 }
             }
 
+            UpdatesToApply.Clear();
+
             return true;
         }
 
