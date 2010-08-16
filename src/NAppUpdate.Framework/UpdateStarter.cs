@@ -2,9 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-using System.Net;
-using System.Net.Sockets;
-
 // Used for the named pipes implementation
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
@@ -15,12 +12,13 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace NAppUpdate.Framework
 {
     /// <summary>
-    /// Downloads and starts the update process
+    /// Starts the cold update process by extracting the updater app from the library's resources,
+    /// passing it all the data it needs and terminating the current application
     /// </summary>
-    public class UpdateStarter
+    internal class UpdateStarter
     {
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern SafeFileHandle CreateNamedPipe(
+        private static extern SafeFileHandle CreateNamedPipe(
            String pipeName,
            uint dwOpenMode,
            uint dwPipeMode,
@@ -31,12 +29,12 @@ namespace NAppUpdate.Framework
            IntPtr lpSecurityAttributes);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern int ConnectNamedPipe(
+        private static extern int ConnectNamedPipe(
            SafeFileHandle hNamedPipe,
            IntPtr lpOverlapped);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern SafeFileHandle CreateFile(
+        private static extern SafeFileHandle CreateFile(
            String pipeName,
            uint dwDesiredAccess,
            uint dwShareMode,
@@ -50,7 +48,6 @@ namespace NAppUpdate.Framework
         private const uint FILE_FLAG_OVERLAPPED = (0x40000000);
 
         internal string PIPE_NAME { get { return string.Format("\\\\.\\pipe\\{0}", _syncProcessName); } }
-
         internal uint BUFFER_SIZE = 4096;
 
         private readonly string _updaterPath;
@@ -112,7 +109,7 @@ namespace NAppUpdate.Framework
 
         private void ExtractUpdaterFromResource()
         {
-            //store the updater temporarily in the designated folder
+            //store the updater temporarily in the designated folder            
             using (var writer = new BinaryWriter(File.Open(_updaterPath, FileMode.Create)))
                 writer.Write(NAppUpdate.Framework.Resources.updater);
         }

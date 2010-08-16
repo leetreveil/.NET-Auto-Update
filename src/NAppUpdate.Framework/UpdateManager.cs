@@ -79,7 +79,7 @@ namespace NAppUpdate.Framework
             }
 
             if (_shouldStop) return false;
-            if (callback != null) callback(UpdatesToApply.Count);
+            if (callback != null) callback.BeginInvoke(UpdatesToApply.Count, null, null);
 
             if (UpdatesToApply.Count > 0)
                 return true;
@@ -96,7 +96,15 @@ namespace NAppUpdate.Framework
         {
             if (!IsWorking)
             {
-                _updatesThread = new Thread(delegate() { CheckForUpdates(source, callback); });
+                _updatesThread = new Thread(delegate()
+                    {
+                        try
+                        {
+                            CheckForUpdates(source, callback);
+                        }
+                        catch { callback.BeginInvoke(0, null, null); /* TODO: Handle error */ }
+                    });
+                _updatesThread.IsBackground = true;
                 _updatesThread.Start();
             }
         }
@@ -114,16 +122,16 @@ namespace NAppUpdate.Framework
         {
             // TODO: Support progress updates
 
-            if (!Directory.Exists(TempFolder))
-                Directory.CreateDirectory(TempFolder);
-
             lock (UpdatesToApply)
             {
                 if (UpdatesToApply.Count == 0)
                 {
-                    if (callback != null) callback(false);
+                    if (callback != null) callback.BeginInvoke(false, null, null);
                     return false;
                 }
+
+                if (!Directory.Exists(TempFolder))
+                    Directory.CreateDirectory(TempFolder);
 
                 foreach (IUpdateTask t in UpdatesToApply)
                 {
@@ -134,7 +142,7 @@ namespace NAppUpdate.Framework
 
             if (_shouldStop) return false;
 
-            if (callback != null) callback(true);
+            if (callback != null) callback.BeginInvoke(true, null, null);
             return true;
         }
 
@@ -142,7 +150,15 @@ namespace NAppUpdate.Framework
         {
             if (!IsWorking)
             {
-                _updatesThread = new Thread(delegate() { PrepareUpdates(callback); });
+                _updatesThread = new Thread(delegate()
+                {
+                    try
+                    {
+                        PrepareUpdates(callback);
+                    }
+                    catch { callback.BeginInvoke(false, null, null); /* TODO: Handle error */ }
+                });
+                _updatesThread.IsBackground = true;
                 _updatesThread.Start();
             }
         }
@@ -167,46 +183,50 @@ namespace NAppUpdate.Framework
         /// <returns>True if successful (unless a restart was required</returns>
         public bool ApplyUpdates(bool RelaunchApplication)
         {
-            Dictionary<string, object> executeOnAppRestart = new Dictionary<string, object>();
-            foreach (IUpdateTask task in UpdatesToApply)
+            lock (UpdatesToApply)
             {
-                if (!task.Execute())
+                Dictionary<string, object> executeOnAppRestart = new Dictionary<string, object>();
+                foreach (IUpdateTask task in UpdatesToApply)
                 {
-                    // TODO: notify about task execution failure using exceptions
-                }
-
-                // This is the only place where we have non-generalized code in UpdateManager.
-                // The reason for that is the updater currently only supports replacing bytes by path, which
-                // only FileUpdaterTask does - so there's no reason to generalize this portion too.
-                else if (task is FileUpdateTask && task.Attributes.ContainsKey("localPath"))
-                {
-                    if (task.Attributes.ContainsKey("apply") && "app-restart".Equals(task.Attributes["apply"]))
+                    if (!task.Execute())
                     {
-                        FileUpdateTask fut = (FileUpdateTask)task;
-                        executeOnAppRestart[task.Attributes["localPath"]] = fut.fileBytes;
+                        // TODO: notify about task execution failure using exceptions
+                    }
+
+                    // This is the only place where we have non-generalized code in UpdateManager.
+                    // The reason for that is the updater currently only supports replacing bytes by path, which
+                    // only FileUpdaterTask does - so there's no reason to generalize this portion too.
+                    else if (task is FileUpdateTask && task.Attributes.ContainsKey("localPath"))
+                    {
+                        if (!task.Attributes.ContainsKey("apply") ||
+                            (task.Attributes.ContainsKey("apply") && "app-restart".Equals(task.Attributes["apply"])))
+                        {
+                            FileUpdateTask fut = (FileUpdateTask)task;
+                            executeOnAppRestart[task.Attributes["localPath"]] = fut.fileBytes;
+                        }
                     }
                 }
-            }
 
-            // If an application restart is required
-            if (executeOnAppRestart.Count > 0)
-            {
-                // Add some environment variables to the dictionary object which will be passed to the updater
-                executeOnAppRestart["ENV:AppPath"] = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-                executeOnAppRestart["ENV:TempFolder"] = TempFolder;
-                executeOnAppRestart["ENV:RelaunchApplication"] = RelaunchApplication;
-
-                UpdateStarter updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
-                bool createdNew;
-                using (Mutex mutex = new Mutex(true, UpdateProcessName, out createdNew))
+                // If an application restart is required
+                if (executeOnAppRestart.Count > 0)
                 {
-                    updStarter.Start();
+                    // Add some environment variables to the dictionary object which will be passed to the updater
+                    executeOnAppRestart["ENV:AppPath"] = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                    executeOnAppRestart["ENV:TempFolder"] = TempFolder;
+                    executeOnAppRestart["ENV:RelaunchApplication"] = RelaunchApplication;
 
-                    Environment.Exit(0);
+                    UpdateStarter updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
+                    bool createdNew;
+                    using (Mutex mutex = new Mutex(true, UpdateProcessName, out createdNew))
+                    {
+                        updStarter.Start();
+
+                        Environment.Exit(0);
+                    }
                 }
-            }
 
-            UpdatesToApply.Clear();
+                UpdatesToApply.Clear();
+            }
 
             return true;
         }
