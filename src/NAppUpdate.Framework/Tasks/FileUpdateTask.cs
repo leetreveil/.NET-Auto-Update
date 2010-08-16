@@ -27,7 +27,7 @@ namespace NAppUpdate.Framework.Tasks
         public bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source)
         {
             if (!Attributes.ContainsKey("updateTo"))
-                return false;
+                return true; // Errorneous case, but there's nothing to prepare...
 
             try
             {
