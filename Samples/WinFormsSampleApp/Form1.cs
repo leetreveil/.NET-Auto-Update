@@ -89,5 +89,10 @@ namespace WinFormsSampleApp
                 }
             }
         }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            UpdateManager.Instance.CleanUp();
+        }
     }
 }

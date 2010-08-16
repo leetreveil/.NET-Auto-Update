@@ -41,6 +41,10 @@ namespace NAppUpdate.Framework
         public IUpdateSource UpdateSource { get; set; }
         public IUpdateFeedReader UpdateFeedReader { get; set; }
 
+        private Thread _updatesThread;
+        private volatile bool _shouldStop;
+        public bool IsWorking { get { return _updatesThread != null && _updatesThread.IsAlive; } }
+
         #region Step 1 - Check for updates
 
         public bool CheckForUpdates()
@@ -67,11 +71,13 @@ namespace NAppUpdate.Framework
                 IList<IUpdateTask> tasks = UpdateFeedReader.Read(source.GetUpdatesFeed());
                 foreach (IUpdateTask t in tasks)
                 {
+                    if (_shouldStop) return false;
                     if (t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met
                         UpdatesToApply.AddLast(t);
                 }
             }
 
+            if (_shouldStop) return false;
             if (callback != null) callback(UpdatesToApply.Count);
 
             if (UpdatesToApply.Count > 0)
@@ -87,7 +93,11 @@ namespace NAppUpdate.Framework
 
         public void CheckForUpdateAsync(IUpdateSource source, Action<int> callback)
         {
-            ThreadPool.QueueUserWorkItem(cb => CheckForUpdates(source, callback));
+            if (!IsWorking)
+            {
+                _updatesThread = new Thread(delegate() { CheckForUpdates(source, callback); });
+                _updatesThread.Start();
+            }
         }
 
         #endregion
@@ -116,9 +126,12 @@ namespace NAppUpdate.Framework
 
                 foreach (IUpdateTask t in UpdatesToApply)
                 {
+                    if (_shouldStop) return false;
                     t.Prepare(UpdateSource);
                 }
             }
+
+            if (_shouldStop) return false;
 
             if (callback != null) callback(true);
             return true;
@@ -126,7 +139,11 @@ namespace NAppUpdate.Framework
 
         public void PrepareUpdatesAsync(Action<bool> callback)
         {
-            ThreadPool.QueueUserWorkItem(cb => PrepareUpdates(callback));
+            if (!IsWorking)
+            {
+                _updatesThread = new Thread(delegate() { PrepareUpdates(callback); });
+                _updatesThread.Start();
+            }
         }
 
         #endregion
@@ -177,11 +194,20 @@ namespace NAppUpdate.Framework
             return true;
         }
 
+        public void Abort()
+        {
+            _shouldStop = true;
+        }
+
         /// <summary>
         /// Delete the temp folder as a whole and fail silently
         /// </summary>
         public void CleanUp()
         {
+            Abort();
+            if (_updatesThread != null && _updatesThread.IsAlive)
+                _updatesThread.Join();
+
             try
             {
                 Directory.Delete(TempFolder, true);
