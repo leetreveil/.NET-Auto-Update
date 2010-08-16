@@ -148,10 +148,23 @@ namespace NAppUpdate.Framework
 
         #endregion
 
+        #region Step 3 - Apply updates
+
+        /// <summary>
+        /// Starts the updater executable and sends update data to it, and relaunch the caller application as soon as its done
+        /// </summary>
+        /// <returns>True if successful (unless a restart was required</returns>
+        public bool ApplyUpdates()
+        {
+            return ApplyUpdates(true);
+        }
+
         /// <summary>
         /// Starts the updater executable and sends update data to it
         /// </summary>
-        public bool ApplyUpdates()
+        /// <param name="RestartApplication">true if relaunching the caller application is required; false otherwise</param>
+        /// <returns>True if successful (unless a restart was required</returns>
+        public bool ApplyUpdates(bool RelaunchApplication)
         {
             Dictionary<string, object> executeOnAppRestart = new Dictionary<string, object>();
             foreach (IUpdateTask task in UpdatesToApply)
@@ -180,6 +193,7 @@ namespace NAppUpdate.Framework
                 // Add some environment variables to the dictionary object which will be passed to the updater
                 executeOnAppRestart["ENV:AppPath"] = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
                 executeOnAppRestart["ENV:TempFolder"] = TempFolder;
+                executeOnAppRestart["ENV:RelaunchApplication"] = RelaunchApplication;
 
                 UpdateStarter updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
                 bool createdNew;
@@ -195,6 +209,8 @@ namespace NAppUpdate.Framework
 
             return true;
         }
+
+        #endregion
 
         public void Abort()
         {

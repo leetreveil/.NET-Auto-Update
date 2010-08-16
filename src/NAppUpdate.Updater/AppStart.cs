@@ -62,6 +62,7 @@ namespace NAppUpdate.Updater
                 }
 
                 string appPath, appDir, tempFolder;
+                bool relaunchApp = true;
                 {
                     Dictionary<string, object> dict = null;
                     if (o is Dictionary<string, object>)
@@ -74,6 +75,7 @@ namespace NAppUpdate.Updater
                     appPath = dict["ENV:AppPath"].ToString();
                     appDir = Path.GetDirectoryName(appPath);
                     tempFolder = dict["ENV:TempFolder"].ToString();
+                    relaunchApp = dict["ENV:RelaunchApplication"] as bool? ?? true;
 
                     // Perform the actual off-line update process
                     Dictionary<string, object>.Enumerator en = dict.GetEnumerator();
@@ -95,8 +97,9 @@ namespace NAppUpdate.Updater
                     }
                 }
 
-                // Start the application
-                Process.Start(appPath);
+                // Start the application only if requested to do so
+                if (relaunchApp)
+                    Process.Start(appPath);
 
                 // Delete the updater EXE and the temp folder
                 try
