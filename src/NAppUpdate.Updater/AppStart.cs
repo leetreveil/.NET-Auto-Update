@@ -61,7 +61,7 @@ namespace NAppUpdate.Updater
                     }
                 }
 
-                string appPath, appDir, tempFolder;
+                string appPath, appDir, tempFolder, backupFolder;
                 bool relaunchApp = true;
                 {
                     Dictionary<string, object> dict = null;
@@ -75,6 +75,7 @@ namespace NAppUpdate.Updater
                     appPath = dict["ENV:AppPath"].ToString();
                     appDir = Path.GetDirectoryName(appPath);
                     tempFolder = dict["ENV:TempFolder"].ToString();
+                    backupFolder = dict["ENV:BackupFolder"].ToString();
                     relaunchApp = dict["ENV:RelaunchApplication"] as bool? ?? true;
 
                     // Perform the actual off-line update process
@@ -96,6 +97,9 @@ namespace NAppUpdate.Updater
                         }
                     }
                 }
+
+                if (Directory.Exists(backupFolder))
+                    Directory.Delete(backupFolder, true);
 
                 // Start the application only if requested to do so
                 if (relaunchApp)

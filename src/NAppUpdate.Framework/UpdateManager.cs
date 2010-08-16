@@ -20,9 +20,12 @@ namespace NAppUpdate.Framework
 
         private UpdateManager()
         {
+            State = UpdateProcessState.NotChecked;
             UpdatesToApply = new LinkedList<IUpdateTask>();
             TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             UpdateProcessName = "NAppUpdateProcess";
+            ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath), "Backup");
         }
 
         public static UpdateManager Instance
@@ -32,12 +35,24 @@ namespace NAppUpdate.Framework
 
         #endregion
 
+        public enum UpdateProcessState
+        {
+            NotChecked,
+            Checked,
+            Prepared,
+            AppliedSuccessfully,
+            RollbackRequired,
+        }
+
         public string TempFolder { get; set; }
         public string UpdateProcessName { get; set; }
+        internal readonly string ApplicationPath;
+        internal readonly string BackupFolder;
         
         internal string BaseUrl { get; set; }
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
         public int UpdatesAvailable { get { if (UpdatesToApply == null) return 0; return UpdatesToApply.Count; } }
+        public UpdateProcessState State { get; set; }
         
         public IUpdateSource UpdateSource { get; set; }
         public IUpdateFeedReader UpdateFeedReader { get; set; }
@@ -79,6 +94,8 @@ namespace NAppUpdate.Framework
             }
 
             if (_shouldStop) return false;
+
+            State = UpdateProcessState.Checked;
             if (callback != null) callback.BeginInvoke(UpdatesToApply.Count, null, null);
 
             if (UpdatesToApply.Count > 0)
@@ -138,6 +155,8 @@ namespace NAppUpdate.Framework
                     if (_shouldStop) return false;
                     t.Prepare(UpdateSource);
                 }
+
+                State = UpdateProcessState.Prepared;
             }
 
             if (_shouldStop) return false;
@@ -185,7 +204,11 @@ namespace NAppUpdate.Framework
         {
             lock (UpdatesToApply)
             {
+                if (!Directory.Exists(BackupFolder))
+                    Directory.CreateDirectory(BackupFolder);
+
                 Dictionary<string, object> executeOnAppRestart = new Dictionary<string, object>();
+                State = UpdateProcessState.RollbackRequired;
                 foreach (IUpdateTask task in UpdatesToApply)
                 {
                     if (!task.Execute())
@@ -211,8 +234,9 @@ namespace NAppUpdate.Framework
                 if (executeOnAppRestart.Count > 0)
                 {
                     // Add some environment variables to the dictionary object which will be passed to the updater
-                    executeOnAppRestart["ENV:AppPath"] = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                    executeOnAppRestart["ENV:AppPath"] = ApplicationPath;
                     executeOnAppRestart["ENV:TempFolder"] = TempFolder;
+                    executeOnAppRestart["ENV:BackupFolder"] = BackupFolder;
                     executeOnAppRestart["ENV:RelaunchApplication"] = RelaunchApplication;
 
                     UpdateStarter updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
@@ -225,6 +249,7 @@ namespace NAppUpdate.Framework
                     }
                 }
 
+                State = UpdateProcessState.AppliedSuccessfully;
                 UpdatesToApply.Clear();
             }
 
@@ -232,6 +257,19 @@ namespace NAppUpdate.Framework
         }
 
         #endregion
+
+        public void RollbackUpdates()
+        {
+            lock (UpdatesToApply)
+            {
+                foreach(IUpdateTask task in UpdatesToApply)
+                {
+                    task.Rollback();
+                }
+
+                State = UpdateProcessState.NotChecked;
+            }
+        }
 
         public void Abort()
         {
@@ -247,11 +285,23 @@ namespace NAppUpdate.Framework
             if (_updatesThread != null && _updatesThread.IsAlive)
                 _updatesThread.Join();
 
-            try
+            lock (UpdatesToApply)
             {
-                Directory.Delete(TempFolder, true);
+                UpdatesToApply.Clear();
+                State = UpdateProcessState.NotChecked;
+
+                try
+                {
+                    Directory.Delete(TempFolder, true);
+                }
+                catch { }
+
+                try
+                {
+                    Directory.Delete(BackupFolder, true);
+                }
+                catch { }
             }
-            catch { }
         }
 
         /*

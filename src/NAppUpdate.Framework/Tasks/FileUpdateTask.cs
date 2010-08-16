@@ -15,6 +15,7 @@ namespace NAppUpdate.Framework.Tasks
         }
 
         internal byte[] fileBytes = null;
+        private string destinationFile;
 
         #region IUpdateTask Members
 
@@ -53,13 +54,18 @@ namespace NAppUpdate.Framework.Tasks
             if (!Attributes.ContainsKey("localPath"))
                 return true;
 
+            destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), Attributes["localPath"]);
+
+            // Create a backup copy if target exists
+            if (File.Exists(destinationFile))
+                File.Copy(destinationFile, Path.Combine(UpdateManager.Instance.BackupFolder, Attributes["localPath"]));
+
             // Only enable execution if the apply attribute was set to hot-swap
             if (Attributes.ContainsKey("apply") && "hot-swap".Equals(Attributes["apply"]))
             {
                 try
                 {
-                    string appDirectory = Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
-                    using (FileStream fs = new FileStream(Path.Combine(appDirectory, Attributes["localPath"]), FileMode.Create, FileAccess.Write))
+                    using (FileStream fs = new FileStream(destinationFile, FileMode.Create, FileAccess.Write))
                     {
                         fs.Write(fileBytes, 0, fileBytes.Length);
                     }
@@ -69,6 +75,19 @@ namespace NAppUpdate.Framework.Tasks
                     return false;
                 }
             }
+            return true;
+        }
+
+        public bool Rollback()
+        {
+            if (string.IsNullOrEmpty(destinationFile))
+                return true;
+
+            // Copy the backup copy back to its original position
+            if (File.Exists(destinationFile))
+                File.Delete(destinationFile);
+            File.Copy(Path.Combine(UpdateManager.Instance.BackupFolder, Attributes["localPath"]), destinationFile);
+
             return true;
         }
 

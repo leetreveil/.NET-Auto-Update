@@ -14,5 +14,6 @@ namespace NAppUpdate.Framework.Tasks
 
         bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source);
         bool Execute();
+        bool Rollback();
     }
 }
