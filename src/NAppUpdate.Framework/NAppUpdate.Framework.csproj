@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Conditions\FileChecksumCondition.cs" />
     <Compile Include="Conditions\FileDateCondition.cs" />
     <Compile Include="Conditions\FileSizeCondition.cs" />
     <Compile Include="Conditions\OSCondition.cs" />
