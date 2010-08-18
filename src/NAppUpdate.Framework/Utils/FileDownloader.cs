@@ -23,6 +23,14 @@ namespace NAppUpdate.Framework.Utils
                 return client.DownloadData(_uri);
         }
 
+        public bool DownloadToFile(string tempLocation)
+        {
+            using (var client = new WebClient())
+                client.DownloadFile(_uri, tempLocation);
+
+            return true;
+        }
+
         /*
         public void DownloadAsync(Action<byte[]> finishedCallback)
         {

@@ -225,7 +225,7 @@ namespace NAppUpdate.Framework
                             (task.Attributes.ContainsKey("apply") && "app-restart".Equals(task.Attributes["apply"])))
                         {
                             FileUpdateTask fut = (FileUpdateTask)task;
-                            executeOnAppRestart[task.Attributes["localPath"]] = fut.fileBytes;
+                            executeOnAppRestart[task.Attributes["localPath"]] = fut.tempFile;
                         }
                     }
                 }

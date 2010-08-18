@@ -4,6 +4,7 @@ using System.Text;
 
 using NAppUpdate.Framework.Utils;
 using System.Net;
+using System.IO;
 
 namespace NAppUpdate.Framework.Sources
 {
@@ -36,13 +37,24 @@ namespace NAppUpdate.Framework.Sources
             return data;
         }
 
-        public byte[] GetFile(string url, string baseUrl)
+        public bool GetData(string url, string baseUrl, ref string tempLocation)
         {
+            FileDownloader fd = null;
             if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
-                return new FileDownloader(url).Download();
-            else if (!string.IsNullOrEmpty(baseUrl))
-                return new FileDownloader(new Uri(new Uri(baseUrl, UriKind.Absolute), url)).Download();
-            return null;
+                fd = new FileDownloader(url);
+            else if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute))
+                fd = new FileDownloader(new Uri(new Uri(baseUrl, UriKind.Absolute), url));
+
+            if (fd == null)
+                return false;
+
+            if (string.IsNullOrEmpty(tempLocation) || !Directory.Exists(Path.GetDirectoryName(tempLocation)))
+                /// WATCHOUT!!! Files downloaded to a path specified by GetTempFileName may be deleted on
+                /// application restart, and as such cannot be relied on for cold updates, only for hot-swaps or
+                /// files requiring pre-processing
+                tempLocation = Path.GetTempFileName();
+
+            return fd.DownloadToFile(tempLocation);
         }
 
         #endregion

@@ -14,7 +14,7 @@ namespace NAppUpdate.Framework.Tasks
             UpdateConditions = new NAppUpdate.Framework.Conditions.BooleanCondition();
         }
 
-        internal byte[] fileBytes = null;
+        internal string tempFile = null;
         private string destinationFile;
 
         #region IUpdateTask Members
@@ -27,21 +27,23 @@ namespace NAppUpdate.Framework.Tasks
 
         public bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source)
         {
+            tempFile = null;
             if (!Attributes.ContainsKey("updateTo"))
                 return true; // Errorneous case, but there's nothing to prepare...
 
             try
             {
-                fileBytes = source.GetFile(Attributes["updateTo"], UpdateManager.Instance.BaseUrl);
+                string tempFileLocal = Path.Combine(UpdateManager.Instance.TempFolder, Guid.NewGuid().ToString());
+                if (!source.GetData(Attributes["updateTo"], UpdateManager.Instance.BaseUrl, ref tempFileLocal))
+                    return false;
+
+                tempFile = tempFileLocal;
             }
             catch { return false; }
 
-            if (fileBytes == null || fileBytes.Length == 0)
-                return false;
-
             if (Attributes.ContainsKey("sha256-checksum"))
             {
-                string checksum = Utils.FileChecksum.GetSHA256Checksum(fileBytes);
+                string checksum = Utils.FileChecksum.GetSHA256Checksum(tempFile);
                 if (!checksum.Equals(Attributes["sha256-checksum"]))
                     return false;
             }
@@ -65,15 +67,11 @@ namespace NAppUpdate.Framework.Tasks
             {
                 try
                 {
-                    using (FileStream fs = new FileStream(destinationFile, FileMode.Create, FileAccess.Write))
-                    {
-                        fs.Write(fileBytes, 0, fileBytes.Length);
-                    }
+                    if (File.Exists(destinationFile))
+                        File.Delete(destinationFile);
+                    File.Move(tempFile, destinationFile);
                 }
-                catch
-                {
-                    return false;
-                }
+                catch { return false; }
             }
             return true;
         }
