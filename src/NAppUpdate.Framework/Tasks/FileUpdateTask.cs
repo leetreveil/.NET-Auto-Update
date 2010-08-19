@@ -27,14 +27,21 @@ namespace NAppUpdate.Framework.Tasks
 
         public bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source)
         {
+            if (!Attributes.ContainsKey("localPath"))
+                return true; // Errorneous case, but there's nothing to prepare to...
+
+            string fileName;
+            if (Attributes.ContainsKey("updateTo"))
+                fileName = Attributes["updateTo"];
+            else
+                fileName = Attributes["localPath"];
+
             tempFile = null;
-            if (!Attributes.ContainsKey("updateTo"))
-                return true; // Errorneous case, but there's nothing to prepare...
 
             try
             {
                 string tempFileLocal = Path.Combine(UpdateManager.Instance.TempFolder, Guid.NewGuid().ToString());
-                if (!source.GetData(Attributes["updateTo"], UpdateManager.Instance.BaseUrl, ref tempFileLocal))
+                if (!source.GetData(fileName, UpdateManager.Instance.BaseUrl, ref tempFileLocal))
                     return false;
 
                 tempFile = tempFileLocal;
