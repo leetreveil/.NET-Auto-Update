@@ -72,8 +72,9 @@ namespace NAppUpdate.Framework.Conditions
 
         public IUpdateCondition Degrade()
         {
-            if (ChildConditionsCount == 1)
+            if (ChildConditionsCount == 1 && (ChildConditions.First.Value._ConditionType & ConditionType.NOT) == 0)
                 return ChildConditions.First.Value._Condition;
+
             return this;
         }
 
