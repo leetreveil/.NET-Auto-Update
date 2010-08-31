@@ -47,7 +47,22 @@ namespace NAppUpdate.Framework
         public string TempFolder { get; set; }
         public string UpdateProcessName { get; set; }
         internal readonly string ApplicationPath;
-        internal readonly string BackupFolder;
+        
+        private string _BackupFolder;
+        public string BackupFolder
+        {
+            set
+            {
+                if (this.State == UpdateProcessState.NotChecked || this.State == UpdateProcessState.Checked)
+                    _BackupFolder = Path.IsPathRooted(value) ? value : Path.Combine(this.TempFolder, value);
+                else
+                    throw new ArgumentException("BackupFolder can only be specified before update has started");
+            }
+            get
+            {
+                return _BackupFolder;
+            }
+        }
         
         internal string BaseUrl { get; set; }
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
@@ -204,8 +219,13 @@ namespace NAppUpdate.Framework
         {
             lock (UpdatesToApply)
             {
-                if (!Directory.Exists(BackupFolder))
-                    Directory.CreateDirectory(BackupFolder);
+                // TODO: Perform read/write test to the backup folder; revert to using a path from
+                // Environment.GetFolderPath(...) or a similar approach if fails (usually on Vista and W7)
+
+                // Remove old backup file in case not successfully done previously 
+                if (Directory.Exists(BackupFolder))
+                    Directory.Delete(BackupFolder, true);
+                Directory.CreateDirectory(BackupFolder);
 
                 Dictionary<string, object> executeOnAppRestart = new Dictionary<string, object>();
                 State = UpdateProcessState.RollbackRequired;
