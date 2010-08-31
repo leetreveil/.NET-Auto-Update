@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Feed>
   <Tasks>
-    <FileUpdateTask apply="app-restart" localPath="htmlayout.dll" updateTo="file://c:/test/htmlayout.dll">
+    <FileUpdateTask apply="app-restart" updateTo="file:///c:/test/htmlayout.dll" localPath="htmlayout.dll">
       <Description>Fixes several bugs with the display</Description>
       <Conditions>
         <FileVersionCondition what="below" version="3.3.2.10" />
@@ -10,7 +10,7 @@
         <FileDateCondition type="or" what="is" version="20091010T000000" />
       </Conditions>
     </FileUpdateTask>
-    <FileUpdateTask localPath="htmlayout64.dll" updateTo="file://c:/test/htmlayout64.dll">
+    <FileUpdateTask updateTo="file:///c:/test/htmlayout.dll" localPath="htmlayout64.dll">
       <Description>Fixes several bugs with the display (for 64 bit platforms)</Description>
       <Conditions>
         <FileVersionCondition what="below" version="3.3.2.10" />
@@ -19,6 +19,6 @@
         <FileExistsCondition type="or" />
       </Conditions>
     </FileUpdateTask>
-    <FileUpdateTask apply="hot-swap" localPath="test.dll" updateTo="file://c:/test/test_rename.dll" />
+    <FileUpdateTask apply="hot-swap" localPath="logo.png" updateTo="http://www.google.com/intl/en_ALL/images/srpr/logo1w.png" />
   </Tasks>
 </Feed>

@@ -110,24 +110,37 @@ namespace WinFormsSampleApp
                 return;
             }
 
-            // Check for updates - returns true if relevant updates are found (after processing all the tasks and
-            // conditions)
-            if (updManager.CheckForUpdates(source))
+            try
             {
-                DialogResult dr = MessageBox.Show(
-                    string.Format("Updates are available to your software ({0} total). Do you want to download and prepare them now? You can always do this at a later time.",
-                    updManager.UpdatesAvailable),
-                    "Software updates available",
-                     MessageBoxButtons.YesNo);
-
-                if (dr == DialogResult.Yes)
+                // Check for updates - returns true if relevant updates are found (after processing all the tasks and
+                // conditions)
+                // Throws exceptions in case of bad arguments or unexpected results
+                if (updManager.CheckForUpdates(source))
                 {
-                    updManager.PrepareUpdatesAsync(OnPrepareUpdatesCompleted);
+                    DialogResult dr = MessageBox.Show(
+                        string.Format("Updates are available to your software ({0} total). Do you want to download and prepare them now? You can always do this at a later time.",
+                        updManager.UpdatesAvailable),
+                        "Software updates available",
+                         MessageBoxButtons.YesNo);
+
+                    if (dr == DialogResult.Yes)
+                    {
+                        updManager.PrepareUpdatesAsync(OnPrepareUpdatesCompleted);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Your software is up to date");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Your software is up to date");
+                if (ex is NAppUpdateException)
+                { 
+                    // This indicates a feed or network error; ex will contain all the info necessary
+                    // to deal with that
+                }
+                else MessageBox.Show(ex.ToString());
             }
         }
 
@@ -160,7 +173,8 @@ namespace WinFormsSampleApp
                 return;
             }
 
-            updManager.ApplyUpdates();
+            if (updManager.ApplyUpdates())
+                MessageBox.Show("Error while trying to install software updates");
         }
 
         private void OnPrepareUpdatesCompleted(bool succeeded)
@@ -183,7 +197,8 @@ namespace WinFormsSampleApp
                 {
                     // This is a synchronous method by design, make sure to save all user work before calling
                     // it as it might restart your application
-                    updManager.ApplyUpdates();
+                    if (!updManager.ApplyUpdates())
+                        MessageBox.Show("Error while trying to install software updates");
                 }
             }
         }
