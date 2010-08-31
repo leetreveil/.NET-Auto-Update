@@ -46,7 +46,10 @@ namespace NAppUpdate.Framework.Tasks
 
                 tempFile = tempFileLocal;
             }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                throw new UpdateProcessFailedException("Couldn't get Data from source", ex);
+            }
 
             if (Attributes.ContainsKey("sha256-checksum"))
             {
@@ -78,7 +81,10 @@ namespace NAppUpdate.Framework.Tasks
                         File.Delete(destinationFile);
                     File.Move(tempFile, destinationFile);
                 }
-                catch { return false; }
+                catch (Exception ex)
+                {
+                    throw new UpdateProcessFailedException("Couldn't move hot-swap file into position", ex);
+                }
             }
             return true;
         }

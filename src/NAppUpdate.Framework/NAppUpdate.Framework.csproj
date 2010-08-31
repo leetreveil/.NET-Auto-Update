@@ -43,6 +43,7 @@
     <Compile Include="Conditions\FileDateCondition.cs" />
     <Compile Include="Conditions\FileSizeCondition.cs" />
     <Compile Include="Conditions\OSCondition.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="FeedReaders\AppcastReader.cs" />
     <Compile Include="Conditions\BooleanCondition.cs" />
     <Compile Include="Conditions\FileExistsCondition.cs" />

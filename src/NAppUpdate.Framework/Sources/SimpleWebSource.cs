@@ -25,6 +25,7 @@ namespace NAppUpdate.Framework.Sources
         public string GetUpdatesFeed()
         {
             string data;
+
             using (var client = new WebClient())
             {
                 client.Encoding = Encoding.UTF8;
@@ -46,7 +47,7 @@ namespace NAppUpdate.Framework.Sources
                 fd = new FileDownloader(new Uri(new Uri(baseUrl, UriKind.Absolute), url));
 
             if (fd == null)
-                return false;
+                throw new ArgumentException("The requested URI does not look valid: " + url, "url");
 
             if (string.IsNullOrEmpty(tempLocation) || !Directory.Exists(Path.GetDirectoryName(tempLocation)))
                 /// WATCHOUT!!! Files downloaded to a path specified by GetTempFileName may be deleted on
