@@ -62,7 +62,7 @@ namespace NAppUpdate.Updater
                 }
 
                 string appPath, appDir, tempFolder, backupFolder;
-                bool relaunchApp = true;
+                bool relaunchApp = true, updateSuccessful = true;
                 {
                     Dictionary<string, object> dict = null;
                     if (o is Dictionary<string, object>)
@@ -93,13 +93,31 @@ namespace NAppUpdate.Updater
                                 a = new FileDumpAction(Path.Combine(appDir, en.Current.Key), (byte[])en.Current.Value);
 
                             if (a != null)
-                                a.Do();
+                            {
+                                try
+                                {
+                                    if (!a.Do())
+                                    {
+                                        updateSuccessful = false;
+                                        break;
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    MessageBox.Show("Update failed: " + e.Message);
+                                    updateSuccessful = false;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
 
-                if (Directory.Exists(backupFolder))
-                    Directory.Delete(backupFolder, true);
+                if (updateSuccessful)
+                {
+                    if (Directory.Exists(backupFolder))
+                        Directory.Delete(backupFolder, true);
+                }
 
                 // Start the application only if requested to do so
                 if (relaunchApp)

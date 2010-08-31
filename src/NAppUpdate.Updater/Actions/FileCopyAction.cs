@@ -22,7 +22,28 @@ namespace NAppUpdate.Updater.Actions
             try
             {
                 if (File.Exists(dest))
-                    File.Delete(dest);
+                {
+                    int retries = 5;
+                    bool access = false;
+
+                    while (!access && retries > 0)
+                    {
+                        try
+                        {
+                            File.Delete(dest);
+                            access = true;
+                        }
+                        catch (System.UnauthorizedAccessException)
+                        {
+                            // Since we are root this should only happen if the file is locked, so lets sleep & retry
+                            retries--;
+                            System.Threading.Thread.Sleep(1000);
+                        }
+                    }
+
+                    if (!access)
+                        throw new Exception("Couldn't gain access to " + dest + " to delete it");
+                }
                 File.Move(source, dest);
             }
             catch { return false; }
