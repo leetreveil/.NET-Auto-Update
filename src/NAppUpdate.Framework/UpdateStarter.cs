@@ -62,7 +62,7 @@ namespace NAppUpdate.Framework
             _syncProcessName = syncProcessName;
         }
 
-        public void Start()
+        public bool Start()
         {
             ExtractUpdaterFromResource(); //take the update executable and extract it to the path where it should be created
 
@@ -78,9 +78,18 @@ namespace NAppUpdate.Framework
             {
                 //failed to create named pipe
                 if (clientPipeHandle.IsInvalid)
-                    return;
+                    return false;
 
-                Process.Start(_updaterPath, string.Format(@"""{0}""", _syncProcessName));
+                ProcessStartInfo info = new ProcessStartInfo(_updaterPath, string.Format(@"""{0}""", _syncProcessName));
+                try
+                {
+                    Process.Start(info);
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    // Person denied UAC escallation
+                    return false;
+                }
 
                 while (true)
                 {
@@ -105,6 +114,8 @@ namespace NAppUpdate.Framework
                     }
                 }
             }
+
+            return true;
         }
 
         private void ExtractUpdaterFromResource()

@@ -263,8 +263,9 @@ namespace NAppUpdate.Framework
                     bool createdNew;
                     using (Mutex mutex = new Mutex(true, UpdateProcessName, out createdNew))
                     {
-                        updStarter.Start();
-
+                        if (!updStarter.Start())
+                            return false;
+                        
                         Environment.Exit(0);
                     }
                 }
