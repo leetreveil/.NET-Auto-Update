@@ -3,6 +3,8 @@ using System.IO;
 using System;
 using System.Reflection;
 using System.Threading;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 using NAppUpdate.Framework.Utils;
 using NAppUpdate.Framework.Conditions;
@@ -47,7 +49,7 @@ namespace NAppUpdate.Framework
         public string TempFolder { get; set; }
         public string UpdateProcessName { get; set; }
         internal readonly string ApplicationPath;
-        
+
         private string _BackupFolder;
         public string BackupFolder
         {
@@ -63,12 +65,12 @@ namespace NAppUpdate.Framework
                 return _BackupFolder;
             }
         }
-        
+
         internal string BaseUrl { get; set; }
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
         public int UpdatesAvailable { get { if (UpdatesToApply == null) return 0; return UpdatesToApply.Count; } }
         public UpdateProcessState State { get; set; }
-        
+
         public IUpdateSource UpdateSource { get; set; }
         public IUpdateFeedReader UpdateFeedReader { get; set; }
 
@@ -222,6 +224,39 @@ namespace NAppUpdate.Framework
                 // TODO: Perform read/write test to the backup folder; revert to using a path from
                 // Environment.GetFolderPath(...) or a similar approach if fails (usually on Vista and W7)
 
+                //Check the application directory to see if we have permission to write to it.
+                var rules = Directory.GetAccessControl(Path.GetDirectoryName(Path.GetDirectoryName(ApplicationPath))).GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier));
+                var groups = WindowsIdentity.GetCurrent().Groups;
+                string sidCurrentUser = WindowsIdentity.GetCurrent().User.Value;
+
+                bool allowwrite = false;
+                bool denywrite = false;
+                foreach (FileSystemAccessRule rule in rules)
+                {
+                    if (rule.AccessControlType == AccessControlType.Deny &&
+                        (rule.FileSystemRights & FileSystemRights.WriteData) == FileSystemRights.WriteData &&
+                        (groups.Contains(rule.IdentityReference) || rule.IdentityReference.Value == sidCurrentUser)
+                        )
+                    {
+                        denywrite = true;
+                    }
+                    if (rule.AccessControlType == AccessControlType.Allow &&
+                        (rule.FileSystemRights & FileSystemRights.WriteData) == FileSystemRights.WriteData &&
+                        (groups.Contains(rule.IdentityReference) || rule.IdentityReference.Value == sidCurrentUser)
+                        )
+                    {
+                        allowwrite = true;
+                    }
+                }
+
+                //If we have both allow and deny permissions, the deny takes precident.
+                if (denywrite || !allowwrite)
+                {
+                    _BackupFolder = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "DesktopCF\\UpdateBackups");
+                }
+
                 // Remove old backup file in case not successfully done previously 
                 if (Directory.Exists(BackupFolder))
                     Directory.Delete(BackupFolder, true);
@@ -265,7 +300,7 @@ namespace NAppUpdate.Framework
                     {
                         if (!updStarter.Start())
                             return false;
-                        
+
                         Environment.Exit(0);
                     }
                 }
@@ -283,7 +318,7 @@ namespace NAppUpdate.Framework
         {
             lock (UpdatesToApply)
             {
-                foreach(IUpdateTask task in UpdatesToApply)
+                foreach (IUpdateTask task in UpdatesToApply)
                 {
                     task.Rollback();
                 }

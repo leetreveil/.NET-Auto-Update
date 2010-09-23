@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 namespace NAppUpdate.Updater.Actions
 {
@@ -19,8 +19,36 @@ namespace NAppUpdate.Updater.Actions
 
         public bool Do()
         {
-            try
+
+            // First we need to check whether we have writable permissions to this folder, as these are separate to delete permissions.
+            var rules = Directory.GetAccessControl(Path.GetDirectoryName(dest)).GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier));
+            var groups = WindowsIdentity.GetCurrent().Groups;
+            string sidCurrentUser = WindowsIdentity.GetCurrent().User.Value;
+
+            bool allowwrite = false;
+            bool denywrite = false;
+            foreach (FileSystemAccessRule rule in rules)
             {
+                if (rule.AccessControlType == AccessControlType.Deny &&
+                    (rule.FileSystemRights & FileSystemRights.WriteData) == FileSystemRights.WriteData &&
+                    (groups.Contains(rule.IdentityReference) || rule.IdentityReference.Value == sidCurrentUser)
+                    )
+                {
+                    denywrite = true;
+                }
+                if (rule.AccessControlType == AccessControlType.Allow &&
+                    (rule.FileSystemRights & FileSystemRights.WriteData) == FileSystemRights.WriteData &&
+                    (groups.Contains(rule.IdentityReference) || rule.IdentityReference.Value == sidCurrentUser)
+                    )
+                {
+                    allowwrite = true;
+                }
+            }
+
+            // Only proceed if we can write to the dir
+            if (allowwrite && !denywrite)
+            {
+
                 if (File.Exists(dest))
                 {
                     int retries = 5;
@@ -46,11 +74,13 @@ namespace NAppUpdate.Updater.Actions
                 }
                 File.Move(source, dest);
             }
-            catch { return false; }
-
+            else
+            {
+                throw new UnauthorizedAccessException("No write permission available on the file");
+            }
             return true;
         }
-
         #endregion
     }
 }
+
