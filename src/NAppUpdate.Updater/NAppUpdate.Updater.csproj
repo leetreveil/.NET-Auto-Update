@@ -19,6 +19,7 @@
     <StartupObject>NAppUpdate.Updater.AppStart</StartupObject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>updateicon.ico</ApplicationIcon>
+    <IsWebBootstrapper>true</IsWebBootstrapper>
     <PublishUrl>http://localhost/updater/</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
@@ -31,7 +32,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.1.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>true</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -64,6 +64,7 @@
     <Compile Include="Actions\FileDumpAction.cs" />
     <Compile Include="Actions\IUpdateAction.cs" />
     <Compile Include="AppStart.cs" />
+    <Compile Include="..\NAppUpdate.Framework\Utils\PermissionsCheck.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -68,6 +68,7 @@
     <Compile Include="Utils\FileDownloader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UpdateStarter.cs" />
+    <Compile Include="Utils\PermissionsCheck.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">

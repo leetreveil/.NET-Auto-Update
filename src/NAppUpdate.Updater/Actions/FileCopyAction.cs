@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Security.AccessControl;
-using System.Security.Principal;
 
 namespace NAppUpdate.Updater.Actions
 {
@@ -19,36 +17,12 @@ namespace NAppUpdate.Updater.Actions
 
         public bool Do()
         {
-
-            // First we need to check whether we have writable permissions to this folder, as these are separate to delete permissions.
-            var rules = Directory.GetAccessControl(Path.GetDirectoryName(dest)).GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier));
-            var groups = WindowsIdentity.GetCurrent().Groups;
-            string sidCurrentUser = WindowsIdentity.GetCurrent().User.Value;
-
-            bool allowwrite = false;
-            bool denywrite = false;
-            foreach (FileSystemAccessRule rule in rules)
-            {
-                if (rule.AccessControlType == AccessControlType.Deny &&
-                    (rule.FileSystemRights & FileSystemRights.WriteData) == FileSystemRights.WriteData &&
-                    (groups.Contains(rule.IdentityReference) || rule.IdentityReference.Value == sidCurrentUser)
-                    )
-                {
-                    denywrite = true;
-                }
-                if (rule.AccessControlType == AccessControlType.Allow &&
-                    (rule.FileSystemRights & FileSystemRights.WriteData) == FileSystemRights.WriteData &&
-                    (groups.Contains(rule.IdentityReference) || rule.IdentityReference.Value == sidCurrentUser)
-                    )
-                {
-                    allowwrite = true;
-                }
-            }
+            // First we need to check whether we have write permissions to this folder, as these are separate to delete permissions
+            bool canWriteToFolder = NAppUpdate.Framework.Utils.PermissionsCheck.HaveWritePermissionsForFolder(dest);
 
             // Only proceed if we can write to the dir
-            if (allowwrite && !denywrite)
+            if (canWriteToFolder)
             {
-
                 if (File.Exists(dest))
                 {
                     int retries = 5;

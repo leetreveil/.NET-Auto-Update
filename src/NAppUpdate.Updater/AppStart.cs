@@ -32,7 +32,7 @@ namespace NAppUpdate.Updater
 
         private static void Main()
         {
-            Debugger.Launch();
+            //Debugger.Launch();
             try
             {
                 // Get the update process name, to be used to create a named pipe and to wait on the application
