@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="FeedReaders\NauXmlFeedReaderTests.cs" />
     <Compile Include="Integration\FileDownloaderTests.cs" />
+    <Compile Include="UtilTests\PermissionsCheckTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FeedReaders\AppcastReaderTests.cs" />
   </ItemGroup>

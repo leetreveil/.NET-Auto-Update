@@ -84,7 +84,7 @@ namespace NAppUpdate.Tests
         [TestMethod()]
         public void HaveWritePermissionsForFolderDeniedTest()
         {
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.System);
             bool expected = false; // TODO: Initialize to an appropriate value
             bool actual;
             actual = PermissionsCheck.HaveWritePermissionsForFolder(path);
