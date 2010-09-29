@@ -15,36 +15,21 @@ namespace NAppUpdate.Framework.FeedReaders
 
         public NauXmlFeedReader()
         {
-            _updateConditions = new Dictionary<string, Type>();
-            _updateTasks = new Dictionary<string, Type>();
-
-            foreach (Type t in this.GetType().Assembly.GetTypes())
-            {
-                if (typeof(IUpdateTask).IsAssignableFrom(t))
-                {
-                    _updateTasks.Add(t.Name, t);
-                    UpdateTaskAliasAttribute[] tasksAliases = (UpdateTaskAliasAttribute[])t.GetCustomAttributes(typeof(UpdateTaskAliasAttribute), false);
-                    foreach (UpdateTaskAliasAttribute alias in tasksAliases)
-                    {
-                        _updateTasks.Add(alias.Alias, t);
-                    }
-                }
-                else if (typeof(IUpdateCondition).IsAssignableFrom(t))
-                {
-                    _updateConditions.Add(t.Name, t);
-                    UpdateConditionAliasAttribute[] tasksAliases = (UpdateConditionAliasAttribute[])t.GetCustomAttributes(typeof(UpdateConditionAliasAttribute), false);
-                    foreach (UpdateConditionAliasAttribute alias in tasksAliases)
-                    {
-                        _updateConditions.Add(alias.Alias, t);
-                    }
-                }
-            }
         }
 
         #region IUpdateFeedReader Members
 
         public IList<IUpdateTask> Read(string feed)
         {
+            // Lazy-load the Condition and Task objects contained in this assembly, unless some have already
+            // been loaded (by a previous lazy-loading in a call to Read, or by an explicit loading)
+            if (_updateTasks == null)
+            {
+                _updateConditions = new Dictionary<string, Type>();
+                _updateTasks = new Dictionary<string, Type>();
+                Utils.Reflection.FindTasksAndConditionsInAssembly(this.GetType().Assembly, _updateTasks, _updateConditions);
+            }
+
             List<IUpdateTask> ret = new List<IUpdateTask>();
 
             XmlDocument doc = new XmlDocument();
@@ -131,5 +116,15 @@ namespace NAppUpdate.Framework.FeedReaders
         }
 
         #endregion
+
+        public void LoadConditionsAndTasks(System.Reflection.Assembly assembly)
+        {
+            if (_updateTasks == null)
+            {
+                _updateConditions = new Dictionary<string, Type>();
+                _updateTasks = new Dictionary<string, Type>();
+            }
+            Utils.Reflection.FindTasksAndConditionsInAssembly(assembly, _updateTasks, _updateConditions);
+        }
     }
 }
