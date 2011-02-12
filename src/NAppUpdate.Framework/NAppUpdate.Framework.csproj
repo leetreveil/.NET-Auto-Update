@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\NauFieldAttribute.cs" />
     <Compile Include="Conditions\FileChecksumCondition.cs" />
     <Compile Include="Conditions\FileDateCondition.cs" />
     <Compile Include="Conditions\FileSizeCondition.cs" />
@@ -62,6 +63,7 @@
     <Compile Include="Sources\SimpleWebSource.cs" />
     <Compile Include="Tasks\FileUpdateTask.cs" />
     <Compile Include="Tasks\IUpdateTask.cs" />
+    <Compile Include="Tasks\RegistryTask.cs" />
     <Compile Include="Tasks\UpdateTaskAliasAttribute.cs" />
     <Compile Include="UpdateManager.cs" />
     <Compile Include="Utils\FileChecksum.cs" />

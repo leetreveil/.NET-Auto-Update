@@ -42,6 +42,10 @@ namespace NAppUpdate.Framework.FeedReaders
             if (root.Attributes["BaseUrl"] != null && !string.IsNullOrEmpty(root.Attributes["BaseUrl"].Value))
                 UpdateManager.Instance.BaseUrl = root.Attributes["BaseUrl"].Value;
 
+            // Temporary collection of attributes, used to aggregate them all with their values
+            // to reduce Reflection calls
+            Dictionary<string, string> attributes = new Dictionary<string, string>();
+
             XmlNodeList nl = root.SelectNodes("./Tasks/*");
             foreach (XmlNode node in nl)
             {
@@ -57,7 +61,13 @@ namespace NAppUpdate.Framework.FeedReaders
                     if ("type".Equals(att.Name))
                         continue;
 
-                    task.Attributes.Add(att.Name, att.Value);
+                    //task.Attributes.Add(att.Name, att.Value);
+                    attributes.Add(att.Name, att.Value);
+                }
+                if (attributes.Count > 0)
+                {
+                    NAppUpdate.Framework.Utils.Reflection.SetTaskAttribute(task, attributes);
+                    attributes.Clear();
                 }
 
                 if (node.HasChildNodes)

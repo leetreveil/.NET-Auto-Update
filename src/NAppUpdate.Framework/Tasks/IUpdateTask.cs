@@ -8,7 +8,6 @@ namespace NAppUpdate.Framework.Tasks
 {
     public interface IUpdateTask
     {
-        IDictionary<string, string> Attributes { get; }
         string Description { get; set; }
         BooleanCondition UpdateConditions { get; set; }
 

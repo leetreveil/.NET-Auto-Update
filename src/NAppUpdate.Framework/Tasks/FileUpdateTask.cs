@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Tasks
 {
@@ -10,16 +11,29 @@ namespace NAppUpdate.Framework.Tasks
     {
         public FileUpdateTask()
         {
-            Attributes = new Dictionary<string, string>();
             UpdateConditions = new NAppUpdate.Framework.Conditions.BooleanCondition();
         }
+
+        [NauField("localPath", "The local path of the file to update", true)]
+        public string LocalPath { get; set; }
+
+        [NauField("updateTo",
+            "File name on the remote location; same name as local path will be used if left blank"
+            , false)]
+        public string UpdateTo { get; set; }
+
+        [NauField("sha256-checksum", "SHA-256 checksum to validate the file after download (optional)", false)]
+        public string Sha256Checksum { get; set; }
+
+        [NauField("hotswap",
+            "Default update action is a cold update; check here if a hot file swap should be attempted"
+            , false)]
+        public bool CanHotSwap { get; set; }
 
         internal string tempFile = null;
         private string destinationFile;
 
         #region IUpdateTask Members
-
-        public IDictionary<string, string> Attributes { get; private set; }
 
         public string Description { get; set; }
 
@@ -27,14 +41,14 @@ namespace NAppUpdate.Framework.Tasks
 
         public bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source)
         {
-            if (!Attributes.ContainsKey("localPath"))
+            if (string.IsNullOrEmpty(LocalPath))
                 return true; // Errorneous case, but there's nothing to prepare to...
 
             string fileName;
-            if (Attributes.ContainsKey("updateTo"))
-                fileName = Attributes["updateTo"];
+            if (!string.IsNullOrEmpty(UpdateTo))
+                fileName = UpdateTo;
             else
-                fileName = Attributes["localPath"];
+                fileName = LocalPath;
 
             tempFile = null;
 
@@ -51,10 +65,10 @@ namespace NAppUpdate.Framework.Tasks
                 throw new UpdateProcessFailedException("Couldn't get Data from source", ex);
             }
 
-            if (Attributes.ContainsKey("sha256-checksum"))
+            if (!string.IsNullOrEmpty(Sha256Checksum))
             {
                 string checksum = Utils.FileChecksum.GetSHA256Checksum(tempFile);
-                if (!checksum.Equals(Attributes["sha256-checksum"]))
+                if (!checksum.Equals(Sha256Checksum))
                     return false;
             }
 
@@ -63,17 +77,17 @@ namespace NAppUpdate.Framework.Tasks
 
         public bool Execute()
         {
-            if (!Attributes.ContainsKey("localPath"))
+            if (string.IsNullOrEmpty(LocalPath))
                 return true;
 
-            destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), Attributes["localPath"]);
+            destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
 
             // Create a backup copy if target exists
             if (File.Exists(destinationFile))
-                File.Copy(destinationFile, Path.Combine(UpdateManager.Instance.BackupFolder, Attributes["localPath"]));
+                File.Copy(destinationFile, Path.Combine(UpdateManager.Instance.BackupFolder, LocalPath));
 
             // Only enable execution if the apply attribute was set to hot-swap
-            if (Attributes.ContainsKey("apply") && "hot-swap".Equals(Attributes["apply"]))
+            if (CanHotSwap)
             {
                 try
                 {
@@ -83,6 +97,7 @@ namespace NAppUpdate.Framework.Tasks
                 }
                 catch (Exception ex)
                 {
+                    // TODO: Don't rethrow, but rather revert and make this a cold update?
                     throw new UpdateProcessFailedException("Couldn't move hot-swap file into position", ex);
                 }
             }
@@ -97,7 +112,7 @@ namespace NAppUpdate.Framework.Tasks
             // Copy the backup copy back to its original position
             if (File.Exists(destinationFile))
                 File.Delete(destinationFile);
-            File.Copy(Path.Combine(UpdateManager.Instance.BackupFolder, Attributes["localPath"]), destinationFile);
+            File.Copy(Path.Combine(UpdateManager.Instance.BackupFolder, LocalPath), destinationFile);
 
             return true;
         }
