@@ -231,27 +231,24 @@ namespace NAppUpdate.Framework
                 }
                 Directory.CreateDirectory(BackupFolder);
 
-                Dictionary<string, object> executeOnAppRestart = new Dictionary<string, object>();
+                var executeOnAppRestart = new Dictionary<string, object>();
                 State = UpdateProcessState.RollbackRequired;
                 foreach (IUpdateTask task in UpdatesToApply)
                 {
+					// First, execute the task
                     if (!task.Execute())
                     {
                         // TODO: notify about task execution failure using exceptions
+                    	continue;
                     }
 
-                    // This is the only place where we have non-generalized code in UpdateManager.
-                    // The reason for that is the updater currently only supports replacing bytes by path, which
-                    // only FileUpdaterTask does - so there's no reason to generalize this portion too.
-                    else if (task is FileUpdateTask && task.Attributes.ContainsKey("localPath"))
-                    {
-                        if (!task.Attributes.ContainsKey("apply") ||
-                            (task.Attributes.ContainsKey("apply") && "app-restart".Equals(task.Attributes["apply"])))
-                        {
-                            FileUpdateTask fut = (FileUpdateTask)task;
-                            executeOnAppRestart[task.Attributes["localPath"]] = fut.tempFile;
-                        }
-                    }
+					// Add any pending cold updates to the list
+                	var en = task.GetColdUpdates();
+					while (en.MoveNext())
+					{
+						// Last write wins
+						executeOnAppRestart[en.Current.Key] = en.Current.Value;
+					}
                 }
 
                 // If an application restart is required

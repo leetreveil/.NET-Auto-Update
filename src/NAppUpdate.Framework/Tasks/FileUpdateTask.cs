@@ -80,6 +80,7 @@ namespace NAppUpdate.Framework.Tasks
                     if (File.Exists(destinationFile))
                         File.Delete(destinationFile);
                     File.Move(tempFile, destinationFile);
+                	tempFile = null;
                 }
                 catch (Exception ex)
                 {
@@ -89,7 +90,14 @@ namespace NAppUpdate.Framework.Tasks
             return true;
         }
 
-        public bool Rollback()
+    	public IEnumerator<KeyValuePair<string, object>> GetColdUpdates()
+    	{
+			if (tempFile != null && Attributes.ContainsKey("localPath"))
+				if (!Attributes.ContainsKey("apply") || (Attributes.ContainsKey("apply") && "app-restart".Equals(Attributes["apply"])))
+					yield return new KeyValuePair<string, object>(Attributes["localPath"], tempFile);
+    	}
+
+    	public bool Rollback()
         {
             if (string.IsNullOrEmpty(destinationFile))
                 return true;
