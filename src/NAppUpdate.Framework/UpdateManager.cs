@@ -1,11 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System;
-using System.Reflection;
 using System.Threading;
-
-using NAppUpdate.Framework.Utils;
-using NAppUpdate.Framework.Conditions;
 using NAppUpdate.Framework.FeedReaders;
 using NAppUpdate.Framework.Sources;
 using NAppUpdate.Framework.Tasks;

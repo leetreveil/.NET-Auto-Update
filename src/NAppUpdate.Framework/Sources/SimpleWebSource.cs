@@ -50,9 +50,9 @@ namespace NAppUpdate.Framework.Sources
                 throw new ArgumentException("The requested URI does not look valid: " + url, "url");
 
             if (string.IsNullOrEmpty(tempLocation) || !Directory.Exists(Path.GetDirectoryName(tempLocation)))
-                /// WATCHOUT!!! Files downloaded to a path specified by GetTempFileName may be deleted on
-                /// application restart, and as such cannot be relied on for cold updates, only for hot-swaps or
-                /// files requiring pre-processing
+                // WATCHOUT!!! Files downloaded to a path specified by GetTempFileName may be deleted on
+                // application restart, and as such cannot be relied on for cold updates, only for hot-swaps or
+                // files requiring pre-processing
                 tempLocation = Path.GetTempFileName();
 
             return fd.DownloadToFile(tempLocation);
