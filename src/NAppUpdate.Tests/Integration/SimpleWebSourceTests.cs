@@ -6,7 +6,8 @@ namespace NAppUpdate.Tests.Integration
 	[TestClass]
 	public class SimpleWebSourceTests
 	{
-		public void can_download_non_utf_feed()
+		[TestMethod]
+		public void can_download_ansi_feed()
 		{
 			const string expected = "NHibernate.Profiler-Build-";
 

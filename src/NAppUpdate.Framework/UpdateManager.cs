@@ -62,7 +62,7 @@ namespace NAppUpdate.Framework
 
         internal string BaseUrl { get; set; }
         internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
-        public int UpdatesAvailable { get { if (UpdatesToApply == null) return 0; return UpdatesToApply.Count; } }
+		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
         public UpdateProcessState State { get; set; }
 
         public IUpdateSource UpdateSource { get; set; }

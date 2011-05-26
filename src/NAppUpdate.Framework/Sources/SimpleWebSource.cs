@@ -26,16 +26,18 @@ namespace NAppUpdate.Framework.Sources
         {
             string data;
 
-            using (var client = new WebClient())
-            {
-                client.Encoding = Encoding.UTF8;
-                data = client.DownloadString(FeedUrl);
-            }
+        	var request = WebRequest.Create(FeedUrl);
+			request.Method = "GET";
+			using (var response = request.GetResponse())
+			{
+				if (response == null) return null;
+				using (var reader = new StreamReader(response.GetResponseStream(), true))
+				{
+					data = reader.ReadToEnd();
+				}
+			}
 
-            if (data.StartsWith(_byteOrderMarkUtf8))
-                data = data.Remove(0, _byteOrderMarkUtf8.Length);
-
-            return data;
+        	return data;
         }
 
         public bool GetData(string url, string baseUrl, ref string tempLocation)
