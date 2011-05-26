@@ -69,7 +69,7 @@ namespace NAppUpdate.Framework
         public IUpdateFeedReader UpdateFeedReader { get; set; }
 
         private Thread _updatesThread;
-        private volatile bool _shouldStop;
+        internal volatile bool ShouldStop;
         public bool IsWorking { get { return _updatesThread != null && _updatesThread.IsAlive; } }
 
         #region Step 1 - Check for updates
@@ -98,13 +98,13 @@ namespace NAppUpdate.Framework
                 IList<IUpdateTask> tasks = UpdateFeedReader.Read(source.GetUpdatesFeed());
                 foreach (IUpdateTask t in tasks)
                 {
-                    if (_shouldStop) return false;
+                    if (ShouldStop) return false;
                     if (t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met
                         UpdatesToApply.AddLast(t);
                 }
             }
 
-            if (_shouldStop) return false;
+            if (ShouldStop) return false;
 
             State = UpdateProcessState.Checked;
             if (callback != null) callback.BeginInvoke(UpdatesToApply.Count, null, null);
@@ -161,16 +161,16 @@ namespace NAppUpdate.Framework
                 if (!Directory.Exists(TempFolder))
                     Directory.CreateDirectory(TempFolder);
 
-                foreach (IUpdateTask t in UpdatesToApply)
-                {
-                    if (_shouldStop) return false;
-                    t.Prepare(UpdateSource);
-                }
+				foreach (IUpdateTask t in UpdatesToApply)
+				{
+					if (ShouldStop || !t.Prepare(UpdateSource))
+						return false;
+				}
 
-                State = UpdateProcessState.Prepared;
+            	State = UpdateProcessState.Prepared;
             }
 
-            if (_shouldStop) return false;
+            if (ShouldStop) return false;
 
             if (callback != null) callback.BeginInvoke(true, null, null);
             return true;
@@ -293,19 +293,34 @@ namespace NAppUpdate.Framework
             }
         }
 
+		/// <summary>
+		/// Abort update process, cancelling whatever background process currently taking place without waiting for it to complete
+		/// </summary>
         public void Abort()
         {
-            _shouldStop = true;
+            Abort(false);
         }
+
+		/// <summary>
+		/// Abort update process, cancelling whatever background process currently taking place
+		/// </summary>
+		/// <param name="waitForTermination">If true, blocks the calling thread until the current process terminates</param>
+		public void Abort(bool waitForTermination)
+		{
+			ShouldStop = true;
+			if (waitForTermination && _updatesThread != null && _updatesThread.IsAlive)
+			{
+				_updatesThread.Join(); // TODO perhaps we should support timeout here instead of per process
+				_updatesThread = null;
+			}
+		}
 
         /// <summary>
         /// Delete the temp folder as a whole and fail silently
         /// </summary>
         public void CleanUp()
         {
-            Abort();
-            if (_updatesThread != null && _updatesThread.IsAlive)
-                _updatesThread.Join();
+            Abort(true);
 
             lock (UpdatesToApply)
             {
