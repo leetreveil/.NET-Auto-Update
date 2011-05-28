@@ -80,11 +80,17 @@ namespace NAppUpdate.Framework
                 if (clientPipeHandle.IsInvalid)
                     return false;
 
-                var info = new ProcessStartInfo(_updaterPath, string.Format(@"""{0}""", _syncProcessName));
-				info.Verb = "runas";
-                try
+                var info = new ProcessStartInfo
+                           	{
+                           		UseShellExecute = true,
+                           		WorkingDirectory = Environment.CurrentDirectory,
+                           		FileName = _updaterPath,
+                           		Arguments = string.Format(@"""{0}""", _syncProcessName),
+                           		Verb = "runas"
+                           	};
+            	try
                 {
-                    Process.Start(info);
+                    var p = Process.Start(info);
                 }
                 catch (System.ComponentModel.Win32Exception)
                 {
@@ -94,7 +100,7 @@ namespace NAppUpdate.Framework
 
                 while (true)
                 {
-                    int success = 0;
+                    var success = 0;
                     try
                     {
                         success = ConnectNamedPipe(
