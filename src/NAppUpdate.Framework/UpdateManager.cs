@@ -8,12 +8,16 @@ using NAppUpdate.Framework.Tasks;
 
 namespace NAppUpdate.Framework
 {
+	/// <summary>
+	/// An UpdateManager class is a singleton class handling the update process from start to end for a consumer application
+	/// </summary>
     public sealed class UpdateManager
     {
         #region Singleton Stuff
 
-        private static readonly UpdateManager instance = new UpdateManager();
-
+		/// <summary>
+		/// Defaut ctor
+		/// </summary>
         private UpdateManager()
         {
             State = UpdateProcessState.NotChecked;
@@ -21,16 +25,23 @@ namespace NAppUpdate.Framework
             TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             UpdateProcessName = "NAppUpdateProcess";
             ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-            BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath), "Backup");
+            BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath) ?? string.Empty, "Backup");
         }
 
+		/// <summary>
+		/// The singleton update manager instance to used by consumer applications
+		/// </summary>
         public static UpdateManager Instance
         {
             get { return instance; }
         }
+		private static readonly UpdateManager instance = new UpdateManager();
 
         #endregion
 
+		/// <summary>
+		/// State of the update process
+		/// </summary>
         public enum UpdateProcessState
         {
             NotChecked,
@@ -44,12 +55,14 @@ namespace NAppUpdate.Framework
         public string UpdateProcessName { get; set; }
         internal readonly string ApplicationPath;
 
-        private string _BackupFolder;
+		/// <summary>
+		/// Path to the backup folder used by this update process
+		/// </summary>
         public string BackupFolder
         {
             set
             {
-                if (this.State == UpdateProcessState.NotChecked || this.State == UpdateProcessState.Checked)
+                if (State == UpdateProcessState.NotChecked || State == UpdateProcessState.Checked)
                     _BackupFolder = Path.IsPathRooted(value) ? value : Path.Combine(this.TempFolder, value);
                 else
                     throw new ArgumentException("BackupFolder can only be specified before update has started");
@@ -59,6 +72,7 @@ namespace NAppUpdate.Framework
                 return _BackupFolder;
             }
         }
+		private string _BackupFolder;
 
         internal string BaseUrl { get; set; }
         internal IList<IUpdateTask> UpdatesToApply { get; private set; }
@@ -75,16 +89,31 @@ namespace NAppUpdate.Framework
 
         #region Step 1 - Check for updates
 
+		/// <summary>
+		/// Check for update synchronously, using the default update source
+		/// </summary>
+		/// <returns>true if successful and updates exist</returns>
         public bool CheckForUpdates()
         {
             return CheckForUpdates(UpdateSource, null);
         }
 
+		/// <summary>
+		/// Check for updates synchronously
+		/// </summary>
+		/// <param name="source">An update source to use</param>
+		/// <returns>true if successful and updates exist</returns>
         public bool CheckForUpdates(IUpdateSource source)
         {
             return CheckForUpdates(source, null);
         }
 
+		/// <summary>
+		/// Check for updates synchronouly
+		/// </summary>
+		/// <param name="source">Updates source to use</param>
+		/// <param name="callback">Callback function to call when done</param>
+		/// <returns>true if successful and updates exist</returns>
         private bool CheckForUpdates(IUpdateSource source, Action<int> callback)
         {
         	LatestError = null;
@@ -187,7 +216,7 @@ namespace NAppUpdate.Framework
                 if (!Directory.Exists(TempFolder))
                     Directory.CreateDirectory(TempFolder);
 
-				foreach (IUpdateTask t in UpdatesToApply)
+				foreach (var t in UpdatesToApply)
 				{
 					if (ShouldStop || !t.Prepare(UpdateSource))
 						return false;
@@ -240,12 +269,12 @@ namespace NAppUpdate.Framework
             return ApplyUpdates(true);
         }
 
-        /// <summary>
-        /// Starts the updater executable and sends update data to it
-        /// </summary>
-        /// <param name="RestartApplication">true if relaunching the caller application is required; false otherwise</param>
-        /// <returns>True if successful (unless a restart was required</returns>
-        public bool ApplyUpdates(bool RelaunchApplication)
+    	/// <summary>
+    	/// Starts the updater executable and sends update data to it
+    	/// </summary>
+		/// <param name="relaunchApplication">true if relaunching the caller application is required; false otherwise</param>
+    	/// <returns>True if successful (unless a restart was required</returns>
+    	public bool ApplyUpdates(bool relaunchApplication)
         {
             lock (UpdatesToApply)
             {
@@ -294,11 +323,11 @@ namespace NAppUpdate.Framework
                     executeOnAppRestart["ENV:AppPath"] = ApplicationPath;
                     executeOnAppRestart["ENV:TempFolder"] = TempFolder;
                     executeOnAppRestart["ENV:BackupFolder"] = BackupFolder;
-                    executeOnAppRestart["ENV:RelaunchApplication"] = RelaunchApplication;
+                    executeOnAppRestart["ENV:RelaunchApplication"] = relaunchApplication;
 
-                    UpdateStarter updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
+                    var updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
                     bool createdNew;
-                    using (Mutex mutex = new Mutex(true, UpdateProcessName, out createdNew))
+                    using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
                     {
                         if (!updStarter.Start())
                             return false;
@@ -316,11 +345,14 @@ namespace NAppUpdate.Framework
 
         #endregion
 
+		/// <summary>
+		/// Rollback executed updates in case of an update failure
+		/// </summary>
         public void RollbackUpdates()
         {
             lock (UpdatesToApply)
             {
-                foreach (IUpdateTask task in UpdatesToApply)
+                foreach (var task in UpdatesToApply)
                 {
                     task.Rollback();
                 }
