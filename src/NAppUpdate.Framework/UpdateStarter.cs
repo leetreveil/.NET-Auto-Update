@@ -81,6 +81,7 @@ namespace NAppUpdate.Framework
                     return false;
 
                 var info = new ProcessStartInfo(_updaterPath, string.Format(@"""{0}""", _syncProcessName));
+				info.Verb = "runas";
                 try
                 {
                     Process.Start(info);
