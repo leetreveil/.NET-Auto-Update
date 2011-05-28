@@ -298,7 +298,7 @@ namespace NAppUpdate.Framework
 
                 var executeOnAppRestart = new Dictionary<string, object>();
                 State = UpdateProcessState.RollbackRequired;
-                foreach (IUpdateTask task in UpdatesToApply)
+                foreach (var task in UpdatesToApply)
                 {
 					// First, execute the task
                     if (!task.Execute())

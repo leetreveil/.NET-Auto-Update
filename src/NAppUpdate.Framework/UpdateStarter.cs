@@ -66,7 +66,7 @@ namespace NAppUpdate.Framework
         {
             ExtractUpdaterFromResource(); //take the update executable and extract it to the path where it should be created
 
-            using (SafeFileHandle clientPipeHandle = CreateNamedPipe(
+            using (var clientPipeHandle = CreateNamedPipe(
                    PIPE_NAME,
                    WRITE_ONLY | FILE_FLAG_OVERLAPPED,
                    0,
@@ -80,7 +80,7 @@ namespace NAppUpdate.Framework
                 if (clientPipeHandle.IsInvalid)
                     return false;
 
-                ProcessStartInfo info = new ProcessStartInfo(_updaterPath, string.Format(@"""{0}""", _syncProcessName));
+                var info = new ProcessStartInfo(_updaterPath, string.Format(@"""{0}""", _syncProcessName));
                 try
                 {
                     Process.Start(info);
@@ -107,7 +107,7 @@ namespace NAppUpdate.Framework
                         break;
 
                     //client connection successfull
-                    using (FileStream fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
+                    using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
                     {
                         new BinaryFormatter().Serialize(fStream, _updateData);
                         fStream.Close();

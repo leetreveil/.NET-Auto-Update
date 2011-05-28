@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
+﻿using System.IO;
 using System.Security.Principal;
 using System.Security.AccessControl;
 
@@ -9,8 +6,8 @@ namespace NAppUpdate.Framework.Utils
 {
     public static class PermissionsCheck
     {
-        private static IdentityReferenceCollection groups = WindowsIdentity.GetCurrent().Groups;
-        private static string sidCurrentUser = WindowsIdentity.GetCurrent().User.Value;
+        private static readonly IdentityReferenceCollection groups = WindowsIdentity.GetCurrent().Groups;
+        private static readonly string sidCurrentUser = WindowsIdentity.GetCurrent().User.Value;
 
         public static bool HaveWritePermissionsForFolder(string path)
         {
