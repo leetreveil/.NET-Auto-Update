@@ -17,7 +17,7 @@ namespace NAppUpdate.Framework
         private UpdateManager()
         {
             State = UpdateProcessState.NotChecked;
-            UpdatesToApply = new LinkedList<IUpdateTask>();
+            UpdatesToApply = new List<IUpdateTask>();
             TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             UpdateProcessName = "NAppUpdateProcess";
             ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -61,7 +61,7 @@ namespace NAppUpdate.Framework
         }
 
         internal string BaseUrl { get; set; }
-        internal LinkedList<IUpdateTask> UpdatesToApply { get; private set; }
+        internal IList<IUpdateTask> UpdatesToApply { get; private set; }
 		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
         public UpdateProcessState State { get; set; }
 
@@ -95,12 +95,12 @@ namespace NAppUpdate.Framework
             lock (UpdatesToApply)
             {
                 UpdatesToApply.Clear();
-                IList<IUpdateTask> tasks = UpdateFeedReader.Read(source.GetUpdatesFeed());
-                foreach (IUpdateTask t in tasks)
+                var tasks = UpdateFeedReader.Read(source.GetUpdatesFeed());
+                foreach (var t in tasks)
                 {
                     if (ShouldStop) return false;
                     if (t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met
-                        UpdatesToApply.AddLast(t);
+                        UpdatesToApply.Add(t);
                 }
             }
 
