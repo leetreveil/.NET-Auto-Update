@@ -64,6 +64,7 @@ namespace NAppUpdate.Framework
         internal IList<IUpdateTask> UpdatesToApply { get; private set; }
 		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
         public UpdateProcessState State { get; set; }
+		public string LatestError { get; set; }
 
         public IUpdateSource UpdateSource { get; set; }
         public IUpdateFeedReader UpdateFeedReader { get; set; }
@@ -86,6 +87,8 @@ namespace NAppUpdate.Framework
 
         private bool CheckForUpdates(IUpdateSource source, Action<int> callback)
         {
+        	LatestError = null;
+
             if (UpdateFeedReader == null)
                 throw new ArgumentException("An update feed reader is required; please set one before checking for updates");
 
@@ -115,40 +118,63 @@ namespace NAppUpdate.Framework
             return false;
         }
 
+		/// <summary>
+		/// Check for updates asynchronously
+		/// </summary>
+		/// <param name="callback">Callback function to call when done</param>
         public void CheckForUpdateAsync(Action<int> callback)
         {
             CheckForUpdateAsync(UpdateSource, callback);
         }
 
+		/// <summary>
+		/// Check for updates asynchronously
+		/// </summary>
+		/// <param name="source">Update source to use</param>
+		/// <param name="callback">Callback function to call when done</param>
         public void CheckForUpdateAsync(IUpdateSource source, Action<int> callback)
         {
-            if (!IsWorking)
-            {
-                _updatesThread = new Thread(delegate()
-                    {
-                        try
-                        {
-                            CheckForUpdates(source, callback);
-                        }
-                        catch { callback.BeginInvoke(0, null, null); /* TODO: Handle error */ }
-                    });
-                _updatesThread.IsBackground = true;
-                _updatesThread.Start();
-            }
+        	if (IsWorking) return;
+
+        	_updatesThread = new Thread(delegate()
+        	                            	{
+												try
+												{
+													CheckForUpdates(source, callback);
+												}
+												catch (Exception ex)
+												{
+													// TODO: Better error handling
+													LatestError = ex.ToString();
+													callback.BeginInvoke(-1, null, null);
+												}
+        	                            	}) {IsBackground = true};
+        	_updatesThread.Start();
         }
 
         #endregion
 
         #region Step 2 - Prepare to execute update tasks
 
+		/// <summary>
+		/// Prepare updates synchronously
+		/// </summary>
+		/// <returns>true if successful</returns>
         public bool PrepareUpdates()
         {
             return PrepareUpdates(null);
         }
 
+		/// <summary>
+		/// Prepare updates synchronously, calling the provided callback when done
+		/// </summary>
+		/// <param name="callback">A callback function to execute when done</param>
+		/// <returns>true if successful</returns>
         private bool PrepareUpdates(Action<bool> callback)
         {
             // TODO: Support progress updates
+
+			LatestError = null;
 
             lock (UpdatesToApply)
             {
@@ -176,21 +202,29 @@ namespace NAppUpdate.Framework
             return true;
         }
 
+		/// <summary>
+		/// Prepare updates asynchronously
+		/// </summary>
+		/// <param name="callback">callback function to call when done</param>
         public void PrepareUpdatesAsync(Action<bool> callback)
         {
-            if (!IsWorking)
-            {
-                _updatesThread = new Thread(delegate()
-                {
-                    try
-                    {
-                        PrepareUpdates(callback);
-                    }
-                    catch { callback.BeginInvoke(false, null, null); /* TODO: Handle error */ }
-                });
-                _updatesThread.IsBackground = true;
-                _updatesThread.Start();
-            }
+        	if (IsWorking) return;
+
+        	_updatesThread = new Thread(delegate()
+        	                            	{
+        	                            		try
+        	                            		{
+        	                            			PrepareUpdates(callback);
+        	                            		}
+        	                            		catch (Exception ex)
+        	                            		{
+													// TODO: Better error handling
+        	                            			LatestError = ex.ToString();
+        	                            			callback.BeginInvoke(false, null, null);
+        	                            		}
+        	                            	}) {IsBackground = true};
+
+        	_updatesThread.Start();
         }
 
         #endregion
@@ -215,6 +249,8 @@ namespace NAppUpdate.Framework
         {
             lock (UpdatesToApply)
             {
+				LatestError = null;
+
                 // Make sure the current backup folder is accessible for writing from this process
                 if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(BackupFolder))
                 {
