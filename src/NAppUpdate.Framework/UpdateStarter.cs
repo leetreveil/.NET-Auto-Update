@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 
@@ -86,13 +87,12 @@ namespace NAppUpdate.Framework
                            		WorkingDirectory = Environment.CurrentDirectory,
                            		FileName = _updaterPath,
                            		Arguments = string.Format(@"""{0}""", _syncProcessName),
-                           		Verb = "runas"
                            	};
             	try
                 {
-                    var p = Process.Start(info);
+                    Process.Start(info);
                 }
-                catch (System.ComponentModel.Win32Exception)
+                catch (Win32Exception)
                 {
                     // Person denied UAC escallation
                     return false;
@@ -129,7 +129,7 @@ namespace NAppUpdate.Framework
         {
             //store the updater temporarily in the designated folder            
             using (var writer = new BinaryWriter(File.Open(_updaterPath, FileMode.Create)))
-                writer.Write(NAppUpdate.Framework.Resources.updater);
+                writer.Write(Resources.updater);
         }
     }
 }

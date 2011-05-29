@@ -321,11 +321,13 @@ namespace NAppUpdate.Framework
                 {
                     // Add some environment variables to the dictionary object which will be passed to the updater
                     executeOnAppRestart["ENV:AppPath"] = ApplicationPath;
+					executeOnAppRestart["ENV:WorkingDirectory"] = Environment.CurrentDirectory;
                     executeOnAppRestart["ENV:TempFolder"] = TempFolder;
                     executeOnAppRestart["ENV:BackupFolder"] = BackupFolder;
                     executeOnAppRestart["ENV:RelaunchApplication"] = relaunchApplication;
 
-                    var updStarter = new UpdateStarter(Path.Combine(TempFolder, "updater.exe"), executeOnAppRestart, UpdateProcessName);
+					// Naming it updater.exe seem to trigger the UAC, and we don't want that
+                    var updStarter = new UpdateStarter(Path.Combine(TempFolder, "foo.exe"), executeOnAppRestart, UpdateProcessName);
                     bool createdNew;
                     using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
                     {
