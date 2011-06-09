@@ -28,6 +28,7 @@ namespace NAppUpdate.Framework.Sources
 
         	var request = WebRequest.Create(FeedUrl);
 			request.Method = "GET";
+            request.Proxy = null;
 			using (var response = request.GetResponse())
 			{
 				if (response == null) return null;

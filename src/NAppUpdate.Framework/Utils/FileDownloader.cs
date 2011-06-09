@@ -29,6 +29,7 @@ namespace NAppUpdate.Framework.Utils
         public bool DownloadToFile(string tempLocation)
         {
         	var request = WebRequest.Create(_uri);
+            request.Proxy = null;
 
 			using (var response = request.GetResponse())
 			using (var tempFile = File.Create(tempLocation))
