@@ -110,7 +110,7 @@ namespace NAppUpdate.Framework
                     catch { }
 
                     //failed to connect client pipe
-                    if (success != 1)
+                    if (success == 0)
                         break;
 
                     //client connection successfull
