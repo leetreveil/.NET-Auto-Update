@@ -8,7 +8,15 @@ namespace NAppUpdate.Framework.Utils
     {
         private readonly Uri _uri;
 
+    	public IWebProxy Proxy { get; set; }
+
 		//public event Action<UpdateStatus> StateChanged = delegate { };
+
+    	public FileDownloader()
+    	{
+    		Proxy = null;
+    	}
+
 
         public FileDownloader(string url)
         {
@@ -29,7 +37,7 @@ namespace NAppUpdate.Framework.Utils
         public bool DownloadToFile(string tempLocation)
         {
         	var request = WebRequest.Create(_uri);
-            request.Proxy = null;
+			request.Proxy = Proxy;
 
 			using (var response = request.GetResponse())
 			using (var tempFile = File.Create(tempLocation))

@@ -10,15 +10,19 @@ namespace NAppUpdate.Framework.Sources
 {
     public class SimpleWebSource : IUpdateSource
     {
-        public SimpleWebSource() { }
+    	public IWebProxy Proxy { get; set; }
+		public string FeedUrl { get; set; }
+
+		public SimpleWebSource()
+		{
+			Proxy = null;
+		}
+
         public SimpleWebSource(string feedUrl)
         {
-            this.FeedUrl = feedUrl;
+			FeedUrl = feedUrl;
+			Proxy = null;
         }
-
-        public string FeedUrl { get; set; }
-
-        private readonly string _byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
 
         #region IUpdateSource Members
 
@@ -28,7 +32,7 @@ namespace NAppUpdate.Framework.Sources
 
         	var request = WebRequest.Create(FeedUrl);
 			request.Method = "GET";
-            request.Proxy = null;
+            request.Proxy = Proxy;
 			using (var response = request.GetResponse())
 			{
 				if (response == null) return null;
@@ -51,6 +55,8 @@ namespace NAppUpdate.Framework.Sources
 
             if (fd == null)
                 throw new ArgumentException("The requested URI does not look valid: " + url, "url");
+
+        	fd.Proxy = Proxy;
 
             if (string.IsNullOrEmpty(tempLocation) || !Directory.Exists(Path.GetDirectoryName(tempLocation)))
                 // WATCHOUT!!! Files downloaded to a path specified by GetTempFileName may be deleted on
