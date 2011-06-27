@@ -63,16 +63,16 @@ namespace NAppUpdate.Framework
             set
             {
                 if (State == UpdateProcessState.NotChecked || State == UpdateProcessState.Checked)
-                    _BackupFolder = Path.IsPathRooted(value) ? value : Path.Combine(this.TempFolder, value);
+                    _backupFolder = Path.IsPathRooted(value) ? value : Path.Combine(this.TempFolder, value);
                 else
                     throw new ArgumentException("BackupFolder can only be specified before update has started");
             }
             get
             {
-                return _BackupFolder;
+                return _backupFolder;
             }
         }
-		private string _BackupFolder;
+		private string _backupFolder;
 
         internal string BaseUrl { get; set; }
         internal IList<IUpdateTask> UpdatesToApply { get; private set; }
@@ -279,24 +279,55 @@ namespace NAppUpdate.Framework
             lock (UpdatesToApply)
             {
 				LatestError = null;
+            	bool revertToDefaultBackupPath = true;
 
                 // Make sure the current backup folder is accessible for writing from this process
-                if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(BackupFolder))
-                {
-                    _BackupFolder = Path.Combine(
-                             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                             UpdateProcessName + "UpdateBackups");
-                }
-                else
-                {
-                    // Remove old backup folder, in case this same folder was used previously,
-                    // and it wasn't removed for some reason
-                    if (Directory.Exists(BackupFolder))
-                        Directory.Delete(BackupFolder, true);
-                }
-                Directory.CreateDirectory(BackupFolder);
+				if (Utils.PermissionsCheck.HaveWritePermissionsForFolder(BackupFolder))
+				{
+					// Remove old backup folder, in case this same folder was used previously,
+					// and it wasn't removed for some reason
+					try
+					{
+						if (Directory.Exists(BackupFolder))
+							Directory.Delete(BackupFolder, true);
+						revertToDefaultBackupPath = false;
+					}
+					catch (UnauthorizedAccessException)
+					{
+					}
 
-                var executeOnAppRestart = new Dictionary<string, object>();
+					// Attempt to (re-)create the backup folder
+					try
+					{
+						Directory.CreateDirectory(BackupFolder);
+					}
+					catch (UnauthorizedAccessException)
+					{
+						// We're having permissions issues with this folder, so we'll attempt
+						// using a backup in a default location
+						revertToDefaultBackupPath = true;
+					}
+				}
+				
+				if (revertToDefaultBackupPath)
+				{
+					_backupFolder = Path.Combine(
+						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+						UpdateProcessName + "UpdateBackups");
+
+					try
+					{
+						Directory.CreateDirectory(BackupFolder);
+					}
+					catch (UnauthorizedAccessException ex)
+					{
+						// We can't backup, so we abort
+						LatestError = ex.ToString();
+						return false;
+					}
+				}
+
+            	var executeOnAppRestart = new Dictionary<string, object>();
                 State = UpdateProcessState.RollbackRequired;
                 foreach (var task in UpdatesToApply)
                 {
