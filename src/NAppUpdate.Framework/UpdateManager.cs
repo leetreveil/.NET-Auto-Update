@@ -357,6 +357,9 @@ namespace NAppUpdate.Framework
                     executeOnAppRestart["ENV:BackupFolder"] = BackupFolder;
                     executeOnAppRestart["ENV:RelaunchApplication"] = relaunchApplication;
 
+					if (!Directory.Exists(TempFolder))
+						Directory.CreateDirectory(TempFolder);
+
 					// Naming it updater.exe seem to trigger the UAC, and we don't want that
                     var updStarter = new UpdateStarter(Path.Combine(TempFolder, "foo.exe"), executeOnAppRestart, UpdateProcessName);
                     bool createdNew;
