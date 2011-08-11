@@ -63,7 +63,10 @@ namespace NAppUpdate.Framework
             set
             {
                 if (State == UpdateProcessState.NotChecked || State == UpdateProcessState.Checked)
-                    _backupFolder = Path.IsPathRooted(value) ? value : Path.Combine(this.TempFolder, value);
+                {
+                    string path = value.TrimEnd(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+                    _backupFolder = Path.IsPathRooted(path) ? path : Path.Combine(TempFolder, path);
+                }
                 else
                     throw new ArgumentException("BackupFolder can only be specified before update has started");
             }
@@ -282,7 +285,8 @@ namespace NAppUpdate.Framework
             	bool revertToDefaultBackupPath = true;
 
                 // Make sure the current backup folder is accessible for writing from this process
-				if (Utils.PermissionsCheck.HaveWritePermissionsForFolder(BackupFolder))
+                string backupParentPath = Path.GetDirectoryName(BackupFolder) ?? string.Empty;
+                if (Directory.Exists(backupParentPath) && Utils.PermissionsCheck.HaveWritePermissionsForFolder(backupParentPath))
 				{
 					// Remove old backup folder, in case this same folder was used previously,
 					// and it wasn't removed for some reason
@@ -300,6 +304,9 @@ namespace NAppUpdate.Framework
 					try
 					{
 						Directory.CreateDirectory(BackupFolder);
+
+                        if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(BackupFolder))
+                            revertToDefaultBackupPath = true;
 					}
 					catch (UnauthorizedAccessException)
 					{
