@@ -9,9 +9,16 @@ namespace NAppUpdate.Framework.Utils
         private static readonly IdentityReferenceCollection groups = WindowsIdentity.GetCurrent().Groups;
         private static readonly string sidCurrentUser = WindowsIdentity.GetCurrent().User.Value;
 
+        public static bool IsDirectory(string path)
+        {
+            FileAttributes attr = File.GetAttributes(path);
+            return ((attr & FileAttributes.Directory) == FileAttributes.Directory);
+        }
+
         public static bool HaveWritePermissionsForFolder(string path)
         {
-            var rules = Directory.GetAccessControl(Path.GetDirectoryName(Path.GetDirectoryName(path))).GetAccessRules(true, true, typeof(SecurityIdentifier));
+            string folder = IsDirectory(path) ? path : Path.GetDirectoryName(path);
+            var rules = Directory.GetAccessControl(folder).GetAccessRules(true, true, typeof(SecurityIdentifier));
 
             bool allowwrite = false;
             bool denywrite = false;
