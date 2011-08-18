@@ -36,8 +36,7 @@ namespace NAppUpdate.Framework.FeedReaders
             doc.LoadXml(feed);
 
             // Support for different feed versions
-            XmlNode root = doc.SelectSingleNode(@"/Feed[version=""1.0""] | /Feed");
-            if (root == null) root = doc;
+            XmlNode root = doc.SelectSingleNode(@"/Feed[version=""1.0""] | /Feed") ?? doc;
 
             if (root.Attributes["BaseUrl"] != null && !string.IsNullOrEmpty(root.Attributes["BaseUrl"].Value))
                 UpdateManager.Instance.BaseUrl = root.Attributes["BaseUrl"].Value;
@@ -47,6 +46,7 @@ namespace NAppUpdate.Framework.FeedReaders
             Dictionary<string, string> attributes = new Dictionary<string, string>();
 
             XmlNodeList nl = root.SelectNodes("./Tasks/*");
+            if (nl == null) return new List<IUpdateTask>(); // TODO: wrong format, probably should throw exception
             foreach (XmlNode node in nl)
             {
                 // Find the requested task type and create a new instance of it
@@ -56,18 +56,21 @@ namespace NAppUpdate.Framework.FeedReaders
                 IUpdateTask task = (IUpdateTask)Activator.CreateInstance(_updateTasks[node.Name]);
 
                 // Store all other task attributes, to be used by the task object later
-                foreach (XmlAttribute att in node.Attributes)
+                if (node.Attributes != null)
                 {
-                    if ("type".Equals(att.Name))
-                        continue;
+                    foreach (XmlAttribute att in node.Attributes)
+                    {
+                        if ("type".Equals(att.Name))
+                            continue;
 
-                    //task.Attributes.Add(att.Name, att.Value);
-                    attributes.Add(att.Name, att.Value);
-                }
-                if (attributes.Count > 0)
-                {
-                    NAppUpdate.Framework.Utils.Reflection.SetTaskAttribute(task, attributes);
-                    attributes.Clear();
+                        attributes.Add(att.Name, att.Value);
+                    }
+                    if (attributes.Count > 0)
+                    {
+                        Utils.Reflection.SetTaskAttribute(task, attributes);
+                        attributes.Clear();
+                    }
+                    // TODO: Check to see if all required task fields have been set
                 }
 
                 if (node.HasChildNodes)

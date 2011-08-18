@@ -40,42 +40,35 @@ namespace NAppUpdate.Framework.Utils
         internal static void SetTaskAttribute(IUpdateTask task, Dictionary<string, string> attributes)
         {
             // Load public non-static properties
-            PropertyInfo[] propertyInfos = typeof(IUpdateTask).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            
-            if (propertyInfos != null)
+            PropertyInfo[] propertyInfos = task.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            string attValue = string.Empty;
+            foreach (PropertyInfo pi in propertyInfos)
             {
-                string attValue = string.Empty;
-                foreach (PropertyInfo pi in propertyInfos)
+                object[] atts = pi.GetCustomAttributes(typeof (NauFieldAttribute), false);
+                if (atts.Length != 1) continue; // NauFieldAttribute doesn't allow multiples
+
+                NauFieldAttribute nfa = (NauFieldAttribute) atts[0];
+
+                // Get the attribute value, process it, and set the object's property with that value
+                if (!attributes.TryGetValue(nfa.Alias, out attValue)) continue;
+                if (pi.PropertyType == typeof (String))
                 {
-                    object[] atts = pi.GetCustomAttributes(typeof(NauFieldAttribute), false);
-                    if (atts == null) continue;
-
-                    NauFieldAttribute nfa = (NauFieldAttribute)atts[0]; // NauFieldAttribute doesn't allow multiples
-
-                    // Get the attribute value, process it, and set the object's property with that value
-                    if (attributes.TryGetValue(nfa.Alias, out attValue))
-                    {
-                        if (pi.PropertyType == typeof(String))
-                        {
-                            pi.SetValue(task, attValue, null);
-                        }
-                        else if (pi.PropertyType.IsEnum)
-                        {
-                            object eObj = Enum.Parse(pi.PropertyType, attValue);
-                            if (eObj != null)
-                                pi.SetValue(task, eObj, null);
-                        }
-                        else
-                        {
-                            MethodInfo mi = pi.PropertyType.GetMethod("Parse", new Type[] { typeof(String) });
-                            if (mi == null) continue;
-                            object o = mi.Invoke(null, new object[] { attValue });
-                        }
-                    }
+                    pi.SetValue(task, attValue, null);
+                }
+                else if (pi.PropertyType.IsEnum)
+                {
+                    object eObj = Enum.Parse(pi.PropertyType, attValue);
+                    if (eObj != null)
+                        pi.SetValue(task, eObj, null);
+                }
+                else
+                {
+                    MethodInfo mi = pi.PropertyType.GetMethod("Parse", new Type[] {typeof (String)});
+                    if (mi == null) continue;
+                    object o = mi.Invoke(null, new object[] {attValue});
                 }
             }
         }
-
-
     }
 }
