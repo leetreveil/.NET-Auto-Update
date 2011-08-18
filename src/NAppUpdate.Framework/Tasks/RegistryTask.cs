@@ -11,7 +11,7 @@ namespace NAppUpdate.Framework.Tasks
     {
         public RegistryTask()
         {
-            UpdateConditions = new NAppUpdate.Framework.Conditions.BooleanCondition();
+            UpdateConditions = new Conditions.BooleanCondition();
         }
 
         [NauField("keyName", "The full path to the registry key", true)]
@@ -48,15 +48,15 @@ namespace NAppUpdate.Framework.Tasks
                 return null;
             }
         }
-        private object originalValue = null;
+        private object originalValue;
 
         #region IUpdateTask Members
 
         public string Description { get; set; }
 
-        public NAppUpdate.Framework.Conditions.BooleanCondition UpdateConditions { get; set; }
+        public Conditions.BooleanCondition UpdateConditions { get; set; }
 
-        public bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source)
+        public bool Prepare(Sources.IUpdateSource source)
         {
             // No preparation required
             return true;

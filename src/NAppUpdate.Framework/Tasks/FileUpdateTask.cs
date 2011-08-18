@@ -11,7 +11,7 @@ namespace NAppUpdate.Framework.Tasks
     {
         public FileUpdateTask()
         {
-            UpdateConditions = new NAppUpdate.Framework.Conditions.BooleanCondition();
+            UpdateConditions = new Conditions.BooleanCondition();
         }
 
         [NauField("localPath", "The local path of the file to update", true)]
@@ -30,16 +30,16 @@ namespace NAppUpdate.Framework.Tasks
             , false)]
         public bool CanHotSwap { get; set; }
 
-        internal string tempFile = null;
+        internal string tempFile;
         private string destinationFile;
 
         #region IUpdateTask Members
 
         public string Description { get; set; }
 
-        public NAppUpdate.Framework.Conditions.BooleanCondition UpdateConditions { get; set; }
+        public Conditions.BooleanCondition UpdateConditions { get; set; }
 
-        public bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source)
+        public bool Prepare(Sources.IUpdateSource source)
         {
             if (string.IsNullOrEmpty(LocalPath))
                 return true; // Errorneous case, but there's nothing to prepare to...

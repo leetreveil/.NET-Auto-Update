@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace NAppUpdate.Framework.Common
 {
@@ -28,6 +26,12 @@ namespace NAppUpdate.Framework.Common
         {
             [System.Diagnostics.DebuggerStepThrough]
             get { return this._description; }
+        }
+
+        public bool IsRequired
+        {
+            [System.Diagnostics.DebuggerStepThrough]
+            get { return this._isRequired; }
         }
     }
 }
