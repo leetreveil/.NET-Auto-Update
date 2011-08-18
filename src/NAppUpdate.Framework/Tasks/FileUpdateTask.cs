@@ -107,9 +107,8 @@ namespace NAppUpdate.Framework.Tasks
 
     	public IEnumerator<KeyValuePair<string, object>> GetColdUpdates()
     	{
-			if (tempFile != null && Attributes.ContainsKey("localPath"))
-				if (!Attributes.ContainsKey("apply") || (Attributes.ContainsKey("apply") && "app-restart".Equals(Attributes["apply"])))
-					yield return new KeyValuePair<string, object>(Attributes["localPath"], tempFile);
+            if (tempFile != null && !string.IsNullOrEmpty(LocalPath) && !CanHotSwap)
+					yield return new KeyValuePair<string, object>(LocalPath, tempFile);
     	}
 
     	public bool Rollback()

@@ -84,6 +84,11 @@ namespace NAppUpdate.Framework.Tasks
             return true;
         }
 
+        public IEnumerator<KeyValuePair<string, object>> GetColdUpdates()
+        {
+            yield break;
+        }
+
         public bool Rollback()
         {
             try
