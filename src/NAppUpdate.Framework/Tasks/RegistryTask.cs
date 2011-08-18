@@ -29,10 +29,10 @@ namespace NAppUpdate.Framework.Tasks
         public string StringValue { get; set; }
 
         [NauField("value", "A DWord value to set", false)]
-        public Int32 DWordValue { get; set; }
+        public Int32? DWordValue { get; set; }
 
         [NauField("value", "A QWord value to set", false)]
-        public Int64 QWordValue { get; set; }
+        public Int64? QWordValue { get; set; }
 
         // Get the first non-null value
         protected object ValueToSet
