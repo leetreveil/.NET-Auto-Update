@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 
@@ -66,7 +67,7 @@ namespace NAppUpdate.Framework
         {
             ExtractUpdaterFromResource(); //take the update executable and extract it to the path where it should be created
 
-            using (SafeFileHandle clientPipeHandle = CreateNamedPipe(
+            using (var clientPipeHandle = CreateNamedPipe(
                    PIPE_NAME,
                    WRITE_ONLY | FILE_FLAG_OVERLAPPED,
                    0,
@@ -80,12 +81,18 @@ namespace NAppUpdate.Framework
                 if (clientPipeHandle.IsInvalid)
                     return false;
 
-                ProcessStartInfo info = new ProcessStartInfo(_updaterPath, string.Format(@"""{0}""", _syncProcessName));
-                try
+                var info = new ProcessStartInfo
+                           	{
+                           		UseShellExecute = true,
+                           		WorkingDirectory = Environment.CurrentDirectory,
+                           		FileName = _updaterPath,
+                           		Arguments = string.Format(@"""{0}""", _syncProcessName),
+                           	};
+            	try
                 {
                     Process.Start(info);
                 }
-                catch (System.ComponentModel.Win32Exception)
+                catch (Win32Exception)
                 {
                     // Person denied UAC escallation
                     return false;
@@ -93,7 +100,7 @@ namespace NAppUpdate.Framework
 
                 while (true)
                 {
-                    int success = 0;
+                    var success = 0;
                     try
                     {
                         success = ConnectNamedPipe(
@@ -103,11 +110,11 @@ namespace NAppUpdate.Framework
                     catch { }
 
                     //failed to connect client pipe
-                    if (success != 1)
+                    if (success == 0)
                         break;
 
                     //client connection successfull
-                    using (FileStream fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
+                    using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
                     {
                         new BinaryFormatter().Serialize(fStream, _updateData);
                         fStream.Close();
@@ -122,7 +129,7 @@ namespace NAppUpdate.Framework
         {
             //store the updater temporarily in the designated folder            
             using (var writer = new BinaryWriter(File.Open(_updaterPath, FileMode.Create)))
-                writer.Write(NAppUpdate.Framework.Resources.updater);
+                writer.Write(Resources.updater);
         }
     }
 }

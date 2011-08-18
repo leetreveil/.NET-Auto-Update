@@ -1,6 +1,8 @@
-﻿NAppUpdate - An application auto-update framework for .NET
+NAppUpdate - An application auto-update framework for .NET
 
 Copyright (c) 2010 Itamar Syn-Hershko
+
+User and developer discussion group is at http://groups.google.com/group/nappupdate
 
 This project is partially based on work done by Lee Treveil,
 in http://github.com/leetreveil/.NET-Auto-Update.

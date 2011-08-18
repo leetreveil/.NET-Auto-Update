@@ -1,4 +1,3 @@
-using NAppUpdate.Framework;
 using NAppUpdate.Framework.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,11 +15,11 @@ namespace NAppUpdate.Updater
 {
     internal static class AppStart
     {
-        static readonly uint GENERIC_READ = (0x80000000);
+        const uint GENERIC_READ = (0x80000000);
         //static readonly uint GENERIC_WRITE = (0x40000000);
-        static readonly uint OPEN_EXISTING = 3;
-        static readonly uint FILE_FLAG_OVERLAPPED = (0x40000000);
-        static readonly int BUFFER_SIZE = 4096;
+        const uint OPEN_EXISTING = 3;
+        const uint FILE_FLAG_OVERLAPPED = (0x40000000);
+        const int BUFFER_SIZE = 4096;
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern SafeFileHandle CreateFile(
@@ -44,12 +45,12 @@ namespace NAppUpdate.Updater
                     Application.Exit();
 
                 // Connect to the named pipe and retrieve the updates list
-                string PIPE_NAME = string.Format("\\\\.\\pipe\\{0}", syncProcessName);
-                object o = GetUpdates(PIPE_NAME);
+                var PIPE_NAME = string.Format("\\\\.\\pipe\\{0}", syncProcessName);
+                var o = GetUpdates(PIPE_NAME);
 
                 // Make sure we start updating only once the application has completely terminated
                 bool createdNew;
-                using (Mutex mutex = new Mutex(false, syncProcessName, out createdNew))
+                using (var mutex = new Mutex(false, syncProcessName, out createdNew))
                 {
                     try
                     {
@@ -68,18 +69,21 @@ namespace NAppUpdate.Updater
                     if (o is Dictionary<string, object>)
                         dict = o as Dictionary<string, object>;
 
-                    if (dict == null || dict.Count == 0)
-                        Application.Exit();
+					if (dict == null || dict.Count == 0)
+					{
+						Application.Exit();
+						return;
+					}
 
-                    // Get some required environment variables
+                	// Get some required environment variables
                     appPath = dict["ENV:AppPath"].ToString();
-                    appDir = Path.GetDirectoryName(appPath);
+					appDir = dict["ENV:WorkingDirectory"] as string ?? Path.GetDirectoryName(appPath);
                     tempFolder = dict["ENV:TempFolder"].ToString();
                     backupFolder = dict["ENV:BackupFolder"].ToString();
                     relaunchApp = dict["ENV:RelaunchApplication"] as bool? ?? true;
 
                     // Perform the actual off-line update process
-                    Dictionary<string, object>.Enumerator en = dict.GetEnumerator();
+                    var en = dict.GetEnumerator();
                     while (en.MoveNext())
                     {
                         if (en.Current.Key.StartsWith("ENV:"))
@@ -124,13 +128,27 @@ namespace NAppUpdate.Updater
                 }
 
                 // Start the application only if requested to do so
-                if (relaunchApp)
-                    Process.Start(appPath);
+				if (relaunchApp)
+				{
+					try
+					{
+						Process.Start(new ProcessStartInfo
+						              	{
+						              		UseShellExecute = true,
+						              		WorkingDirectory = appDir,
+						              		FileName = appPath,
+						              	});
+					} catch(Win32Exception e) {
+						MessageBox.Show(e.ToString());
+					}
+				}
 
-                // Delete the updater EXE and the temp folder
+            	//MessageBox.Show(string.Format("Re-launched process {0} with working dir {1}", appPath, appDir));
+
+            	// Delete the updater EXE and the temp folder)
                 try
                 {
-                    ProcessStartInfo Info = new ProcessStartInfo();
+                    var Info = new ProcessStartInfo();
                     //Application.ExecutablePath
                     Info.Arguments = string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}"""
                                    , tempFolder);
@@ -168,7 +186,7 @@ namespace NAppUpdate.Updater
                 if (pipeHandle.IsInvalid)
                     return null;
 
-                using (FileStream fStream = new FileStream(pipeHandle, FileAccess.Read, BUFFER_SIZE, true))
+                using (var fStream = new FileStream(pipeHandle, FileAccess.Read, BUFFER_SIZE, true))
                 {
                     return new BinaryFormatter().Deserialize(fStream);
                 }

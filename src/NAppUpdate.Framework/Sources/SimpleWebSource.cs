@@ -10,15 +10,19 @@ namespace NAppUpdate.Framework.Sources
 {
     public class SimpleWebSource : IUpdateSource
     {
-        public SimpleWebSource() { }
+    	public IWebProxy Proxy { get; set; }
+		public string FeedUrl { get; set; }
+
+		public SimpleWebSource()
+		{
+			Proxy = null;
+		}
+
         public SimpleWebSource(string feedUrl)
         {
-            this.FeedUrl = feedUrl;
+			FeedUrl = feedUrl;
+			Proxy = null;
         }
-
-        public string FeedUrl { get; set; }
-
-        private readonly string _byteOrderMarkUtf8 = Encoding.UTF8.GetString(Encoding.UTF8.GetPreamble());
 
         #region IUpdateSource Members
 
@@ -26,16 +30,19 @@ namespace NAppUpdate.Framework.Sources
         {
             string data;
 
-            using (var client = new WebClient())
-            {
-                client.Encoding = Encoding.UTF8;
-                data = client.DownloadString(FeedUrl);
-            }
+        	var request = WebRequest.Create(FeedUrl);
+			request.Method = "GET";
+            request.Proxy = Proxy;
+			using (var response = request.GetResponse())
+			{
+				if (response == null) return null;
+				using (var reader = new StreamReader(response.GetResponseStream(), true))
+				{
+					data = reader.ReadToEnd();
+				}
+			}
 
-            if (data.StartsWith(_byteOrderMarkUtf8))
-                data = data.Remove(0, _byteOrderMarkUtf8.Length);
-
-            return data;
+        	return data;
         }
 
         public bool GetData(string url, string baseUrl, ref string tempLocation)
@@ -49,10 +56,12 @@ namespace NAppUpdate.Framework.Sources
             if (fd == null)
                 throw new ArgumentException("The requested URI does not look valid: " + url, "url");
 
+        	fd.Proxy = Proxy;
+
             if (string.IsNullOrEmpty(tempLocation) || !Directory.Exists(Path.GetDirectoryName(tempLocation)))
-                /// WATCHOUT!!! Files downloaded to a path specified by GetTempFileName may be deleted on
-                /// application restart, and as such cannot be relied on for cold updates, only for hot-swaps or
-                /// files requiring pre-processing
+                // WATCHOUT!!! Files downloaded to a path specified by GetTempFileName may be deleted on
+                // application restart, and as such cannot be relied on for cold updates, only for hot-swaps or
+                // files requiring pre-processing
                 tempLocation = Path.GetTempFileName();
 
             return fd.DownloadToFile(tempLocation);

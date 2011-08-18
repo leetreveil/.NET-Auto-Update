@@ -25,6 +25,7 @@ namespace NAppUpdate.Framework.Tasks
         /// </summary>
         /// <returns>True if successful, false otherwise</returns>
         bool Execute();
+    	IEnumerator<KeyValuePair<string, object>> GetColdUpdates();
 
         /// <summary>
         /// Rollback the update performed by this task.
