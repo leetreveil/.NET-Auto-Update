@@ -37,10 +37,10 @@ namespace NAppUpdate.Framework.Utils
             }
         }
 
-        internal static void SetTaskAttribute(IUpdateTask task, Dictionary<string, string> attributes)
+        internal static void SetNauAttributes(INauFieldsHolder fieldsHolder, Dictionary<string, string> attributes)
         {
             // Load public non-static properties
-            PropertyInfo[] propertyInfos = task.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            PropertyInfo[] propertyInfos = fieldsHolder.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
             string attValue = string.Empty;
             foreach (PropertyInfo pi in propertyInfos)
@@ -54,13 +54,13 @@ namespace NAppUpdate.Framework.Utils
                 if (!attributes.TryGetValue(nfa.Alias, out attValue)) continue;
                 if (pi.PropertyType == typeof (String))
                 {
-                    pi.SetValue(task, attValue, null);
+                    pi.SetValue(fieldsHolder, attValue, null);
                 }
                 else if (pi.PropertyType.IsEnum)
                 {
                     object eObj = Enum.Parse(pi.PropertyType, attValue);
                     if (eObj != null)
-                        pi.SetValue(task, eObj, null);
+                        pi.SetValue(fieldsHolder, eObj, null);
                 }
                 else
                 {

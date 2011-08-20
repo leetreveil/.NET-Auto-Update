@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿using System.Collections.Generic;
+using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
 {
-    public interface IUpdateTask
+    public interface IUpdateTask : INauFieldsHolder
     {
         string Description { get; set; }
         BooleanCondition UpdateConditions { get; set; }
@@ -17,7 +15,7 @@ namespace NAppUpdate.Framework.Tasks
         /// </summary>
         /// <param name="source">An update source object, in case more data is required</param>
         /// <returns>True if successful, false otherwise</returns>
-        bool Prepare(NAppUpdate.Framework.Sources.IUpdateSource source);
+        bool Prepare(Sources.IUpdateSource source);
         
         /// <summary>
         /// Execute the update. After all preparation is done, this call should be quite a short one

@@ -67,7 +67,7 @@ namespace NAppUpdate.Framework.FeedReaders
                     }
                     if (attributes.Count > 0)
                     {
-                        Utils.Reflection.SetTaskAttribute(task, attributes);
+                        Utils.Reflection.SetNauAttributes(task, attributes);
                         attributes.Clear();
                     }
                     // TODO: Check to see if all required task fields have been set
