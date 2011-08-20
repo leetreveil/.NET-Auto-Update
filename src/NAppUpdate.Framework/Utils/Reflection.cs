@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
 
 namespace NAppUpdate.Framework.Utils
@@ -69,6 +68,14 @@ namespace NAppUpdate.Framework.Utils
                     object o = mi.Invoke(null, new object[] {attValue});
                 }
             }
+        }
+
+        internal static object GetNauAttribute(INauFieldsHolder fieldsHolder, string attributeName)
+        {
+            PropertyInfo pi = fieldsHolder.GetType().GetProperty(attributeName, BindingFlags.Public | BindingFlags.Instance);
+            if (pi == null) return null;
+
+            return pi.GetValue(fieldsHolder, null);
         }
     }
 }

@@ -107,7 +107,9 @@ namespace NAppUpdate.Framework.FeedReaders
                 {
                     IUpdateCondition childCondition = ReadCondition(child);
                     if (childCondition != null)
-                        bc.AddCondition(childCondition, BooleanCondition.ConditionTypeFromString(child.Attributes["type"] == null ? null : child.Attributes["type"].Value));
+                        bc.AddCondition(childCondition,
+                                        BooleanCondition.ConditionTypeFromString(child.Attributes != null && child.Attributes["type"] != null
+                                                                                     ? child.Attributes["type"].Value : null));
                 }
                 if (bc.ChildConditionsCount > 0)
                     conditionObject = bc.Degrade();
@@ -116,13 +118,20 @@ namespace NAppUpdate.Framework.FeedReaders
             {
                 conditionObject = (IUpdateCondition)Activator.CreateInstance(_updateConditions[cnd.Name]);
 
-                // Store all other attributes, to be used by the condition object later
-                foreach (XmlAttribute att in cnd.Attributes)
+                if (cnd.Attributes != null)
                 {
-                    if ("type".Equals(att.Name))
-                        continue;
+                    Dictionary<string, string> dict = new Dictionary<string, string>();
 
-                    conditionObject.Attributes.Add(att.Name, att.Value);
+                    // Store all other attributes, to be used by the condition object later
+                    foreach (XmlAttribute att in cnd.Attributes)
+                    {
+                        if ("type".Equals(att.Name))
+                            continue;
+
+                        dict.Add(att.Name, att.Value);
+                    }
+                    if (dict.Count > 0)
+                        Utils.Reflection.SetNauAttributes(conditionObject, dict);
                 }
             }
             return conditionObject;

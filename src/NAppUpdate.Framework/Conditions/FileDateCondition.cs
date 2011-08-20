@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
@@ -9,40 +8,43 @@ namespace NAppUpdate.Framework.Conditions
     {
         public FileDateCondition()
         {
-            Attributes = new Dictionary<string, string>();
+            Timestap = DateTime.MinValue;
         }
+
+        [NauField("localPath",
+            "The local path of the file to check. If not set but set under a FileUpdateTask, the LocalPath of the task will be used. Otherwise this condition will be ignored."
+            , false)]
+        public string LocalPath { get; set; }
+
+        [NauField("timestamp", "Date-time to compare with", true)]
+        public DateTime Timestap { get; set; }
+
+        [NauField("what", "Comparison action to perform. Accepted values: newer, is, older. Default: older.", false)]
+        public string ComparisonType { get; set; }
 
         #region IUpdateCondition Members
 
-        public IDictionary<string, string> Attributes { get; private set; }
-
-        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
+        public bool IsMet(Tasks.IUpdateTask task)
         {
-            DateTime fileDateTime;
-            if (!Attributes.ContainsKey("timestamp") || !DateTime.TryParse(Attributes["timestamp"], out fileDateTime))
+            if (Timestap == DateTime.MinValue)
                 return true;
 
-            string localPath = string.Empty;
-            if (Attributes.ContainsKey("localPath"))
-                localPath = Attributes["localPath"];
-            else if (task != null && task.Attributes.ContainsKey("localPath"))
-                localPath = task.Attributes["localPath"];
-
-            if (!File.Exists(localPath))
+            string localPath = !string.IsNullOrEmpty(LocalPath)
+                                   ? LocalPath
+                                   : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
+            if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                 return true;
 
             DateTime localFileDateTime = File.GetLastWriteTime(localPath);
-            if (Attributes.ContainsKey("what"))
+            switch (ComparisonType)
             {
-                switch (Attributes["what"])
-                {
-                    case "newer":
-                        return localFileDateTime > fileDateTime;
-                    case "is":
-                        return localFileDateTime.Equals(fileDateTime);
-                }
+                case "newer":
+                    return localFileDateTime > Timestap;
+                case "is":
+                    return localFileDateTime.Equals(Timestap);
+                default:
+                    return localFileDateTime < Timestap; // == what="older"
             }
-            return localFileDateTime < fileDateTime; // == what="older"
         }
 
         #endregion

@@ -1,52 +1,47 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Reflection;
+using System.IO;
 using System.Diagnostics;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
     [UpdateConditionAlias("version")]
     public class FileVersionCondition : IUpdateCondition
     {
-        public FileVersionCondition()
-        {
-            Attributes = new Dictionary<string, string>();
-        }
+        [NauField("localPath",
+            "The local path of the file to check. If not set but set under a FileUpdateTask, the LocalPath of the task will be used. Otherwise this condition will be ignored."
+            , false)]
+        public string LocalPath { get; set; }
+
+        [NauField("version", "Version string to check against", true)]
+        public string Version { get; set; }
+
+        [NauField("what", "Comparison action to perform. Accepted values: above, is, below. Default: below.", false)]
+        public string ComparisonType { get; set; }
 
         #region IUpdateCondition Members
 
-        public IDictionary<string, string> Attributes { get; private set; }
-
-        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
+        public bool IsMet(Tasks.IUpdateTask task)
         {
-            if (!Attributes.ContainsKey("version"))
-                return true;
-
-            string localPath = string.Empty;
-            if (Attributes.ContainsKey("localPath"))
-                localPath = Attributes["localPath"];
-            else if (task != null && task.Attributes.ContainsKey("localPath"))
-                localPath = task.Attributes["localPath"];
-
-            if (!System.IO.File.Exists(localPath))
+            string localPath = !string.IsNullOrEmpty(LocalPath)
+                                   ? LocalPath
+                                   : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
+            if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                 return true;
 
             string versionString = FileVersionInfo.GetVersionInfo(localPath).FileVersion.Replace(", ", ".");
             Version localVersion = new Version(versionString);
-            Version updateVersion = new Version(Attributes["version"]);
+            Version updateVersion = new Version(Version);
 
-            if (Attributes.ContainsKey("what"))
+            switch (ComparisonType)
             {
-                switch (Attributes["what"])
-                {
-                    case "above":
-                        return updateVersion < localVersion;
-                    case "is":
-                        return updateVersion == localVersion;
-                }
+                case "above":
+                    return updateVersion < localVersion;
+                case "is":
+                    return updateVersion == localVersion;
+                default:
+                    return updateVersion > localVersion;
             }
-            return updateVersion > localVersion;
         }
 
         #endregion

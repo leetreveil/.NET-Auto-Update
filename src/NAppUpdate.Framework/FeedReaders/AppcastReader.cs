@@ -27,10 +27,10 @@ namespace NAppUpdate.Framework.FeedReaders
                 FileUpdateTask task = new FileUpdateTask();
                 task.Description = n["description"].InnerText;
                 //task.UpdateTo = n["enclosure"].Attributes["url"].Value;
-                task.Attributes.Add("remotePath", n["enclosure"].Attributes["url"].Value);
+                task.UpdateTo = n["enclosure"].Attributes["url"].Value;
 
                 FileVersionCondition cnd = new FileVersionCondition();
-                cnd.Attributes.Add("version", n["appcast:version"].InnerText);
+                cnd.Version = n["appcast:version"].InnerText;
                 task.UpdateConditions.AddCondition(cnd, BooleanCondition.ConditionType.AND);
 
                 ret.Add(task);

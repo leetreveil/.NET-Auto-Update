@@ -1,40 +1,39 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
+using NAppUpdate.Framework.Common;
+using NAppUpdate.Framework.Tasks;
 
 namespace NAppUpdate.Framework.Conditions
 {
     public class FileChecksumCondition : IUpdateCondition
     {
-        public FileChecksumCondition()
-        {
-            Attributes = new Dictionary<string, string>();
-        }
+        [NauField("localPath",
+            "The local path of the file to check. If not set but set under a FileUpdateTask, the LocalPath of the task will be used. Otherwise this condition will be ignored."
+            , false)]
+        public string LocalPath { get; set; }
+
+        [NauField("checksum", "Checksum expected from the file", true)]
+        public string Checksum { get; set; }
+
+        [NauField("checksumType", "Type of checksum to calculate", true)]
+        public string ChecksumType { get; set; }
 
         #region IUpdateCondition Members
 
-        public IDictionary<string, string> Attributes { get; private set; }
-
-        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
+        public bool IsMet(IUpdateTask task)
         {
-            string localPath = string.Empty;
-            if (Attributes.ContainsKey("localPath"))
-                localPath = Attributes["localPath"];
-            else if (task != null && task.Attributes.ContainsKey("localPath"))
-                localPath = task.Attributes["localPath"];
-
-            if (!File.Exists(localPath))
+            string localPath = !string.IsNullOrEmpty(LocalPath) ? LocalPath : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
+            if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                 return true;
 
-            if (Attributes.ContainsKey("sha256-checksum"))
+            if ("sha256".Equals(ChecksumType, StringComparison.InvariantCultureIgnoreCase))
             {
                 string sha256 = Utils.FileChecksum.GetSHA256Checksum(localPath);
-                if (!string.IsNullOrEmpty(sha256) && sha256.Equals(Attributes["sha256-checksum"]))
+                if (!string.IsNullOrEmpty(sha256) && sha256.Equals(Checksum))
                     return true;
             }
 
-            // TODO: Support more checksum algorithms (although SHA256 has no collisions, other are more commonly used)
+            // TODO: Support more checksum algorithms (although SHA256 isn't known to have collisions, other are more commonly used)
 
             return false;
         }

@@ -1,49 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
+﻿using System.IO;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
     public class FileSizeCondition : IUpdateCondition
     {
-        public FileSizeCondition()
-        {
-            Attributes = new Dictionary<string, string>();
-        }
+        [NauField("localPath",
+            "The local path of the file to check. If not set but set under a FileUpdateTask, the LocalPath of the task will be used. Otherwise this condition will be ignored."
+            , false)]
+        public string LocalPath { get; set; }
+
+        [NauField("size", "File size to compare with (in bytes)", true)]
+        public long FileSize { get; set; }
+
+        [NauField("what", "Comparison action to perform. Accepted values: above, is, below. Default: below.", false)]
+        public string ComparisonType { get; set; }
 
         #region IUpdateCondition Members
 
-        public IDictionary<string, string> Attributes { get; private set; }
-
-        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
+        public bool IsMet(Tasks.IUpdateTask task)
         {
-            long fileLength = 0;
-            if (!Attributes.ContainsKey("size") || !long.TryParse(Attributes["size"], out fileLength))
+            if (FileSize <= 0)
                 return true;
 
-            string localPath = string.Empty;
-            if (Attributes.ContainsKey("localPath"))
-                localPath = Attributes["localPath"];
-            else if (task != null && task.Attributes.ContainsKey("localPath"))
-                localPath = task.Attributes["localPath"];
-
-            if (!File.Exists(localPath))
+            string localPath = !string.IsNullOrEmpty(LocalPath)
+                                   ? LocalPath
+                                   : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
+            if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                 return true;
 
             FileInfo fi = new FileInfo(localPath);
-
-            if (Attributes.ContainsKey("what"))
+            switch (ComparisonType)
             {
-                switch (Attributes["what"])
-                {
-                    case "above":
-                        return fileLength < fi.Length;
-                    case "is":
-                        return fileLength == fi.Length;
-                }
+                case "above":
+                    return FileSize < fi.Length;
+                case "is":
+                    return FileSize == fi.Length;
             }
-            return fileLength > fi.Length;
+            return FileSize > fi.Length;
         }
 
         #endregion
