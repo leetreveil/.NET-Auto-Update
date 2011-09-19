@@ -6,18 +6,18 @@ namespace NAppUpdate.Framework.Sources
 {
     public class MemorySource : IUpdateSource
     {
-        public MemorySource(string feedXml)
+        public MemorySource(string feedString)
         {
-            this.FeedXml = feedXml;
+			this.Feed = feedString;
         }
 
-        public string FeedXml { get; set; }
+        public string Feed { get; set; }
 
         #region IUpdateSource Members
 
         public string GetUpdatesFeed()
         {
-            return FeedXml;
+            return Feed;
         }
 
         public bool GetData(string filePath, string basePath, ref string tempFile)
