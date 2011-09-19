@@ -20,4 +20,12 @@ namespace NAppUpdate.Framework
         public UpdateProcessFailedException(string message, Exception ex) : base(message, ex) { }
         public UpdateProcessFailedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
+
+	public class FeedReaderException : NAppUpdateException
+	{
+		public FeedReaderException() : base() { }
+		public FeedReaderException(string message) : base(message) { }
+		public FeedReaderException(string message, Exception ex) : base(message, ex) { }
+		public FeedReaderException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+	}
 }
