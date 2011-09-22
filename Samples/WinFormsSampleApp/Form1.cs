@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 
 using NAppUpdate.Framework;
@@ -57,7 +54,7 @@ namespace WinFormsSampleApp
                 if (UpdateManager.Instance.State == UpdateManager.UpdateProcessState.Checked)
                 {
                     UpdateManager.Instance.CleanUp();
-                    lblStatus.Text = DateTime.Now.ToString() + " - Update state was reset to NotChecked";
+                    lblStatus.Text = DateTime.Now + " - Update state was reset to NotChecked";
                 }
             });
             _resetCheckedState.Start();
