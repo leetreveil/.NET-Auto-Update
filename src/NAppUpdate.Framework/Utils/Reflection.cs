@@ -51,10 +51,17 @@ namespace NAppUpdate.Framework.Utils
 
                 // Get the attribute value, process it, and set the object's property with that value
                 if (!attributes.TryGetValue(nfa.Alias, out attValue)) continue;
-                if (pi.PropertyType == typeof (String))
-                {
-                    pi.SetValue(fieldsHolder, attValue, null);
-                }
+				if (pi.PropertyType == typeof(String))
+				{
+					pi.SetValue(fieldsHolder, attValue, null);
+				}
+				else if (pi.PropertyType == typeof(DateTime))
+				{
+					DateTime dt = DateTime.MaxValue;
+					if (DateTime.TryParse(attValue, out dt))
+						pi.SetValue(fieldsHolder, dt, null);
+				}
+				// TODO: type: Uri
                 else if (pi.PropertyType.IsEnum)
                 {
                     object eObj = Enum.Parse(pi.PropertyType, attValue);
