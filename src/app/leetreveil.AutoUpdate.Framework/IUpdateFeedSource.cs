@@ -4,6 +4,6 @@ namespace leetreveil.AutoUpdate.Framework
 {
     public interface IUpdateFeedSource
     {
-        IEnumerable<Update> Read(string url);
+        List<Update> Read(string url);
     }
 }

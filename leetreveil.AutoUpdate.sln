@@ -1,13 +1,13 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "leetreveil.AutoUpdate.Tests", "src\test\leetreveil.AutoUpdate.Tests\leetreveil.AutoUpdate.Tests.csproj", "{2742ABE7-977D-4989-B12A-992A50B28E2F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "leetreveil.AutoUpdate.Updater", "src\app\leetreveil.AutoUpdate.Updater\leetreveil.AutoUpdate.Updater.csproj", "{7D4D18D4-DBD2-4ADC-9D82-397D6C5E9F40}"
-EndProject
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{BDD7694F-9B8D-45B1-B75E-3901BC6F04DD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{69829CE6-2507-4208-83A0-4AFF3773DC69}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "leetreveil.AutoUpdate.Tests", "src\test\leetreveil.AutoUpdate.Tests\leetreveil.AutoUpdate.Tests.csproj", "{2742ABE7-977D-4989-B12A-992A50B28E2F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "leetreveil.AutoUpdate.Updater", "src\app\leetreveil.AutoUpdate.Updater\leetreveil.AutoUpdate.Updater.csproj", "{7D4D18D4-DBD2-4ADC-9D82-397D6C5E9F40}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "leetreveil.AutoUpdate.SampleApp", "src\app\leetreveil.AutoUpdate.SampleApp\leetreveil.AutoUpdate.SampleApp.csproj", "{D4321517-F941-4B1C-A9F7-9F63F5B86EE8}"
 EndProject

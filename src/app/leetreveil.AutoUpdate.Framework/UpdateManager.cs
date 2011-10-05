@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System;
-using System.Linq;
 using System.Reflection;
-using System.Windows;
 using System.Threading;
 
 namespace leetreveil.AutoUpdate.Framework
@@ -57,16 +55,16 @@ namespace leetreveil.AutoUpdate.Framework
             if (String.IsNullOrEmpty(AppFeedUrl))
                 throw new ArgumentException("The AppFeedUrl has not been set");
 
-            IEnumerable<Update> results = new AppcastReader().Read(AppFeedUrl);
+            List<Update> results = new AppcastReader().Read(AppFeedUrl);
 
             return GetLatestUpdateFromUpdates(results);
         }
 
-        private bool GetLatestUpdateFromUpdates(IEnumerable<Update> results)
+        private bool GetLatestUpdateFromUpdates(List<Update> results)
         {
-            if (results.Count() <= 0) return false;
+            if (results.Count <= 0) return false;
 
-            Update update = results.First();
+            Update update = results[0];
 
             var assemblyVersion = Assembly.GetEntryAssembly().GetName().Version;
 
@@ -84,7 +82,7 @@ namespace leetreveil.AutoUpdate.Framework
             if (String.IsNullOrEmpty(AppFeedUrl))
                 throw new ArgumentException("The AppFeedUrl has not been set");
 
-            IEnumerable<Update> results = updateReader.Read(this.AppFeedUrl);
+            List<Update> results = updateReader.Read(this.AppFeedUrl);
 
             return GetLatestUpdateFromUpdates(results);
         }
@@ -133,7 +131,7 @@ namespace leetreveil.AutoUpdate.Framework
                 this.UpdateData = downloadedData;
                 finishedCallback(true);
             },
-            (arg1, arg2) => progressPercentageCallback((int) (100 * (arg1) / arg2)));
+            (progress) => progressPercentageCallback((int)(100 * (progress.Current / progress.Total))));
         }
 
         private FileDownloader GetFileDownloader()
@@ -159,8 +157,6 @@ namespace leetreveil.AutoUpdate.Framework
                 throw new ArgumentException("UpdateExeBinary has not been set");
 
             new UpdateStarter(UpdateExePath, UpdateExeBinary, UpdateData).Start();
-
-            Application.Current.Shutdown();
         }
     }
 }

@@ -1,26 +1,44 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Linq;
+using System.Xml;
 
 namespace leetreveil.AutoUpdate.Framework
 {
     public class AppcastReader : IUpdateFeedSource
     {
-        public IEnumerable<Update> Read(string url)
+        public List<Update> Read(string url)
         {
-            var document = XDocument.Load(url);
+            var updates = new List<Update>();
 
-            XNamespace ns = "http://www.adobe.com/xml-namespaces/appcast/1.0";
+            var document = new XmlDocument();
+            document.Load(url);
 
-            return document.Descendants("channel").Descendants("item").Select(
-                item => new Update
-                            {
-                                Title = item.Element("title").Value,
-                                Version = new Version(item.Element(ns + "version").Value),
-                                FileUrl = item.Element("enclosure").Attribute("url").Value,
-                                FileLength = Convert.ToInt64(item.Element("enclosure").Attribute("length").Value)
-                            });
+            var nsManager = new XmlNamespaceManager(document.NameTable);
+            nsManager.AddNamespace("appcast", "http://www.adobe.com/xml-namespaces/appcast/1.0");
+
+            var nodes = document.SelectNodes("/rss/channel/item");
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes.Item(i);
+
+                var titleNode = node.SelectSingleNode("title");
+                var versionNode = node.SelectSingleNode("appcast:version", nsManager);
+                var enclosureNode = node.SelectSingleNode("enclosure");
+                var fileUrlNode = enclosureNode.Attributes["url"];
+                var fileLengthNode = enclosureNode.Attributes["length"];
+
+                var update = new Update
+                {
+                    Title = titleNode.InnerText,
+                    Version = new Version(versionNode.InnerText),
+                    FileUrl = fileUrlNode.Value,
+                    FileLength = Convert.ToInt64(fileLengthNode.Value)
+                };
+
+                updates.Add(update);
+            }
+            return updates;
         }
     }
 }
