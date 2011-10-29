@@ -1,41 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Runtime.InteropServices;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
     public class OSCondition : IUpdateCondition
     {
-        public OSCondition()
-        {
-            Attributes = new Dictionary<string, string>();
-        }
+		[NauField("bit", "File size to compare with (in bytes)", true)]
+		public int OsBits { get; set; }
+
+		// TODO: Work with enums on code and Attributes to get a proper and full OS version comparison
+		// use http://stackoverflow.com/questions/545666/how-to-translate-ms-windows-os-version-numbers-into-product-names-in-net
+		// and http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx
 
         #region IUpdateCondition Members
 
-        public IDictionary<string, string> Attributes { get; private set; }
+		public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
+		{
+			bool is64Bit = Is64BitOperatingSystem();
 
-        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
-        {
-            // OS bitness check, if requested
-            if (Attributes.ContainsKey("bit"))
-            {
-                bool Is64Bit = Is64BitOperatingSystem();
-                if ("32".Equals(Attributes["bit"]) && Is64Bit)
-                    return false;
-                else if ("64".Equals(Attributes["bit"]) && !Is64Bit)
-                    return false;
-            }
-            return true;
+			if (OsBits == 32 && OsBits != 64)
+				return true;
 
-            // TODO: Work with enums on code and Attributes to get a proper and full OS version comparison
-            // use http://stackoverflow.com/questions/545666/how-to-translate-ms-windows-os-version-numbers-into-product-names-in-net
-            // and http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx
-            throw new NotImplementedException();
-        }
+			// OS bitness check, if requested
+			if (OsBits == 32 && is64Bit)
+				return false;
+			if (OsBits == 64 && !is64Bit)
+				return false;
 
-        #endregion
+			return true;
+		}
+
+    	#endregion
 
         // Check OS bitness (32 / 64 bit)
         // As seen on http://1code.codeplex.com/SourceControl/changeset/view/39074#842775
