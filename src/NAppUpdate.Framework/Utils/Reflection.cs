@@ -73,6 +73,9 @@ namespace NAppUpdate.Framework.Utils
                     MethodInfo mi = pi.PropertyType.GetMethod("Parse", new Type[] {typeof (String)});
                     if (mi == null) continue;
                     object o = mi.Invoke(null, new object[] {attValue});
+                    
+                    if (o != null)
+                    	pi.SetValue(fieldsHolder, o, null);
                 }
             }
         }
