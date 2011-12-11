@@ -108,7 +108,7 @@ namespace NAppUpdate.Framework
 		/// <returns>true if successful and updates exist</returns>
         public bool CheckForUpdates(IUpdateSource source)
         {
-            return CheckForUpdates(source, null);
+            return CheckForUpdates(source ?? UpdateSource, null);
         }
 
 		/// <summary>

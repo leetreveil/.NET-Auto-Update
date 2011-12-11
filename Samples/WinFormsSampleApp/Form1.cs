@@ -83,7 +83,7 @@ namespace WinFormsSampleApp
             {
                 // All we need to do is set the feed url and we are all set, no need to create new objects etc
                 ((SimpleWebSource)source).FeedUrl = feedUrl;
-                CheckForUpdates(null);
+                CheckForUpdates(source);
             }
             else
             {
