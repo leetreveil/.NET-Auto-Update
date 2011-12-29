@@ -92,6 +92,7 @@
     <Compile Include="Utils\FileDownloader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UpdateStarter.cs" />
+    <Compile Include="Utils\FileSystem.cs" />
     <Compile Include="Utils\PermissionsCheck.cs" />
     <Compile Include="Utils\Reflection.cs" />
   </ItemGroup>

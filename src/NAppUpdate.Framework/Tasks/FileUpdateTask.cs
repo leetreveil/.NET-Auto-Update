@@ -82,6 +82,9 @@ namespace NAppUpdate.Framework.Tasks
 
             destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
 
+			if (!Directory.Exists(Path.GetDirectoryName(destinationFile)))
+				Utils.FileSystem.CreateDirectoryStructure(Path.GetDirectoryName(destinationFile), false);
+
             // Create a backup copy if target exists
             if (File.Exists(destinationFile))
                 File.Copy(destinationFile, Path.Combine(UpdateManager.Instance.BackupFolder, LocalPath));
