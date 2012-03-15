@@ -29,7 +29,10 @@ namespace NAppUpdate.Framework.Conditions
             if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                 return true;
 
-            string versionString = FileVersionInfo.GetVersionInfo(localPath).FileVersion.Replace(", ", ".");
+        	var versionInfo = FileVersionInfo.GetVersionInfo(localPath);
+			if (versionInfo.FileVersion == null) return true; // perform the update if no version info is found
+			
+			string versionString = versionInfo.FileVersion.Replace(", ", ".");
             Version localVersion = new Version(versionString);
             Version updateVersion = new Version(Version);
 
