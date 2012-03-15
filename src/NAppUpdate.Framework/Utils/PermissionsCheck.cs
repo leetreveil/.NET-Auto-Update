@@ -21,8 +21,7 @@ namespace NAppUpdate.Framework.Utils
             var folder = IsDirectory(path) ? path : Path.GetDirectoryName(path);
             var rules = Directory.GetAccessControl(folder).GetAccessRules(true, true, typeof(SecurityIdentifier));
 
-            bool allowwrite = false;
-            bool denywrite = false;
+            bool allowwrite = false, denywrite = false;
             foreach (FileSystemAccessRule rule in rules)
             {
                 if (rule.AccessControlType == AccessControlType.Deny &&
