@@ -41,6 +41,10 @@ namespace NAppUpdate.Framework.FeedReaders
             if (root.Attributes["BaseUrl"] != null && !string.IsNullOrEmpty(root.Attributes["BaseUrl"].Value))
                 UpdateManager.Instance.BaseUrl = root.Attributes["BaseUrl"].Value;
 
+			// Handy for displaying the changes before running the update
+			if (root.Attributes["ChangeLogUrl"] != null && !string.IsNullOrEmpty(root.Attributes["ChangeLogUrl"].Value))
+				UpdateManager.Instance.ChangeLogUrl = root.Attributes["ChangeLogUrl"].Value;
+			
             // Temporary collection of attributes, used to aggregate them all with their values
             // to reduce Reflection calls
             Dictionary<string, string> attributes = new Dictionary<string, string>();
