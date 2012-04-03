@@ -82,7 +82,6 @@ namespace NAppUpdate.Framework
 		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
         public UpdateProcessState State { get; private set; }
 		public string LatestError { get; set; }
-		public string ChangeLogUrl { get; internal set; }
 
         public IUpdateSource UpdateSource { get; set; }
         public IUpdateFeedReader UpdateFeedReader { get; set; }
@@ -369,7 +368,7 @@ namespace NAppUpdate.Framework
 						Directory.CreateDirectory(TempFolder);
 
 					// Naming it updater.exe seem to trigger the UAC, and we don't want that, so let the developer decide
-                    var updStarter = new UpdateStarter(Path.Combine(TempFolder, String.Format("{0}.exe", UpdateProcessName)), executeOnAppRestart, UpdateProcessName);
+                    var updStarter = new UpdateStarter(Path.Combine(TempFolder, String.Format("{0}.exe", Utils.SafeUACFilename.GetFilename(UpdateProcessName))), executeOnAppRestart, UpdateProcessName);
                     bool createdNew;
                     using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
                     {
