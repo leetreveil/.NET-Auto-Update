@@ -78,7 +78,7 @@ namespace NAppUpdate.Framework
 		private string _backupFolder;
 
         internal string BaseUrl { get; set; }
-        internal IList<IUpdateTask> UpdatesToApply { get; private set; }
+        public IList<IUpdateTask> UpdatesToApply { get; private set; }
 		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
         public UpdateProcessState State { get; private set; }
 		public string LatestError { get; set; }
