@@ -24,6 +24,7 @@ namespace NAppUpdate.Framework
             UpdatesToApply = new List<IUpdateTask>();
             TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             UpdateProcessName = "NAppUpdateProcess";
+			UpdateExecutableName = "foo.exe"; // Naming it updater.exe seem to trigger the UAC, and we don't want that
             ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath) ?? string.Empty, "Backup");
         }
@@ -53,7 +54,15 @@ namespace NAppUpdate.Framework
 
         public string TempFolder { get; set; }
         public string UpdateProcessName { get; set; }
-        internal readonly string ApplicationPath;
+		
+		/// <summary>
+		/// The name for the executable file to extract and run cold updates with. Default is foo.exe. You can change
+		/// it to whatever you want, but pay attention to names like "updater.exe" and "installer.exe" - they will trigger
+		/// an UAC prompt in all cases.
+		/// </summary>
+		public string UpdateExecutableName { get; set; }
+        
+		internal readonly string ApplicationPath;
 
 		/// <summary>
 		/// Path to the backup folder used by this update process
@@ -367,8 +376,7 @@ namespace NAppUpdate.Framework
 					if (!Directory.Exists(TempFolder))
 						Directory.CreateDirectory(TempFolder);
 
-					// Naming it updater.exe seem to trigger the UAC, and we don't want that
-                    var updStarter = new UpdateStarter(Path.Combine(TempFolder, "foo.exe"), executeOnAppRestart, UpdateProcessName);
+					var updStarter = new UpdateStarter(Path.Combine(TempFolder, UpdateExecutableName), executeOnAppRestart, UpdateProcessName);
                     bool createdNew;
                     using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
                     {
