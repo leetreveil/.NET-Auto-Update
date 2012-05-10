@@ -163,7 +163,7 @@ Public Class frmMain
 					'Size
 					If chkSize.Checked Then
 						cond = doc.CreateElement("FileSizeCondition")
-						If pastFirst Then cond.SetAttribute("type", "or")
+                        If pastFirst Then cond.SetAttribute("type", "not")
 						cond.SetAttribute("what", "is")
 						cond.SetAttribute("size", .FileInfo.Length.ToString)
 						conds.AppendChild(cond)
@@ -173,7 +173,7 @@ Public Class frmMain
 					'Date
 					If chkDate.Checked Then
 						cond = doc.CreateElement("FileVersionCondition")
-						If pastFirst Then cond.SetAttribute("type", "or")
+                        If pastFirst Then cond.SetAttribute("type", "not")
 						cond.SetAttribute("what", "below")
 						cond.SetAttribute("timestamp", .FileInfo.LastWriteTime.ToFileTime.ToString)
 						conds.AppendChild(cond)
@@ -183,7 +183,7 @@ Public Class frmMain
 					'Hash
 					If chkHash.Checked Then
 						cond = doc.CreateElement("FileChecksumCondition")
-						If pastFirst Then cond.SetAttribute("type", "or")
+                        If pastFirst Then cond.SetAttribute("type", "not")
 						cond.SetAttribute("checksumType", "sha256")
 						cond.SetAttribute("checksum", .Hash)
 						conds.AppendChild(cond)
