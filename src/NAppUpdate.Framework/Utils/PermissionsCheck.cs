@@ -11,7 +11,7 @@ namespace NAppUpdate.Framework.Utils
 
         public static bool IsDirectory(string path)
         {
-			if (!File.Exists(path)) return false;
+			if (!Directory.Exists(path)) return false;
             FileAttributes attr = File.GetAttributes(path);
             return ((attr & FileAttributes.Directory) == FileAttributes.Directory);
         }
