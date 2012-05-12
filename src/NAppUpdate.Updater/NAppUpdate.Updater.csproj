@@ -36,6 +36,7 @@
     <ApplicationVersion>1.1.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -131,6 +132,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)\Updater.exe" "$(SolutionDir)src\NAppUpdate.Framework\Updater"</PostBuildEvent>
+    <PostBuildEvent>mkdir "$(SolutionDir)src\NAppUpdate.Framework\Updater"
+copy /y "$(TargetDir)Updater.exe" "$(SolutionDir)src\NAppUpdate.Framework\Updater\"</PostBuildEvent>
   </PropertyGroup>
 </Project>
