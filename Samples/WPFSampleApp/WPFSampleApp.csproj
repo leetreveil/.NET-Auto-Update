@@ -137,7 +137,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <Content Include="sampleappupdatefeed.xml">
+    <Content Include="SampleAppUpdateFeed.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
