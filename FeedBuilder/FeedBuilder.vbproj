@@ -76,6 +76,7 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgumentsParser.vb" />
     <Compile Include="FeedBuilderSettingsProvider.vb" />
     <Compile Include="FileInfoEx.vb" />
     <Compile Include="frmMain.vb">
@@ -84,6 +85,9 @@
     <Compile Include="frmMain.Designer.vb">
       <DependentUpon>frmMain.vb</DependentUpon>
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="HelpfulTextBox.vb">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -132,6 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="component.ico" />
+    <Content Include="Readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

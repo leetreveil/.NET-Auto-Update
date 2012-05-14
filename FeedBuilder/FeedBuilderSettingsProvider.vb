@@ -8,7 +8,33 @@ Imports System.Collections.Specialized
 Public Class FeedBuilderSettingsProvider
 	Inherits SettingsProvider
 
-	Private Const SETTINGSROOT As String = "Settings" 'XML Root Node
+    Private Const SETTINGSROOT As String = "Settings" 'XML Root Node
+
+    Public Sub SaveAs(filename As String)
+        Try
+            Dim settings = My.Settings
+            settings.Save()
+            Dim source As String = Path.Combine(GetAppSettingsPath, GetAppSettingsFilename)
+            File.Copy(source, filename, True)
+        Catch ex As Exception
+            Dim msg As String = String.Format("An error occurred while saving the file: {0}{0}{1}",
+                                              Environment.NewLine, ex.Message)
+            MessageBox.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Public Sub LoadFrom(filename As String)
+        Try
+            Dim dest As String = Path.Combine(GetAppSettingsPath, GetAppSettingsFilename)
+            If filename = dest Then Return
+            File.Copy(filename, dest, True)
+            My.Settings.Reload()
+        Catch ex As Exception
+            Dim msg As String = String.Format("An error occurred while loading the file: {0}{0}{1}",
+                                              Environment.NewLine, ex.Message)
+            MessageBox.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 
 	Public Overrides Sub Initialize(ByVal name As String, ByVal col As NameValueCollection)
 		MyBase.Initialize(Me.ApplicationName, col)
