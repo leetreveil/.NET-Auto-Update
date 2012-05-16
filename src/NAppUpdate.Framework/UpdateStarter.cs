@@ -54,13 +54,15 @@ namespace NAppUpdate.Framework
         private readonly string _updaterPath;
         private readonly Dictionary<string, object> _updateData;
         private readonly string _syncProcessName;
+        private readonly bool _runPrivileged;
 
         public UpdateStarter(string pathWhereUpdateExeShouldBeCreated,
-            Dictionary<string, object> updateData, string syncProcessName)
+            Dictionary<string, object> updateData, string syncProcessName, bool runPrivileged)
         {
             _updaterPath = pathWhereUpdateExeShouldBeCreated;
             _updateData = updateData;
             _syncProcessName = syncProcessName;
+            _runPrivileged = runPrivileged;
         }
 
         public bool Start()
@@ -89,7 +91,7 @@ namespace NAppUpdate.Framework
                            		Arguments = string.Format(@"""{0}""", _syncProcessName),
                            	};
 				//If we can't write to the destination folder, then lets try elevating priviledges.
-				if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory)) { info.Verb = "runas"; }
+				if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory) || _runPrivileged) { info.Verb = "runas"; }
             	
 				try
                 {

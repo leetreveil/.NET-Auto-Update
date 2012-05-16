@@ -130,6 +130,14 @@ namespace NAppUpdate.Framework.Tasks
             return true;
         }
 
+        public bool MustRunPrivileged() {
+            if (File.Exists(destinationFile)) {
+                return !Utils.PermissionsCheck.HaveWritePermissionsForFileOrFolder(destinationFile);
+            } else {
+                return false;
+            }
+        }
+        
         #endregion
     }
 }

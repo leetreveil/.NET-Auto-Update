@@ -343,6 +343,7 @@ namespace NAppUpdate.Framework
 					}
 				}
 
+                bool runPrivileged = false;
             	var executeOnAppRestart = new Dictionary<string, object>();
                 State = UpdateProcessState.RollbackRequired;
                 foreach (var task in UpdatesToApply)
@@ -353,6 +354,9 @@ namespace NAppUpdate.Framework
                         // TODO: notify about task execution failure using exceptions
                     	continue;
                     }
+
+                    // run updater privileged if required
+                    runPrivileged = runPrivileged || task.MustRunPrivileged();
 
 					// Add any pending cold updates to the list
                 	var en = task.GetColdUpdates();
@@ -376,7 +380,8 @@ namespace NAppUpdate.Framework
 					if (!Directory.Exists(TempFolder))
 						Directory.CreateDirectory(TempFolder);
 
-					var updStarter = new UpdateStarter(Path.Combine(TempFolder, UpdateExecutableName), executeOnAppRestart, UpdateProcessName);
+					var updStarter = new UpdateStarter(Path.Combine(TempFolder, UpdateExecutableName),
+                                                executeOnAppRestart, UpdateProcessName, runPrivileged);
                     bool createdNew;
                     using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
                     {
