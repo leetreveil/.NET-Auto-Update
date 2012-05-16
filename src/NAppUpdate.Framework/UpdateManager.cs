@@ -293,6 +293,11 @@ namespace NAppUpdate.Framework
 				LatestError = null;
             	bool revertToDefaultBackupPath = true;
 
+                // Set current directory the the application directory
+                // this prevents the updater from writing to e.g. c:\windows\system32
+                // if the process is started by autorun on windows logon.
+                Environment.CurrentDirectory = Path.GetDirectoryName(ApplicationPath);
+
                 // Make sure the current backup folder is accessible for writing from this process
                 string backupParentPath = Path.GetDirectoryName(BackupFolder) ?? string.Empty;
                 if (Directory.Exists(backupParentPath) && Utils.PermissionsCheck.HaveWritePermissionsForFolder(backupParentPath))
