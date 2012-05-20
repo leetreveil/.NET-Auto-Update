@@ -113,7 +113,7 @@ namespace NAppUpdate.Framework
 		/// <returns>true if successful and updates exist</returns>
         public bool CheckForUpdates()
         {
-            return CheckForUpdates(UpdateSource, null);
+            return CheckForUpdates_Internal(UpdateSource, null, null);
         }
 
 		/// <summary>
@@ -123,16 +123,40 @@ namespace NAppUpdate.Framework
 		/// <returns>true if successful and updates exist</returns>
         public bool CheckForUpdates(IUpdateSource source)
         {
-            return CheckForUpdates(source ?? UpdateSource, null);
+            return CheckForUpdates_Internal(source ?? UpdateSource, null, null);
         }
 
 		/// <summary>
+		/// Check for updates synchronouly, for a callback that simply checks the 
+        /// number of updates available.
+		/// </summary>
+		/// <param name="source">Updates source to use</param>
+		/// <param name="callback">Callback function to call when done</param>
+		/// <returns>true if successful and updates exist</returns>
+        public bool CheckForUpdates(IUpdateSource source, Action<int> callback)
+        {
+            return CheckForUpdates_Internal(source, callback, null);
+        }
+
+        /// <summary>
+		/// Check for updates synchronouly, for a callback that processes the list
+        /// update tasks.
+		/// </summary>
+		/// <param name="source">Updates source to use</param>
+		/// <param name="callback">Callback function to call when done</param>
+		/// <returns>true if successful and updates exist</returns>
+        public bool CheckForUpdates(IUpdateSource source, Action<IList<IUpdateTask>> callback)
+        {
+            return CheckForUpdates_Internal(source, null, callback);
+        }
+
+        /// <summary>
 		/// Check for updates synchronouly
 		/// </summary>
 		/// <param name="source">Updates source to use</param>
 		/// <param name="callback">Callback function to call when done</param>
 		/// <returns>true if successful and updates exist</returns>
-        private bool CheckForUpdates(IUpdateSource source, Action<int> callback)
+        private bool CheckForUpdates_Internal(IUpdateSource source, Action<int> countCallback, Action<IList<IUpdateTask>> listCallback)
         {
         	LatestError = null;
 
@@ -157,7 +181,8 @@ namespace NAppUpdate.Framework
             if (ShouldStop) return false;
 
             State = UpdateProcessState.Checked;
-            if (callback != null) callback.BeginInvoke(UpdatesToApply.Count, null, null);
+            if (countCallback != null) countCallback.BeginInvoke(UpdatesAvailable, null, null);
+            if (listCallback != null) listCallback.BeginInvoke(UpdatesToApply, null, null);
 
             if (UpdatesToApply.Count > 0)
                 return true;
@@ -171,7 +196,16 @@ namespace NAppUpdate.Framework
 		/// <param name="callback">Callback function to call when done</param>
         public void CheckForUpdateAsync(Action<int> callback)
         {
-            CheckForUpdateAsync(UpdateSource, callback);
+            CheckForUpdateAsync_Internal(UpdateSource, callback, null);
+        }
+
+		/// <summary>
+		/// Check for updates asynchronously
+		/// </summary>
+		/// <param name="callback">Callback function to call when done</param>
+        public void CheckForUpdateAsync(Action<IList<IUpdateTask>> callback)
+        {
+            CheckForUpdateAsync_Internal(UpdateSource, null, callback);
         }
 
 		/// <summary>
@@ -179,7 +213,17 @@ namespace NAppUpdate.Framework
 		/// </summary>
 		/// <param name="source">Update source to use</param>
 		/// <param name="callback">Callback function to call when done</param>
-        public void CheckForUpdateAsync(IUpdateSource source, Action<int> callback)
+        public void CheckForUpdateAsync(IUpdateSource source, Action<IList<IUpdateTask>> callback)
+        {
+            CheckForUpdateAsync_Internal(source, null, callback);
+        }
+
+		/// <summary>
+		/// Check for updates asynchronously
+		/// </summary>
+		/// <param name="source">Update source to use</param>
+		/// <param name="callback">Callback function to call when done</param>
+        private void CheckForUpdateAsync_Internal(IUpdateSource source, Action<int> countCallback, Action<IList<IUpdateTask>> listCallback)
         {
         	if (IsWorking) return;
 
@@ -187,13 +231,16 @@ namespace NAppUpdate.Framework
         	                            	{
 												try
 												{
-													CheckForUpdates(source, callback);
+                                                    CheckForUpdates_Internal(source, countCallback, listCallback);
 												}
 												catch (Exception ex)
 												{
 													// TODO: Better error handling
 													LatestError = ex.ToString();
-													callback.BeginInvoke(-1, null, null);
+                                                    if (countCallback != null) 
+                                                        countCallback.BeginInvoke(-1, null, null);
+                                                    if (listCallback != null)
+                                                        listCallback.BeginInvoke(null, null, null);
 												}
         	                            	}) {IsBackground = true};
         	_updatesThread.Start();

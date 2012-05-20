@@ -39,7 +39,7 @@ namespace NAppUpdate.Framework.Conditions
         }
         #endregion
 
-        private class ConditionItem
+        public class ConditionItem
         {
             public ConditionItem(IUpdateCondition cnd, ConditionType typ)
             {
@@ -56,7 +56,7 @@ namespace NAppUpdate.Framework.Conditions
             Attributes = new Dictionary<string, string>();
         }
 
-        private LinkedList<ConditionItem> ChildConditions { get; set; }
+        public LinkedList<ConditionItem> ChildConditions { get; set; }
         public int ChildConditionsCount { get { if (ChildConditions != null) return ChildConditions.Count; return 0; } }
 
         public void AddCondition(IUpdateCondition cnd)
