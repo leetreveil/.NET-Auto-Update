@@ -54,6 +54,12 @@ namespace NAppUpdate.Framework
 
         public string TempFolder { get; set; }
         public string UpdateProcessName { get; set; }
+        public System.IO.Stream IconStream
+        {
+            get { 
+                return System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("NAppUpdate.Framework.updateicon.ico"); 
+            }
+        }
 		
 		/// <summary>
 		/// The name for the executable file to extract and run cold updates with. Default is foo.exe. You can change
