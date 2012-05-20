@@ -181,7 +181,7 @@ namespace NAppUpdate.Framework
             if (ShouldStop) return false;
 
             State = UpdateProcessState.Checked;
-            if (countCallback != null) countCallback.BeginInvoke(UpdatesAvailable, null, null);
+            if (countCallback != null) countCallback.BeginInvoke(UpdatesToApply.Count, null, null);
             if (listCallback != null) listCallback.BeginInvoke(UpdatesToApply, null, null);
 
             if (UpdatesToApply.Count > 0)
@@ -358,6 +358,11 @@ namespace NAppUpdate.Framework
 				LatestError = null;
             	bool revertToDefaultBackupPath = true;
 
+                // Set current directory the the application directory
+                // this prevents the updater from writing to e.g. c:\windows\system32
+                // if the process is started by autorun on windows logon.
+                Environment.CurrentDirectory = Path.GetDirectoryName(ApplicationPath);
+
                 // Make sure the current backup folder is accessible for writing from this process
                 string backupParentPath = Path.GetDirectoryName(BackupFolder) ?? string.Empty;
                 if (Directory.Exists(backupParentPath) && Utils.PermissionsCheck.HaveWritePermissionsForFolder(backupParentPath))
@@ -408,6 +413,7 @@ namespace NAppUpdate.Framework
 					}
 				}
 
+                bool runPrivileged = false;
             	var executeOnAppRestart = new Dictionary<string, object>();
                 State = UpdateProcessState.RollbackRequired;
                 foreach (var task in UpdatesToApply)
@@ -418,6 +424,9 @@ namespace NAppUpdate.Framework
                         // TODO: notify about task execution failure using exceptions
                     	continue;
                     }
+
+                    // run updater privileged if required
+                    runPrivileged = runPrivileged || task.MustRunPrivileged();
 
 					// Add any pending cold updates to the list
                 	var en = task.GetColdUpdates();
@@ -441,7 +450,8 @@ namespace NAppUpdate.Framework
 					if (!Directory.Exists(TempFolder))
 						Directory.CreateDirectory(TempFolder);
 
-					var updStarter = new UpdateStarter(Path.Combine(TempFolder, UpdateExecutableName), executeOnAppRestart, UpdateProcessName);
+					var updStarter = new UpdateStarter(Path.Combine(TempFolder, UpdateExecutableName),
+                                                executeOnAppRestart, UpdateProcessName, runPrivileged);
                     updStarter.SetOptions(updaterDoLogging, updaterShowConsole);
                     bool createdNew;
                     using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
