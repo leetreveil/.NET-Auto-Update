@@ -294,6 +294,18 @@ namespace NAppUpdate.Framework
     	/// <returns>True if successful (unless a restart was required</returns>
     	public bool ApplyUpdates(bool relaunchApplication)
         {
+            return ApplyUpdates(relaunchApplication, false, false);
+        }
+
+       	/// <summary>
+    	/// Starts the updater executable and sends update data to it
+    	/// </summary>
+		/// <param name="relaunchApplication">true if relaunching the caller application is required; false otherwise</param>
+        /// <param name="updaterDoLogging">true if the updater writes to a log file; false otherwise</param>
+        /// <param name="updaterShowConsole">true if the updater shows the console window; false otherwise</param>
+    	/// <returns>True if successful (unless a restart was required</returns>
+    	public bool ApplyUpdates(bool relaunchApplication, bool updaterDoLogging, bool updaterShowConsole)
+        {
             lock (UpdatesToApply)
             {
 				LatestError = null;
@@ -383,6 +395,7 @@ namespace NAppUpdate.Framework
 						Directory.CreateDirectory(TempFolder);
 
 					var updStarter = new UpdateStarter(Path.Combine(TempFolder, UpdateExecutableName), executeOnAppRestart, UpdateProcessName);
+                    updStarter.SetOptions(updaterDoLogging, updaterShowConsole);
                     bool createdNew;
                     using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
                     {

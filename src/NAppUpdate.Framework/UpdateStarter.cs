@@ -54,6 +54,8 @@ namespace NAppUpdate.Framework
         private readonly string _updaterPath;
         private readonly Dictionary<string, object> _updateData;
         private readonly string _syncProcessName;
+        private bool _updaterDoLogging;
+        private bool _updaterShowConsole;
 
         public UpdateStarter(string pathWhereUpdateExeShouldBeCreated,
             Dictionary<string, object> updateData, string syncProcessName)
@@ -61,6 +63,12 @@ namespace NAppUpdate.Framework
             _updaterPath = pathWhereUpdateExeShouldBeCreated;
             _updateData = updateData;
             _syncProcessName = syncProcessName;
+        }
+
+        public void SetOptions(bool updaterDoLogging, bool updaterShowConsole)
+        {
+            _updaterDoLogging = updaterDoLogging;
+            _updaterShowConsole = updaterShowConsole;
         }
 
         public bool Start()
@@ -86,8 +94,16 @@ namespace NAppUpdate.Framework
                            		UseShellExecute = true,
                            		WorkingDirectory = Environment.CurrentDirectory,
                            		FileName = _updaterPath,
-                           		Arguments = string.Format(@"""{0}""", _syncProcessName),
+                           		Arguments = string.Format(@"""{0}"" {1} {2}", _syncProcessName,
+                                _updaterShowConsole ? "-showConsole" : "",
+                                _updaterDoLogging ? "-log" : ""),
                            	};
+                if (!_updaterShowConsole)
+                {
+                    info.WindowStyle = ProcessWindowStyle.Hidden;
+                    info.CreateNoWindow = true;
+                }
+
 				//If we can't write to the destination folder, then lets try elevating priviledges.
 				if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory)) { info.Verb = "runas"; }
             	
