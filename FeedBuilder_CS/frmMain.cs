@@ -219,7 +219,6 @@ namespace FeedBuilder
 			XmlElement task = null;
 			XmlElement conds = null;
 			XmlElement cond = null;
-			bool pastFirst = false;
 
 			doc.AppendChild(dec);
 			feed = doc.CreateElement("Feed");
@@ -238,7 +237,6 @@ namespace FeedBuilder
 				string destFile = Path.Combine(Path.GetDirectoryName(txtFeedXML.Text.Trim()), thisItem.Text);
 
 				if (thisItem.Checked) {
-					pastFirst = false;
 
 					var _with2 = (FileInfoEx)thisItem.Tag;
 					task = doc.CreateElement("FileUpdateTask");
@@ -247,41 +245,37 @@ namespace FeedBuilder
 					conds = doc.CreateElement("Conditions");
 
 					//Version
-					if (chkVersion.Checked) {
+					if (chkVersion.Checked && !string.IsNullOrEmpty(_with2.FileVersion)) {
 						cond = doc.CreateElement("FileVersionCondition");
+                        cond.SetAttribute("type", "or");
 						cond.SetAttribute("what", "below");
 						cond.SetAttribute("version", _with2.FileVersion);
 						conds.AppendChild(cond);
-						pastFirst = true;
 					}
 
 					//Size
 					if (chkSize.Checked) {
 						cond = doc.CreateElement("FileSizeCondition");
-						if (pastFirst)
-							cond.SetAttribute("type", "not");
+                        cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("what", "is");
 						cond.SetAttribute("size", _with2.FileInfo.Length.ToString());
 						conds.AppendChild(cond);
-						pastFirst = true;
 					}
 
 					//Date
 					if (chkDate.Checked) {
-						cond = doc.CreateElement("FileVersionCondition");
-						if (pastFirst)
-							cond.SetAttribute("type", "not");
-						cond.SetAttribute("what", "below");
+                        cond = doc.CreateElement("FileDateCondition");
+                        cond.SetAttribute("type", "or");
+						cond.SetAttribute("what", "older");
+                        // local timestamp, not UTC
 						cond.SetAttribute("timestamp", _with2.FileInfo.LastWriteTime.ToFileTime().ToString());
 						conds.AppendChild(cond);
-						pastFirst = true;
 					}
 
 					//Hash
 					if (chkHash.Checked) {
 						cond = doc.CreateElement("FileChecksumCondition");
-						if (pastFirst)
-							cond.SetAttribute("type", "not");
+                        cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("checksumType", "sha256");
 						cond.SetAttribute("checksum", _with2.Hash);
 						conds.AppendChild(cond);
