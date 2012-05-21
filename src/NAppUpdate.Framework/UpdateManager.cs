@@ -203,6 +203,15 @@ namespace NAppUpdate.Framework
 		/// Check for updates asynchronously
 		/// </summary>
 		/// <param name="callback">Callback function to call when done</param>
+        public void CheckForUpdateAsync(IUpdateSource source, Action<int> callback)
+        {
+            CheckForUpdateAsync_Internal(source, callback, null);
+        }
+
+		/// <summary>
+		/// Check for updates asynchronously
+		/// </summary>
+		/// <param name="callback">Callback function to call when done</param>
         public void CheckForUpdateAsync(Action<IList<IUpdateTask>> callback)
         {
             CheckForUpdateAsync_Internal(UpdateSource, null, callback);
