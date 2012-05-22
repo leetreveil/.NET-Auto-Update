@@ -106,6 +106,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ImageBehavior.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
@@ -138,6 +139,7 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="throbber.gif" />
     <None Include="app.config" />
     <Content Include="SampleAppUpdateFeed.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

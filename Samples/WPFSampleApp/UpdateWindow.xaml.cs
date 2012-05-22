@@ -42,6 +42,13 @@ namespace NAppUpdate.SampleApp
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
         {
+            ShowThrobber();
+            // dummy time delay for demonstration purposes
+            System.Timers.Timer t = new System.Timers.Timer(5000);
+            t.AutoReset = false;
+            t.Start();
+            while (t.Enabled) { DoEvents(); }
+
             _updateManager.PrepareUpdatesAsync(finished =>
                                                    {
                                                        try
@@ -78,6 +85,31 @@ namespace NAppUpdate.SampleApp
                                                    {
                                                        this.DownloadProgress = progressPercent;
                                                    }*/
+        }
+
+        static void DoEvents()
+        {
+            DispatcherFrame frame = new DispatcherFrame(true);
+            Dispatcher.CurrentDispatcher.BeginInvoke
+            (
+            DispatcherPriority.Background,
+            (System.Threading.SendOrPostCallback)delegate(object arg)
+            {
+                var f = arg as DispatcherFrame;
+                f.Continue = false;
+            },
+            frame
+            );
+            Dispatcher.PushFrame(frame);
+        }
+
+        private void ShowThrobber()
+        {
+            btnInstallAtExit.Visibility = Visibility.Collapsed;
+            btnInstallNow.Visibility = Visibility.Collapsed;
+            imgThrobber.Height = 30;
+            imgThrobber.Visibility = Visibility.Visible;
+            lblDownload.Visibility = Visibility.Visible;
         }
 
         private void InstallAtExit_Click(object sender, RoutedEventArgs e)

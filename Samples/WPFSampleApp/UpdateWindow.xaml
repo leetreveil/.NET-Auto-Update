@@ -1,7 +1,10 @@
 ﻿<Window x:Class="NAppUpdate.SampleApp.UpdateWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="SampleApp Update" Height="350" Width="400" ResizeMode="CanResize" Topmost="True">
+    xmlns:local="clr-namespace:NAppUpdate.SampleApp"
+    Title="SampleApp Update" Height="350" Width="400" ResizeMode="CanResize" Topmost="True"
+        MinHeight="350" MinWidth="300"
+        >
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -37,7 +40,9 @@
                 <TextBlock Text="{Binding UpdateDate}" />
             </StackPanel>
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Description: "/>
-            <TextBlock Grid.Row="2" Grid.Column="1" FontSize="12" Text="{Binding UpdateDescription}" TextWrapping="Wrap" />
+            <ScrollViewer Grid.Row="2" Grid.Column="1" VerticalScrollBarVisibility="Auto" MaxHeight="60" >
+                <TextBlock FontSize="12" Text="{Binding UpdateDescription}" TextWrapping="Wrap" />
+            </ScrollViewer>
             <TextBlock Grid.Row="3" Grid.Column="0" Text="Size of update: "/>
             <TextBlock Grid.Row="3" Grid.Column="1" FontSize="12" Text="{Binding UpdateSize}"/>
         </Grid>
@@ -66,9 +71,12 @@
             <!-- show buttons first -->
             <Button      Grid.Row="0" Height="30" Margin="3,10,3,3" x:Name="btnInstallAtExit" Content="Install When I Exit" Click="InstallAtExit_Click" />
             <Button      Grid.Row="1" Height="30" Margin="3,3,3,10" x:Name="btnInstallNow" Content="Install Now" Click="InstallNow_Click" />
-            <!-- hide these until a button is pressed -->
-            <ProgressBar Grid.Row="0" Height="30" Margin="3,10,3,3" x:Name="prgDownload" Value="{Binding DownloadProgress}" Visibility="Collapsed"/>
-            <TextBlock   Grid.Row="1" Height="30" Margin="3,3,3,10" x:Name="lblDownload" Text="Downloading..." Visibility="Collapsed" />
+            <!-- hide progress items until a button is pressed (use a throbber if actual progress bar can't be used) -->
+            <!-- throbber image was generated at http://ajaxload.info/ -->
+            <TextBlock   Grid.Row="0" Height="30" Margin="3,10,3,3" x:Name="lblDownload" Visibility="Collapsed" Text="Downloading..." HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+            <Image       Grid.Row="1" Height="0" Margin="3,3,3,10" x:Name="imgThrobber" local:ImageBehavior.AnimatedSource="/NAppUpdate.SampleApp;component/throbber.gif" />
+            <!--<ProgressBar Grid.Row="0" Height="30" Margin="3,10,3,3" x:Name="prgDownload" Value="{Binding DownloadProgress}" Visibility="Collapsed"/>-->
+
         </Grid>
 
     </Grid>
