@@ -53,6 +53,8 @@ namespace FeedBuilder
 					} else {
 						_argParser.ShowGui = true;
 						_argParser.Build = false;
+                        this.FileName = _argParser.FileName;
+                        UpdateTitle();
 					}
 				}
 				InitializeFormSettings();
@@ -90,6 +92,14 @@ namespace FeedBuilder
 				Settings.Default.IgnoreFiles = new System.Collections.Specialized.StringCollection();
 			ReadFiles();
 		}
+
+        private void UpdateTitle()
+        {
+            if (string.IsNullOrEmpty(this.FileName))
+                this.Text = "FeedBuilder"; 
+            else
+                this.Text = "FeedBuilder - " + this.FileName;
+        }
 
 		private void SaveFormSettings()
 		{
@@ -428,6 +438,7 @@ namespace FeedBuilder
 				FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
 				p.SaveAs(this.FileName);
 			}
+            UpdateTitle();
 		}
 
 		#endregion

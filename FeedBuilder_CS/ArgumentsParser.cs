@@ -37,15 +37,31 @@ namespace FeedBuilder
 				} else if (arg == "openoutputs") {
 					this.OpenOutputsFolder = true;
 					this.HasArgs = true;
-				} else if (File.Exists(arg)) {
-					this.FileName = arg;
+                } else if (IsValidFileName(thisArg)) {
+                    // keep the same character casing as we were originally provided
+					this.FileName = thisArg;
 					this.HasArgs = true;
-				} else {
+				} else  {
 					Console.WriteLine("Unrecognized arg '{0}'", arg);
 				}
 
 			}
+
 		}
+
+        // this merely checks whether the parent folder exists and if it does, 
+        // we say the filename is valid
+        private bool IsValidFileName(string filename)
+        {
+            if (File.Exists(filename)) return true;
+            try
+            {
+                var d = Directory.GetParent(filename);
+                if (d.Exists) return true;
+            }
+            catch { }
+            return false;
+        }
 
 		private string CleanArg(string arg)
 		{
