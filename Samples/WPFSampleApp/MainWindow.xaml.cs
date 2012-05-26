@@ -54,8 +54,16 @@ namespace NAppUpdate.SampleApp
                             else
                                 Dispatcher.Invoke(showUpdateAction);
                         }
+                        else if (updatesCount == 0)
+                        {
+                            MessageBox.Show("You already have the latest software.\n\n" +
+                                "   Version " + System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString());
+                        }
                     }
-                    catch (Exception ex) { MessageBox.Show("Could not start UpdateWindow: \n" + ex.Message); }
+                    catch (Exception ex) 
+                    { 
+                        MessageBox.Show("Could not start UpdateWindow: \n" + ex.Message); 
+                    }
                 });
         }
     }
