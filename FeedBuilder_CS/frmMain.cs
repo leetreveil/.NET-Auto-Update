@@ -73,7 +73,7 @@ namespace FeedBuilder
 		{
 			if (!string.IsNullOrEmpty(Settings.Default.OutputFolder) && Directory.Exists(Settings.Default.OutputFolder))
 				txtOutputFolder.Text = Settings.Default.OutputFolder;
-			if (!string.IsNullOrEmpty(Settings.Default.FeedXML) && Directory.Exists(Path.GetDirectoryName(Settings.Default.FeedXML)))
+			if (!string.IsNullOrEmpty(Settings.Default.FeedXML))
 				txtFeedXML.Text = Settings.Default.FeedXML;
 			if (!string.IsNullOrEmpty(Settings.Default.BaseURL))
 				txtBaseURL.Text = Settings.Default.BaseURL;
@@ -142,7 +142,12 @@ namespace FeedBuilder
 			Build();
 		}
 
-		private void btnNew_Click(System.Object sender, System.EventArgs e)
+        private void btnOpenOutputs_Click(object sender, EventArgs e)
+        {
+            OpenOutputsFolder();
+        }
+
+        private void btnNew_Click(System.Object sender, System.EventArgs e)
 		{
 			Settings.Default.Reset();
 			InitializeFormSettings();
@@ -231,6 +236,11 @@ namespace FeedBuilder
                 Console.WriteLine(msg);
                 return;
             }
+            // If the target folder doesn't exist, create a path to it
+            string dest = txtFeedXML.Text.Trim();
+            var destDir = Directory.GetParent(new FileInfo(dest).FullName);
+            if (!Directory.Exists(destDir.FullName)) Directory.CreateDirectory(destDir.FullName);
+
 			XmlDocument doc = new XmlDocument();
 			XmlDeclaration dec = doc.CreateXmlDeclaration("1.0", "utf-8", null);
 			XmlElement feed = null;
@@ -326,14 +336,10 @@ namespace FeedBuilder
 					tasks.AppendChild(task);
 
 					if (chkCopyFiles.Checked) {
-						try {
-							if (File.Exists(destFile))
-								File.Delete(destFile);
-							File.Copy(_with2.FileInfo.FullName, destFile);
-							itemsCopied += 1;
-						} catch (IOException) {
-							itemsFailed += 1;
-						}
+                        if (CopyFile(_with2.FileInfo.FullName, destFile))
+                            itemsCopied++;
+                        else
+                            itemsFailed++;
 					}
 				} else {
 					try {
@@ -367,12 +373,60 @@ namespace FeedBuilder
 				Console.WriteLine("{0,5} items failed", itemsFailed);
 		}
 
+        private bool CopyFile(string sourceFile, string destFile)
+        {
+            // If the target folder doesn't exist, create the path to it
+            var fi = new FileInfo(destFile);
+            var d = Directory.GetParent(fi.FullName);
+            if (!Directory.Exists(d.FullName)) CreateDirectoryPath(d.FullName);
+
+            // Copy with delayed retry
+            int retries = 3;
+            while (retries > 0)
+            {
+                try
+                {
+                    if (File.Exists(destFile))
+                        File.Delete(destFile);
+                    File.Copy(sourceFile, destFile);
+                    retries = 0; // success
+                    return true;
+                }
+                catch (IOException)
+                {
+                    // Failed... let's try sleeping a bit (slow disk maybe)
+                    if (retries-- > 0)
+                        System.Threading.Thread.Sleep(200);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // same handling as IOException
+                    if (retries-- > 0) 
+                        System.Threading.Thread.Sleep(200);
+                }
+            }
+            return false;
+        }
+
+        private void CreateDirectoryPath(string directoryPath)
+        {
+            // Create the folder/path if it doesn't exist, with delayed retry
+            int retries = 3;
+            while (retries > 0 && !Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+                if(retries-- < 3) System.Threading.Thread.Sleep(200);
+            }
+        }
+
 		private void OpenOutputsFolder()
 		{
-			var _with3 = new Process();
-			_with3.StartInfo.UseShellExecute = true;
-			_with3.StartInfo.FileName = Path.GetDirectoryName(txtFeedXML.Text.Trim());
-			_with3.Start();
+            string dir = Path.GetDirectoryName(txtFeedXML.Text.Trim());
+            CreateDirectoryPath(dir);
+			var process = new Process();
+            process.StartInfo.UseShellExecute = true;
+            process.StartInfo.FileName = dir;
+            process.Start();
 		}
 
 		private int GetImageIndex(string ext)
@@ -473,6 +527,33 @@ namespace FeedBuilder
 		}
 
 		#endregion
+
+        private void frmMain_DragEnter(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (files.Length == 0) return;
+            if (files[0].EndsWith(".config"))
+                e.Effect = DragDropEffects.Move;
+            else e.Effect = DragDropEffects.None;
+        }
+
+        private void frmMain_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (files.Length == 0) return;
+            try
+            {
+                string fileName = files[0];
+                FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
+                p.LoadFrom(fileName);
+                this.FileName = fileName;
+                InitializeFormSettings();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("The file could not be opened: \n" + ex.Message);
+            }
+        }
 
 	}
 }
