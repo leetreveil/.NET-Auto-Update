@@ -91,6 +91,7 @@ namespace FeedBuilder
 			if (Settings.Default.IgnoreFiles == null)
 				Settings.Default.IgnoreFiles = new System.Collections.Specialized.StringCollection();
 			ReadFiles();
+            UpdateTitle();
 		}
 
         private void UpdateTitle()
@@ -222,6 +223,14 @@ namespace FeedBuilder
 		private void Build()
 		{
 			Console.WriteLine("Building NAppUpdater feed '{0}'", txtBaseURL.Text.Trim());
+            if (string.IsNullOrEmpty(txtFeedXML.Text))
+            {
+                string msg = "The feed file location needs to be defined.\n" +
+                    "The outputs cannot be generated without this.";
+                if (_argParser.ShowGui) MessageBox.Show(msg);
+                Console.WriteLine(msg);
+                return;
+            }
 			XmlDocument doc = new XmlDocument();
 			XmlDeclaration dec = doc.CreateXmlDeclaration("1.0", "utf-8", null);
 			XmlElement feed = null;
@@ -244,7 +253,23 @@ namespace FeedBuilder
 			int itemsSkipped = 0;
 			int itemsFailed = 0;
 			foreach (ListViewItem thisItem in lstFiles.Items) {
-				string destFile = Path.Combine(Path.GetDirectoryName(txtFeedXML.Text.Trim()), thisItem.Text);
+				string destFile = "";
+                string folder = "";
+                string filename = "";
+                try 
+                {
+                    folder = Path.GetDirectoryName(txtFeedXML.Text.Trim());
+                    filename = thisItem.Text;
+                    destFile = Path.Combine(folder, filename); 
+                }
+                catch { }
+                if (destFile == "" || folder == "" || filename == "")
+                {
+                    string msg = string.Format("The file could not be pathed:\nFolder:'{0}'\nFile:{1}", folder, filename);
+                    if (_argParser.ShowGui) MessageBox.Show(msg);
+                    Console.WriteLine(msg);
+                    continue;
+                }
 
 				if (thisItem.Checked) {
 

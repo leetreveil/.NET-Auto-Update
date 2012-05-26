@@ -56,6 +56,9 @@ namespace FeedBuilder
             if (File.Exists(filename)) return true;
             try
             {
+                // the URI test... filter out things that aren't even trying to look like filenames
+                Uri u = new Uri(filename);
+                // see if the arg's parent folder exists
                 var d = Directory.GetParent(filename);
                 if (d.Exists) return true;
             }
