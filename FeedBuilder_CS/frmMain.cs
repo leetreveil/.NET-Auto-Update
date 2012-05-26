@@ -277,6 +277,12 @@ namespace FeedBuilder
 					task = doc.CreateElement("FileUpdateTask");
 					task.SetAttribute("localPath", _with2.FileInfo.Name);
 
+                    // generate FileUpdateTask metadata items
+                    task.SetAttribute("lastModified", _with2.FileInfo.LastWriteTime.ToFileTime().ToString());
+                    task.SetAttribute("fileSize", _with2.FileInfo.Length.ToString());
+                    if (!string.IsNullOrEmpty(_with2.FileVersion))
+                        task.SetAttribute("version", _with2.FileVersion);
+
 					conds = doc.CreateElement("Conditions");
 
 					//Version

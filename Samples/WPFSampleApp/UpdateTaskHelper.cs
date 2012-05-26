@@ -39,6 +39,10 @@ namespace NAppUpdate.SampleApp
                 var taskInfo = new UpdateTaskInfo();
                 taskInfo.FileName = fileTask.LocalPath;
                 taskInfo.FileDescription = fileTask.Description;
+                taskInfo.FileDate = fileTask.LastModified;
+                taskInfo.FileSize = fileTask.FileSize;
+                taskInfo.FileVersion = fileTask.Version;
+
 
                 string appExe = System.Reflection.Assembly.GetExecutingAssembly().Location;
                 bool isAppExe = fileTask.LocalPath == null ? true : appExe == new FileInfo(fileTask.LocalPath).FullName;
@@ -48,6 +52,7 @@ namespace NAppUpdate.SampleApp
                     this.UpdateDescription = taskInfo.FileDescription;
                 }
 
+                /*
                 foreach (BooleanCondition.ConditionItem condition in task.UpdateConditions.ChildConditions)
                 {
                     var fileSize = condition._Condition as FileSizeCondition;
@@ -79,6 +84,7 @@ namespace NAppUpdate.SampleApp
                     }
                 }
                 taskListInfo.Add(taskInfo);
+            */
             }
             this.TaskListInfo = taskListInfo;
             return taskListInfo;
