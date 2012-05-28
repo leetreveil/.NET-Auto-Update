@@ -262,6 +262,7 @@ namespace FeedBuilder
 			int itemsCleaned = 0;
 			int itemsSkipped = 0;
 			int itemsFailed = 0;
+            int itemsMissingConditions = 0;
 			foreach (ListViewItem thisItem in lstFiles.Items) {
 				string destFile = "";
                 string folder = "";
@@ -282,7 +283,6 @@ namespace FeedBuilder
                 }
 
 				if (thisItem.Checked) {
-
 					var _with2 = (FileInfoEx)thisItem.Tag;
 					task = doc.CreateElement("FileUpdateTask");
 					task.SetAttribute("localPath", _with2.FileInfo.Name);
@@ -307,7 +307,12 @@ namespace FeedBuilder
 					//Size
 					if (chkSize.Checked) {
 						cond = doc.CreateElement("FileSizeCondition");
-                        cond.SetAttribute("type", "or-not");
+                        // If we also have an "age-sensitive" type of condition checked, 
+                        // we probably want this to be AND
+                        if (chkVersion.Checked || chkDate.Checked || chkSize.Checked)
+                            cond.SetAttribute("type", "and-not");
+                        else
+                            cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("what", "is");
 						cond.SetAttribute("size", _with2.FileInfo.Length.ToString());
 						conds.AppendChild(cond);
@@ -326,12 +331,19 @@ namespace FeedBuilder
 					//Hash
 					if (chkHash.Checked) {
 						cond = doc.CreateElement("FileChecksumCondition");
-                        cond.SetAttribute("type", "or-not");
+                        // If we also have an "age-sensitive" type of condition checked, 
+                        // we probably want this to be AND
+                        if (chkVersion.Checked || chkDate.Checked || chkSize.Checked)
+                            cond.SetAttribute("type", "and-not");
+                        else
+                            cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("checksumType", "sha256");
 						cond.SetAttribute("checksum", _with2.Hash);
 						conds.AppendChild(cond);
 					}
 
+                    if (conds.ChildNodes.Count == 0) 
+                        itemsMissingConditions++;
 					task.AppendChild(conds);
 					tasks.AppendChild(task);
 
@@ -371,6 +383,8 @@ namespace FeedBuilder
 				Console.WriteLine("{0,5} items skipped", itemsSkipped);
 			if (itemsFailed > 0)
 				Console.WriteLine("{0,5} items failed", itemsFailed);
+            if (itemsMissingConditions > 0)
+                Console.WriteLine("{0,5} items without any conditions", itemsMissingConditions);
 		}
 
         private bool CopyFile(string sourceFile, string destFile)
