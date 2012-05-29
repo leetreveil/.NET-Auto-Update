@@ -39,10 +39,15 @@ namespace NAppUpdate.Updater
         private static void Main()
         {
             //Debugger.Launch();
+            string appPath, appDir, backupFolder;
+            string tempFolder = "";
             try
             {
 				_args = ArgumentsParser.Get();
-	            _logger = new Logger("NAppUpdate.log");
+                string logFile = System.Reflection.Assembly.GetEntryAssembly().Location;
+                logFile = Path.Combine(Path.GetDirectoryName(logFile), "logs");
+                logFile = Path.Combine(logFile, "NauUpdate.log");
+	            _logger = new Logger(logFile);
 	            _args.ParseCommandLineArgs();
                 if (_args.ShowConsole)
                 {
@@ -51,6 +56,8 @@ namespace NAppUpdate.Updater
                 }
 	            Log("==========================================");
                 Log("Starting...");
+                if (_args.Log)
+                    _console.WriteLine("Logging to {0}", logFile);
 
                 // Get the update process name, to be used to create a named pipe and to wait on the application
                 // to quit
@@ -91,7 +98,6 @@ namespace NAppUpdate.Updater
                     }
                 }
 
-                string appPath, appDir, tempFolder, backupFolder;
                 bool relaunchApp = true, updateSuccessful = true;
                 {
                     Dictionary<string, object> dict = null;
@@ -142,11 +148,11 @@ namespace NAppUpdate.Updater
                                 {
                                     if (!a.Do())
                                     {
-                                        Log("{0}Update action failed: {1}", tabSpace, a.Do().ToString());
+                                        Log("{0}Update action failed: {1}", tabSpace, en.Current.Value);
                                         updateSuccessful = false;
                                         break;
                                     }
-                                    else Log("{0}Update action succeeded: {1}", tabSpace, a.Do().ToString());
+                                    else Log("{0}Update action succeeded: {1}", tabSpace, en.Current.Value);
                                 }
                                 catch (Exception e)
                                 {
@@ -191,21 +197,6 @@ namespace NAppUpdate.Updater
 
             	//MessageBox.Show(string.Format("Re-launched process {0} with working dir {1}", appPath, appDir));
 
-            	// Delete the updater EXE and the temp folder)
-                Log("Removing updater and temp folder...");
-                try
-                {
-                    var Info = new ProcessStartInfo();
-                    //Application.ExecutablePath
-                    Info.Arguments = string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}"""
-                                   , tempFolder);
-                    Info.WindowStyle = ProcessWindowStyle.Hidden;
-                    Info.CreateNoWindow = true;
-                    Info.FileName = "cmd.exe";
-                    Process.Start(Info);
-                }
-                catch { /* ignore exceptions thrown while trying to clean up */ }
-
                 Log("All done.");
                 //Application.Exit();
             }
@@ -230,7 +221,32 @@ namespace NAppUpdate.Updater
                     _console.WriteLine("Press any key or close this window to exit.");
                     _console.ReadKey();
                 }
+                CleanUp(tempFolder);
                 Application.Exit();
+            }
+        }
+
+        private static void CleanUp(string tempFolder)
+        {
+            try
+            {
+                // Delete the updater EXE and the temp folder)
+                Log("Removing updater and temp folder...");
+                try
+                {
+                    var Info = new ProcessStartInfo();
+                    //Application.ExecutablePath
+                    Info.Arguments = string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}"""
+                                   , tempFolder);
+                    Info.WindowStyle = ProcessWindowStyle.Hidden;
+                    Info.CreateNoWindow = true;
+                    Info.FileName = "cmd.exe";
+                    Process.Start(Info);
+                }
+                catch { /* ignore exceptions thrown while trying to clean up */ }
+            }
+            catch (Exception ex)
+            {
             }
         }
 

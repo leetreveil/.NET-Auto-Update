@@ -54,6 +54,7 @@
             this.KeyPreview = true;
             this.Name = "ConsoleForm";
             this.Text = "Application Updater";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ConsoleForm_FormClosed);
             this.Load += new System.EventHandler(this.ConsoleForm_Load);
             this.ResumeLayout(false);
 

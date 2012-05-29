@@ -11,6 +11,7 @@ namespace NAppUpdate.Updater
         public Logger(string filename)
         {
             _filename = filename;
+            Directory.CreateDirectory(new FileInfo(filename).Directory.FullName);
         }
 
         public void Log(string message)

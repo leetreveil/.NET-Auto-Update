@@ -42,14 +42,28 @@ namespace NAppUpdate.Updater
             // attach the keypress event and then wait for it to receive something
             this.KeyPress += ConsoleForm_KeyPress;
             rtbConsole.ReadOnly = false;
-            while (_keyPresses == 0) Application.DoEvents();
+            while (_keyPresses == 0)
+            {
+                Application.DoEvents();
+                System.Threading.Thread.Sleep(100);
+            }
         }
 
         private int _keyPresses;
         private void ConsoleForm_KeyPress(object sender, KeyPressEventArgs e)
         {
+            HandleKeyPress();
+        }
+
+        private void ConsoleForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            HandleKeyPress(); // allow readkey to finish
+        }
+
+        private void HandleKeyPress()
+        {
             this.KeyPress -= ConsoleForm_KeyPress;
-            _keyPresses += 1;
+            _keyPresses++;
         }
 
     }
