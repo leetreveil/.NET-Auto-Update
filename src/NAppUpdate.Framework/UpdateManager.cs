@@ -156,6 +156,7 @@ namespace NAppUpdate.Framework
 		/// <param name="source">Updates source to use</param>
 		/// <param name="callback">Callback function to call when done</param>
 		/// <returns>true if successful and updates exist</returns>
+        [System.Diagnostics.DebuggerStepThrough()]
         private bool CheckForUpdates_Internal(IUpdateSource source, Action<int> countCallback, Action<IList<IUpdateTask>> listCallback)
         {
         	LatestError = null;

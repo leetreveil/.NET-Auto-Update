@@ -35,16 +35,36 @@ namespace NAppUpdate.Framework.Conditions
             if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                 return true;
 
-            DateTime localFileDateTime = File.GetLastWriteTime(localPath);
+            long localPlus = File.GetLastWriteTime(localPath).AddSeconds(2).ToFileTimeUtc();
+            long localMinus = File.GetLastWriteTime(localPath).AddSeconds(-2).ToFileTimeUtc();
+            long localFileDateTime = File.GetLastWriteTime(localPath).ToFileTimeUtc();
+            long remoteFileDateTime = Timestamp.ToFileTimeUtc();
+
+            // File timestamps seem to be off by a little bit (conversion rounding?)
+            // Does DST need to be taken into account?
+            bool result;
             switch (ComparisonType)
             {
                 case "newer":
-                    return localFileDateTime > Timestamp;
+                    result = localMinus > remoteFileDateTime;
+                    break;
                 case "is":
-                    return localFileDateTime.Equals(Timestamp);
+                    result = localMinus <= remoteFileDateTime && remoteFileDateTime <= localPlus;
+                    break;
                 default:
-                    return localFileDateTime < Timestamp; // == what="older"
+                    result = localPlus < remoteFileDateTime;
+                    break;
             }
+            //if (result)
+            //    MessageBox.Show(string.Format("{0}\n" +
+            //        "localFileDateTime:     {1} ({2})\n" +
+            //        "remoteFileDateTime: {3} ({4})\n" +
+            //        "result: {5} = {6}",
+            //        localPath,
+            //        localFileDateTime, DateTime.FromFileTimeUtc(localFileDateTime),
+            //        remoteFileDateTime, DateTime.FromFileTimeUtc(remoteFileDateTime),
+            //        ComparisonType, result));
+            return result;
         }
 
         #endregion
