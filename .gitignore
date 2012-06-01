@@ -26,3 +26,4 @@ Thumbs.db
 *.cache
 *\TestResults
 *\updater.exe
+*.orig
