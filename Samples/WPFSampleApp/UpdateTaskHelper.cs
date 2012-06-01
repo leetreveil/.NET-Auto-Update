@@ -39,10 +39,6 @@ namespace NAppUpdate.SampleApp
                 var taskInfo = new UpdateTaskInfo();
                 taskInfo.FileName = fileTask.LocalPath;
                 taskInfo.FileDescription = fileTask.Description;
-                taskInfo.FileDate = fileTask.LastModified;
-                taskInfo.FileSize = fileTask.FileSize;
-                taskInfo.FileVersion = fileTask.Version;
-
 
                 string appExe = System.Reflection.Assembly.GetExecutingAssembly().Location;
                 bool isAppExe = fileTask.LocalPath == null ? true : appExe == new FileInfo(fileTask.LocalPath).FullName;
@@ -89,15 +85,5 @@ namespace NAppUpdate.SampleApp
             this.TaskListInfo = taskListInfo;
             return taskListInfo;
         }
-
-        private string FormatCondition(BooleanCondition.ConditionItem condition, object value)
-        {
-            // Helps with debugging conditiions
-            //return string.Format("{0} {1}", condition, value);
-
-            // Better for production
-            return string.Format("{0}", value);
-        }
-
     }
 }
