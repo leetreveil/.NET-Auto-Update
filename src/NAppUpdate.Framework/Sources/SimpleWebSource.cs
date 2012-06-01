@@ -28,8 +28,10 @@ namespace NAppUpdate.Framework.Sources
 
         public string GetUpdatesFeed()
         {
-            string data;
+            string data = null;
 
+            try
+            {
         	var request = WebRequest.Create(FeedUrl);
 			request.Method = "GET";
             request.Proxy = Proxy;
@@ -42,6 +44,15 @@ namespace NAppUpdate.Framework.Sources
 				}
 			}
 
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine ("WebException: " + e.Message);
+            }
+            catch (UriFormatException e)
+            {
+                Console.WriteLine ("UriFormatWebException: " + e.Message);
+            }
         	return data;
         }
 
@@ -52,6 +63,8 @@ namespace NAppUpdate.Framework.Sources
                 fd = new FileDownloader(url);
             else if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute))
                 fd = new FileDownloader(new Uri(new Uri(baseUrl, UriKind.Absolute), url));
+            else if (Uri.IsWellFormedUriString(new Uri(new Uri(baseUrl), url).AbsoluteUri, UriKind.Absolute))
+                fd = new FileDownloader(new Uri(new Uri(baseUrl), url));
 
             if (fd == null)
                 throw new ArgumentException("The requested URI does not look valid: " + url, "url");

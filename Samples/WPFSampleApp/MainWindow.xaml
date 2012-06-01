@@ -2,7 +2,11 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="MainWindow" Height="300" Width="300" Loaded="Window_Loaded">
-    <Grid>
-        <TextBlock FontSize="14" Text="{Binding AppVersion}"/>
+    <Grid Margin="10" >
+        <StackPanel Orientation="Horizontal">
+            <TextBlock FontSize="14" Text="Current version:  "/>
+            <TextBlock FontSize="14" Text="{Binding AppVersion}" FontWeight="Bold"/>
+        </StackPanel>
+        <Button x:Name="btnCheckForUpdates" Content="Check for Updates" Height="23" Click="btnCheckForUpdates_Click" />
     </Grid>
 </Window>

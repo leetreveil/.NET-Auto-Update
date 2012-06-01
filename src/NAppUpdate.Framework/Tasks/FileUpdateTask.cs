@@ -25,6 +25,19 @@ namespace NAppUpdate.Framework.Tasks
         [NauField("sha256-checksum", "SHA-256 checksum to validate the file after download (optional)", false)]
         public string Sha256Checksum { get; set; }
 
+        #region File metadata fields
+
+        [NauField("lastModified", "Last modified timestamp of the file", false)]
+        public DateTime LastModified { get; set; }
+
+        [NauField("fileSize", "Size of the file in bytes", false)]
+        public long FileSize { get; set; }
+
+        [NauField("version", "Version of the file", false)]
+        public string Version { get; set; }
+
+        #endregion
+
         [NauField("hotswap",
             "Default update action is a cold update; check here if a hot file swap should be attempted"
             , false)]
@@ -99,11 +112,14 @@ namespace NAppUpdate.Framework.Tasks
                     File.Move(tempFile, destinationFile);
                 	tempFile = null;
                 }
-                catch (Exception ex)
+                catch //(Exception ex)
                 {
-                    // TODO: Don't rethrow, but rather revert and make this a cold update?
-                    throw new UpdateProcessFailedException("Couldn't move hot-swap file into position", ex);
-                }
+					// TODO: Don't rethrow, but rather revert and make this a cold update?
+					//throw new UpdateProcessFailedException("Couldn't move hot-swap file into position", ex);
+
+					// Seems to work quite nicely as an alternative to the exception
+					CanHotSwap = false;
+				}
             }
             return true;
         }
@@ -127,6 +143,14 @@ namespace NAppUpdate.Framework.Tasks
             return true;
         }
 
+        public bool MustRunPrivileged() {
+            if (File.Exists(destinationFile)) {
+                return !Utils.PermissionsCheck.HaveWritePermissionsForFileOrFolder(destinationFile);
+            } else {
+                return false;
+            }
+        }
+        
         #endregion
     }
 }

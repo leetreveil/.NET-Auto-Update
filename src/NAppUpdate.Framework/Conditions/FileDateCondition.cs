@@ -8,7 +8,7 @@ namespace NAppUpdate.Framework.Conditions
     {
         public FileDateCondition()
         {
-            Timestap = DateTime.MinValue;
+            Timestamp = DateTime.MinValue;
         }
 
         [NauField("localPath",
@@ -17,7 +17,7 @@ namespace NAppUpdate.Framework.Conditions
         public string LocalPath { get; set; }
 
         [NauField("timestamp", "Date-time to compare with", true)]
-        public DateTime Timestap { get; set; }
+        public DateTime Timestamp { get; set; }
 
         [NauField("what", "Comparison action to perform. Accepted values: newer, is, older. Default: older.", false)]
         public string ComparisonType { get; set; }
@@ -26,7 +26,7 @@ namespace NAppUpdate.Framework.Conditions
 
         public bool IsMet(Tasks.IUpdateTask task)
         {
-            if (Timestap == DateTime.MinValue)
+            if (Timestamp == DateTime.MinValue)
                 return true;
 
             string localPath = !string.IsNullOrEmpty(LocalPath)
@@ -35,16 +35,36 @@ namespace NAppUpdate.Framework.Conditions
             if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                 return true;
 
-            DateTime localFileDateTime = File.GetLastWriteTime(localPath);
+            long localPlus = File.GetLastWriteTime(localPath).AddSeconds(2).ToFileTimeUtc();
+            long localMinus = File.GetLastWriteTime(localPath).AddSeconds(-2).ToFileTimeUtc();
+            long localFileDateTime = File.GetLastWriteTime(localPath).ToFileTimeUtc();
+            long remoteFileDateTime = Timestamp.ToFileTimeUtc();
+
+            // File timestamps seem to be off by a little bit (conversion rounding?)
+            // Does DST need to be taken into account?
+            bool result;
             switch (ComparisonType)
             {
                 case "newer":
-                    return localFileDateTime > Timestap;
+                    result = localMinus > remoteFileDateTime;
+                    break;
                 case "is":
-                    return localFileDateTime.Equals(Timestap);
+                    result = localMinus <= remoteFileDateTime && remoteFileDateTime <= localPlus;
+                    break;
                 default:
-                    return localFileDateTime < Timestap; // == what="older"
+                    result = localPlus < remoteFileDateTime;
+                    break;
             }
+            //if (result)
+            //    MessageBox.Show(string.Format("{0}\n" +
+            //        "localFileDateTime:     {1} ({2})\n" +
+            //        "remoteFileDateTime: {3} ({4})\n" +
+            //        "result: {5} = {6}",
+            //        localPath,
+            //        localFileDateTime, DateTime.FromFileTimeUtc(localFileDateTime),
+            //        remoteFileDateTime, DateTime.FromFileTimeUtc(remoteFileDateTime),
+            //        ComparisonType, result));
+            return result;
         }
 
         #endregion
