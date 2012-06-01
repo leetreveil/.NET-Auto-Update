@@ -99,12 +99,9 @@ namespace NAppUpdate.Framework.Tasks
                     File.Move(tempFile, destinationFile);
                 	tempFile = null;
                 }
-                catch //(Exception ex)
+                catch
                 {
-					// TODO: Don't rethrow, but rather revert and make this a cold update?
-					//throw new UpdateProcessFailedException("Couldn't move hot-swap file into position", ex);
-
-					// Seems to work quite nicely as an alternative to the exception
+					// Failed hot swap file tasks should now downgrade to cold tasks automatically
 					CanHotSwap = false;
 				}
             }
