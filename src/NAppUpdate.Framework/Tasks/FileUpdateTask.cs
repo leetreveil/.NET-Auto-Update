@@ -25,19 +25,6 @@ namespace NAppUpdate.Framework.Tasks
         [NauField("sha256-checksum", "SHA-256 checksum to validate the file after download (optional)", false)]
         public string Sha256Checksum { get; set; }
 
-        #region File metadata fields
-
-        [NauField("lastModified", "Last modified timestamp of the file", false)]
-        public DateTime LastModified { get; set; }
-
-        [NauField("fileSize", "Size of the file in bytes", false)]
-        public long FileSize { get; set; }
-
-        [NauField("version", "Version of the file", false)]
-        public string Version { get; set; }
-
-        #endregion
-
         [NauField("hotswap",
             "Default update action is a cold update; check here if a hot file swap should be attempted"
             , false)]

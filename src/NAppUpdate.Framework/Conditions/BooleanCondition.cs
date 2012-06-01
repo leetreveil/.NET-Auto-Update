@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace NAppUpdate.Framework.Conditions
 {
@@ -39,7 +38,7 @@ namespace NAppUpdate.Framework.Conditions
         }
         #endregion
 
-        public class ConditionItem
+        private class ConditionItem
         {
             public ConditionItem(IUpdateCondition cnd, ConditionType typ)
             {
@@ -47,8 +46,8 @@ namespace NAppUpdate.Framework.Conditions
                 this._ConditionType = typ;
             }
 
-            public IUpdateCondition _Condition;
-            public ConditionType _ConditionType;
+            public readonly IUpdateCondition _Condition;
+            public readonly ConditionType _ConditionType;
         }
 
         public BooleanCondition()
@@ -56,7 +55,7 @@ namespace NAppUpdate.Framework.Conditions
             Attributes = new Dictionary<string, string>();
         }
 
-        public LinkedList<ConditionItem> ChildConditions { get; set; }
+        private LinkedList<ConditionItem> ChildConditions { get; set; }
         public int ChildConditionsCount { get { if (ChildConditions != null) return ChildConditions.Count; return 0; } }
 
         public void AddCondition(IUpdateCondition cnd)
