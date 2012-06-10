@@ -119,7 +119,6 @@ namespace NAppUpdate.Framework
 
 			var taskPerc = 100/UpdatesToApply.Count;
 			currentStatus.Percentage = (currentStatus.Percentage * taskPerc / 100) + (currentStatus.TaskId - 1) * taskPerc;
-			Console.WriteLine(currentStatus.Percentage);
 
 			ReportProgress(currentStatus);
 		}
