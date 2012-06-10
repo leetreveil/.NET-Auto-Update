@@ -150,7 +150,7 @@ namespace NAppUpdate.Framework
 		/// Check for updates synchronouly
 		/// </summary>
 		/// <param name="source">Updates source to use</param>
-		/// <param name="callback">Callback function to call when done</param>
+		/// <param name="countCallback">Callback function to call when done</param>
 		/// <returns>true if successful and updates exist</returns>
 		private bool CheckForUpdates(IUpdateSource source, Action<int> countCallback)
 		{
@@ -177,7 +177,7 @@ namespace NAppUpdate.Framework
 			if (ShouldStop) return false;
 
 			State = UpdateProcessState.Checked;
-			if (countCallback != null) countCallback.BeginInvoke(UpdatesToApply.Count, null, null);
+			if (countCallback != null) countCallback(UpdatesToApply.Count);
 
 			if (UpdatesToApply.Count > 0)
 				return true;
@@ -198,7 +198,7 @@ namespace NAppUpdate.Framework
 		/// Check for updates asynchronously
 		/// </summary>
 		/// <param name="source">Update source to use</param>
-		/// <param name="callback">Callback function to call when done</param>
+		/// <param name="countCallback">Callback function to call when done</param>
 		private void CheckForUpdateAsync(IUpdateSource source, Action<int> countCallback)
 		{
 			if (IsWorking) return;
@@ -213,7 +213,7 @@ namespace NAppUpdate.Framework
 												{
 													// TODO: Better error handling
 													LatestError = ex.ToString();
-													countCallback.BeginInvoke(-1, null, null);
+													if (countCallback != null) countCallback(-1);
 												}
 											}) { IsBackground = true };
 			_updatesThread.Start();
@@ -245,7 +245,7 @@ namespace NAppUpdate.Framework
 			{
 				if (UpdatesToApply.Count == 0)
 				{
-					if (callback != null) callback.BeginInvoke(false, null, null);
+					if (callback != null) callback(false);
 					return false;
 				}
 
@@ -265,7 +265,7 @@ namespace NAppUpdate.Framework
 
 			if (ShouldStop) return false;
 
-			if (callback != null) callback.BeginInvoke(true, null, null);
+			if (callback != null) callback(true);
 			return true;
 		}
 
@@ -287,7 +287,7 @@ namespace NAppUpdate.Framework
 												{
 													// TODO: Better error handling
 													LatestError = ex.ToString();
-													callback.BeginInvoke(false, null, null);
+													if (callback != null) callback(false);
 												}
 											}) { IsBackground = true };
 
