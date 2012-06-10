@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Utils;
 using System.Net;
 using System.IO;
@@ -28,15 +26,17 @@ namespace NAppUpdate.Framework.Sources
 
 		public string GetUpdatesFeed()
 		{
-			string data;
+			string data = string.Empty;
 
 			var request = WebRequest.Create(FeedUrl);
 			request.Method = "GET";
 			request.Proxy = Proxy;
 			using (var response = request.GetResponse())
 			{
-				if (response == null) return null;
-				using (var reader = new StreamReader(response.GetResponseStream(), true))
+				var stream = response.GetResponseStream();
+
+				if (stream != null)
+				using (var reader = new StreamReader(stream, true))
 				{
 					data = reader.ReadToEnd();
 				}
@@ -45,7 +45,7 @@ namespace NAppUpdate.Framework.Sources
 			return data;
 		}
 
-		public bool GetData(string url, string baseUrl, ref string tempLocation)
+		public bool GetData(string url, string baseUrl, Action<UpdateProgressInfo> onProgress, ref string tempLocation)
 		{
 			FileDownloader fd = null;
 			if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
@@ -66,7 +66,7 @@ namespace NAppUpdate.Framework.Sources
 				// files requiring pre-processing
 				tempLocation = Path.GetTempFileName();
 
-			return fd.DownloadToFile(tempLocation);
+			return fd.DownloadToFile(tempLocation, onProgress);
 		}
 
 		#endregion

@@ -56,7 +56,9 @@ namespace NAppUpdate.Framework.Tasks
             try
             {
                 string tempFileLocal = Path.Combine(UpdateManager.Instance.TempFolder, Guid.NewGuid().ToString());
-                if (!source.GetData(fileName, UpdateManager.Instance.BaseUrl, ref tempFileLocal))
+                if (!source.GetData(fileName, UpdateManager.Instance.BaseUrl, 
+					p => OnProgress(p),
+					ref tempFileLocal))
                     return false;
 
                 tempFile = tempFileLocal;

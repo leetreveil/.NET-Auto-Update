@@ -11,4 +11,10 @@
 		public int Percentage { get; set; }
 		public bool StillWorking { get; set; }
 	}
+
+	public class DownloadProgressInfo : UpdateProgressInfo
+	{
+		public long FileSizeInBytes { get; set; }
+		public long DownloadedInBytes { get; set; }
+	}
 }

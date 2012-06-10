@@ -1,16 +1,15 @@
 using System;
 using System.IO;
 using System.Net;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Utils
 {
     public sealed class FileDownloader
     {
         private readonly Uri _uri;
-
+    	private readonly int _bufferSize = 1024;
     	public IWebProxy Proxy { get; set; }
-
-		//public event Action<UpdateStatus> StateChanged = delegate { };
 
     	public FileDownloader()
     	{
@@ -34,7 +33,12 @@ namespace NAppUpdate.Framework.Utils
                 return client.DownloadData(_uri);
         }
 
-        public bool DownloadToFile(string tempLocation)
+		public bool DownloadToFile(string tempLocation)
+		{
+			return DownloadToFile(tempLocation, null);
+		}
+
+		public bool DownloadToFile(string tempLocation, Action<UpdateProgressInfo> onProgress)
         {
         	var request = WebRequest.Create(_uri);
 			request.Proxy = Proxy;
@@ -42,23 +46,29 @@ namespace NAppUpdate.Framework.Utils
 			using (var response = request.GetResponse())
 			using (var tempFile = File.Create(tempLocation))
 			{
-				if (response == null)
-					return false;
-
 				using (var responseStream = response.GetResponseStream())
 				{
 					if (responseStream ==null)
 						return false;
 
-					var downloadSize = Convert.ToDouble(response.ContentLength);
+					var downloadSize = response.ContentLength;
 					var totalBytes = 0;
-					var buffer = new byte[1024];
+					var buffer = new byte[_bufferSize];
 					int bytesRead;
 					do
 					{
 						bytesRead = responseStream.Read(buffer, 0, buffer.Length);
 						totalBytes += bytesRead;
 						tempFile.Write(buffer, 0, bytesRead);
+
+						if (onProgress != null) onProgress(new DownloadProgressInfo {
+							DownloadedInBytes = totalBytes,
+							FileSizeInBytes = downloadSize,
+							Percentage = (int)(totalBytes * 100 / downloadSize),
+							Message = string.Format("Downloading... ({0} / {1} completed)", totalBytes, downloadSize), // TODO: KB / MB Formatting
+							StillWorking = totalBytes == downloadSize,
+						});
+
 					} while (bytesRead > 0 && !UpdateManager.Instance.ShouldStop);
 
 					return totalBytes == downloadSize;

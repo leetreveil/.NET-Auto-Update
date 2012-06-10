@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Sources
 {
@@ -20,10 +19,10 @@ namespace NAppUpdate.Framework.Sources
             return Feed;
         }
 
-        public bool GetData(string filePath, string basePath, ref string tempFile)
-        {
-            throw new NotImplementedException();
-        }
+		public bool GetData(string filePath, string basePath, Action<UpdateProgressInfo> onProgress, ref string tempLocation)
+    	{
+    		throw new NotImplementedException();
+    	}
 
         #endregion
     }
