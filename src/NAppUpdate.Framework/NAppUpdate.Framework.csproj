@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="Common\INauFieldsHolder.cs" />
     <Compile Include="Common\NauFieldAttribute.cs" />
+    <Compile Include="Common\UpdateProgressInfo.cs" />
     <Compile Include="Conditions\FileChecksumCondition.cs" />
     <Compile Include="Conditions\FileDateCondition.cs" />
     <Compile Include="Conditions\FileSizeCondition.cs" />

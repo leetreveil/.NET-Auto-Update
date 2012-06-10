@@ -55,8 +55,9 @@ namespace NAppUpdate.Framework.Tasks
         public string Description { get; set; }
 
         public Conditions.BooleanCondition UpdateConditions { get; set; }
+    	public event ReportProgressDelegate OnProgress;
 
-        public bool Prepare(Sources.IUpdateSource source)
+    	public bool Prepare(Sources.IUpdateSource source)
         {
             // No preparation required
             return true;

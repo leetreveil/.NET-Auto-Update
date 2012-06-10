@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System;
 using System.Threading;
+using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.FeedReaders;
 using NAppUpdate.Framework.Sources;
 using NAppUpdate.Framework.Tasks;
@@ -105,6 +106,25 @@ namespace NAppUpdate.Framework
 		private Thread _updatesThread;
 		internal volatile bool ShouldStop;
 		public bool IsWorking { get { return _updatesThread != null && _updatesThread.IsAlive; } }
+
+		#region Progress reporting
+
+		public event ReportProgressDelegate ReportProgress;
+		private void TaskProgressCallback(UpdateProgressInfo currentStatus, IUpdateTask task)
+		{
+			if (ReportProgress == null) return;
+
+			currentStatus.TaskDescription = task.Description;
+			currentStatus.TaskId = UpdatesToApply.IndexOf(task) + 1;
+
+			var taskPerc = 100/UpdatesToApply.Count;
+			currentStatus.Percentage = (currentStatus.Percentage * taskPerc / 100) + (currentStatus.TaskId - 1) * taskPerc;
+			Console.WriteLine(currentStatus.Percentage);
+
+			ReportProgress(currentStatus);
+		}
+
+		#endregion
 
 		#region Step 1 - Check for updates
 
@@ -220,8 +240,6 @@ namespace NAppUpdate.Framework
 		/// <returns>true if successful</returns>
 		private bool PrepareUpdates(Action<bool> callback)
 		{
-			// TODO: Support progress updates
-
 			LatestError = null;
 
 			lock (UpdatesToApply)
@@ -235,9 +253,11 @@ namespace NAppUpdate.Framework
 				if (!Directory.Exists(TempFolder))
 					Directory.CreateDirectory(TempFolder);
 
-				foreach (var t in UpdatesToApply)
+				foreach (var task in UpdatesToApply)
 				{
-					if (ShouldStop || !t.Prepare(UpdateSource))
+					var t = task;
+					task.OnProgress += status => TaskProgressCallback(status, t);
+					if (ShouldStop || !task.Prepare(UpdateSource))
 						return false;
 				}
 
@@ -372,6 +392,9 @@ namespace NAppUpdate.Framework
 				State = UpdateProcessState.RollbackRequired;
 				foreach (var task in UpdatesToApply)
 				{
+					IUpdateTask t = task;
+					task.OnProgress += status => TaskProgressCallback(status, t);
+
 					// First, execute the task
 					if (!task.Execute())
 					{

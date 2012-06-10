@@ -8,6 +8,7 @@ namespace NAppUpdate.Framework.Tasks
     {
         string Description { get; set; }
         BooleanCondition UpdateConditions { get; set; }
+		event ReportProgressDelegate OnProgress;
 
         /// <summary>
         /// Do all work, especially if it is lengthy, required to prepare the update task, except from
