@@ -49,14 +49,14 @@ namespace WinFormsSampleApp
             // Create a timer for reseting the update state
             _resetCheckedState = new Timer();
             _resetCheckedState.Interval = 60000;
-            _resetCheckedState.Tick += new EventHandler((object sender, EventArgs ea) =>
-            {
-                if (UpdateManager.Instance.State == UpdateManager.UpdateProcessState.Checked)
-                {
-                    UpdateManager.Instance.CleanUp();
-                    lblStatus.Text = DateTime.Now + " - Update state was reset to NotChecked";
-                }
-            });
+            _resetCheckedState.Tick += (sender, ea) =>
+                                       	{
+                                       		if (UpdateManager.Instance.State == UpdateManager.UpdateProcessState.Checked)
+                                       		{
+                                       			UpdateManager.Instance.CleanUp();
+                                       			lblStatus.Text = DateTime.Now + " - Update state was reset to NotChecked";
+                                       		}
+                                       	};
             _resetCheckedState.Start();
         }
 
