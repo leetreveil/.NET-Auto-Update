@@ -55,7 +55,7 @@ namespace NAppUpdate.Framework.Tasks
 
             try
             {
-                string tempFileLocal = Path.Combine(UpdateManager.Instance.TempFolder, Guid.NewGuid().ToString());
+                string tempFileLocal = Path.Combine(UpdateManager.Instance.Config.TempFolder, Guid.NewGuid().ToString());
                 if (!source.GetData(fileName, UpdateManager.Instance.BaseUrl, 
 					p => OnProgress(p),
 					ref tempFileLocal))
@@ -91,9 +91,9 @@ namespace NAppUpdate.Framework.Tasks
             // Create a backup copy if target exists
             if (File.Exists(destinationFile))
             {
-                if (!Directory.Exists(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.BackupFolder, LocalPath))))
-                    Utils.FileSystem.CreateDirectoryStructure(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.BackupFolder, LocalPath)), false);
-                File.Copy(destinationFile, Path.Combine(UpdateManager.Instance.BackupFolder, LocalPath), true);
+                if (!Directory.Exists(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath))))
+                    Utils.FileSystem.CreateDirectoryStructure(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath)), false);
+                File.Copy(destinationFile, Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath), true);
             }
 
             // Only enable execution if the apply attribute was set to hot-swap
@@ -129,7 +129,7 @@ namespace NAppUpdate.Framework.Tasks
             // Copy the backup copy back to its original position
             if (File.Exists(destinationFile))
                 File.Delete(destinationFile);
-            File.Copy(Path.Combine(UpdateManager.Instance.BackupFolder, LocalPath), destinationFile);
+            File.Copy(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath), destinationFile);
 
             return true;
         }

@@ -76,7 +76,7 @@ namespace NAppUpdate.Framework
 
         public bool Start()
         {
-            ExtractUpdaterFromResource(_updaterPath, UpdateManager.Instance.UpdateProcessName);
+            ExtractUpdaterFromResource(_updaterPath, UpdateManager.Instance.Config.UpdateProcessName);
 
             using (var clientPipeHandle = CreateNamedPipe(
                    PIPE_NAME,
@@ -96,7 +96,7 @@ namespace NAppUpdate.Framework
                            	{
                            		UseShellExecute = true,
                            		WorkingDirectory = Environment.CurrentDirectory,
-								FileName = Path.Combine(_updaterPath, UpdateManager.Instance.UpdateProcessName),
+								FileName = Path.Combine(_updaterPath, UpdateManager.Instance.Config.UpdateProcessName),
                            		Arguments = string.Format(@"""{0}"" {1} {2}", _syncProcessName,
                                 _updaterShowConsole ? "-showConsole" : "",
                                 _updaterDoLogging ? "-log" : ""),

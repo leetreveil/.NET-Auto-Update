@@ -23,11 +23,14 @@ namespace NAppUpdate.Framework
 		{
 			State = UpdateProcessState.NotChecked;
 			UpdatesToApply = new List<IUpdateTask>();
-			TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-			UpdateProcessName = "NAppUpdateProcess";
-			UpdateExecutableName = "foo.exe"; // Naming it updater.exe seem to trigger the UAC, and we don't want that
 			ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-            BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath) ?? string.Empty, "Backup" + DateTime.Now.Ticks);
+			Config = new NauConfigurations
+			         	{
+			         		TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()),
+							BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath) ?? string.Empty, "Backup" + DateTime.Now.Ticks),
+			         		UpdateProcessName = "NAppUpdateProcess",
+			         		UpdateExecutableName = "foo.exe", // Naming it updater.exe seem to trigger the UAC, and we don't want that
+			         	};
 		}
 
 		/// <summary>
@@ -53,39 +56,9 @@ namespace NAppUpdate.Framework
 			RollbackRequired,
 		}
 
-		public string TempFolder { get; set; }
-		public string UpdateProcessName { get; set; }
-
-		/// <summary>
-		/// The name for the executable file to extract and run cold updates with. Default is foo.exe. You can change
-		/// it to whatever you want, but pay attention to names like "updater.exe" and "installer.exe" - they will trigger
-		/// an UAC prompt in all cases.
-		/// </summary>
-		public string UpdateExecutableName { get; set; }
-
 		internal readonly string ApplicationPath;
 
-		/// <summary>
-		/// Path to the backup folder used by this update process
-		/// </summary>
-		public string BackupFolder
-		{
-			set
-			{
-				if (State == UpdateProcessState.NotChecked || State == UpdateProcessState.Checked)
-				{
-					string path = value.TrimEnd(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-					_backupFolder = Path.IsPathRooted(path) ? path : Path.Combine(TempFolder, path);
-				}
-				else
-					throw new ArgumentException("BackupFolder can only be specified before update has started");
-			}
-			get
-			{
-				return _backupFolder;
-			}
-		}
-		private string _backupFolder;
+		public NauConfigurations Config { get; set; }
 
 		internal string BaseUrl { get; set; }
 		public IList<IUpdateTask> UpdatesToApply { get; private set; }
@@ -242,8 +215,8 @@ namespace NAppUpdate.Framework
 					return false;
 				}
 
-				if (!Directory.Exists(TempFolder))
-					Directory.CreateDirectory(TempFolder);
+				if (!Directory.Exists(Config.TempFolder))
+					Directory.CreateDirectory(Config.TempFolder);
 
 				foreach (var task in UpdatesToApply)
 				{
@@ -330,15 +303,15 @@ namespace NAppUpdate.Framework
 				Environment.CurrentDirectory = Path.GetDirectoryName(ApplicationPath);
 
 				// Make sure the current backup folder is accessible for writing from this process
-				string backupParentPath = Path.GetDirectoryName(BackupFolder) ?? string.Empty;
+				string backupParentPath = Path.GetDirectoryName(Config.BackupFolder) ?? string.Empty;
 				if (Directory.Exists(backupParentPath) && Utils.PermissionsCheck.HaveWritePermissionsForFolder(backupParentPath))
 				{
 					// Remove old backup folder, in case this same folder was used previously,
 					// and it wasn't removed for some reason
 					try
 					{
-						if (Directory.Exists(BackupFolder))
-							Utils.FileSystem.DeleteDirectory(BackupFolder);
+						if (Directory.Exists(Config.BackupFolder))
+							Utils.FileSystem.DeleteDirectory(Config.BackupFolder);
 						revertToDefaultBackupPath = false;
 					}
 					catch (UnauthorizedAccessException)
@@ -348,9 +321,9 @@ namespace NAppUpdate.Framework
 					// Attempt to (re-)create the backup folder
 					try
 					{
-						Directory.CreateDirectory(BackupFolder);
+						Directory.CreateDirectory(Config.BackupFolder);
 
-						if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(BackupFolder))
+						if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(Config.BackupFolder))
 							revertToDefaultBackupPath = true;
 					}
 					catch (UnauthorizedAccessException)
@@ -363,13 +336,13 @@ namespace NAppUpdate.Framework
 
 				if (revertToDefaultBackupPath)
 				{
-					_backupFolder = Path.Combine(
+					Config._backupFolder = Path.Combine(
 						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-						UpdateProcessName + "UpdateBackups" + DateTime.Now.Ticks);
+						Config.UpdateProcessName + "UpdateBackups" + DateTime.Now.Ticks);
 
 					try
 					{
-						Directory.CreateDirectory(BackupFolder);
+						Directory.CreateDirectory(Config.BackupFolder);
 					}
 					catch (UnauthorizedAccessException ex)
 					{
@@ -412,15 +385,14 @@ namespace NAppUpdate.Framework
 					// Add some environment variables to the dictionary object which will be passed to the updater
 					executeOnAppRestart["ENV:AppPath"] = ApplicationPath;
 					executeOnAppRestart["ENV:WorkingDirectory"] = Environment.CurrentDirectory;
-					executeOnAppRestart["ENV:TempFolder"] = TempFolder;
-					executeOnAppRestart["ENV:BackupFolder"] = BackupFolder;
+					executeOnAppRestart["ENV:TempFolder"] = Config.TempFolder;
+					executeOnAppRestart["ENV:BackupFolder"] = Config.BackupFolder;
 					executeOnAppRestart["ENV:RelaunchApplication"] = relaunchApplication;
 
-					var updStarter = new UpdateStarter(TempFolder,
-												executeOnAppRestart, UpdateProcessName, runPrivileged);
+					var updStarter = new UpdateStarter(Config.TempFolder, executeOnAppRestart, Config.UpdateProcessName, runPrivileged);
 					updStarter.SetOptions(updaterDoLogging, updaterShowConsole);
 					bool createdNew;
-					using (var _ = new Mutex(true, UpdateProcessName, out createdNew))
+					using (var _ = new Mutex(true, Config.UpdateProcessName, out createdNew))
 					{
 						if (!updStarter.Start())
 							return false;
@@ -490,13 +462,13 @@ namespace NAppUpdate.Framework
 
 				try
 				{
-					Utils.FileSystem.DeleteDirectory(TempFolder);
+					Utils.FileSystem.DeleteDirectory(Config.TempFolder);
 				}
 				catch { }
 
 				try
 				{
-					Utils.FileSystem.DeleteDirectory(TempFolder);
+					Utils.FileSystem.DeleteDirectory(Config.TempFolder);
 				}
 				catch { }
 			}
