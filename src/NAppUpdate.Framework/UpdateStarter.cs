@@ -9,159 +9,167 @@ using Microsoft.Win32.SafeHandles;
 
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
+using NAppUpdate.Framework.Common;
+using NAppUpdate.Framework.Tasks;
 
 namespace NAppUpdate.Framework
 {
-    /// <summary>
-    /// Starts the cold update process by extracting the updater app from the library's resources,
-    /// passing it all the data it needs and terminating the current application
-    /// </summary>
-    internal class UpdateStarter
-    {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern SafeFileHandle CreateNamedPipe(
-           String pipeName,
-           uint dwOpenMode,
-           uint dwPipeMode,
-           uint nMaxInstances,
-           uint nOutBufferSize,
-           uint nInBufferSize,
-           uint nDefaultTimeOut,
-           IntPtr lpSecurityAttributes);
+	/// <summary>
+	/// Starts the cold update process by extracting the updater app from the library's resources,
+	/// passing it all the data it needs and terminating the current application
+	/// </summary>
+	internal class UpdateStarter
+	{
+		internal class NauDto
+		{
+			public NauConfigurations Configs { get; set; }
+			public IList<IUpdateTask> Tasks { get; set; }
+		}
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern int ConnectNamedPipe(
-           SafeFileHandle hNamedPipe,
-           IntPtr lpOverlapped);
+		[DllImport("kernel32.dll", SetLastError = true)]
+		private static extern SafeFileHandle CreateNamedPipe(
+		   String pipeName,
+		   uint dwOpenMode,
+		   uint dwPipeMode,
+		   uint nMaxInstances,
+		   uint nOutBufferSize,
+		   uint nInBufferSize,
+		   uint nDefaultTimeOut,
+		   IntPtr lpSecurityAttributes);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern SafeFileHandle CreateFile(
-           String pipeName,
-           uint dwDesiredAccess,
-           uint dwShareMode,
-           IntPtr lpSecurityAttributes,
-           uint dwCreationDisposition,
-           uint dwFlagsAndAttributes,
-           IntPtr hTemplate);
+		[DllImport("kernel32.dll", SetLastError = true)]
+		private static extern int ConnectNamedPipe(
+		   SafeFileHandle hNamedPipe,
+		   IntPtr lpOverlapped);
 
-        //private const uint DUPLEX = (0x00000003);
-        private const uint WRITE_ONLY = (0x00000002);
-        private const uint FILE_FLAG_OVERLAPPED = (0x40000000);
+		[DllImport("kernel32.dll", SetLastError = true)]
+		private static extern SafeFileHandle CreateFile(
+		   String pipeName,
+		   uint dwDesiredAccess,
+		   uint dwShareMode,
+		   IntPtr lpSecurityAttributes,
+		   uint dwCreationDisposition,
+		   uint dwFlagsAndAttributes,
+		   IntPtr hTemplate);
 
-        internal string PIPE_NAME { get { return string.Format("\\\\.\\pipe\\{0}", _syncProcessName); } }
-        internal uint BUFFER_SIZE = 4096;
+		//private const uint DUPLEX = (0x00000003);
+		private const uint WRITE_ONLY = (0x00000002);
+		private const uint FILE_FLAG_OVERLAPPED = (0x40000000);
 
-        private readonly string _updaterPath;
-        private readonly Dictionary<string, object> _updateData;
-        private readonly string _syncProcessName;
+		internal string PIPE_NAME { get { return string.Format("\\\\.\\pipe\\{0}", _syncProcessName); } }
+		internal uint BUFFER_SIZE = 4096;
 
-        private readonly bool _runPrivileged;
-        private bool _updaterDoLogging;
-        private bool _updaterShowConsole;
+		private readonly string _updaterPath;
+		private readonly Dictionary<string, object> _updateData;
+		private readonly string _syncProcessName;
 
-        public UpdateStarter(string pathWhereUpdateExeShouldBeCreated,
-            Dictionary<string, object> updateData, string syncProcessName, bool runPrivileged)
-        {
-            _updaterPath = pathWhereUpdateExeShouldBeCreated;
-            _updateData = updateData;
-            _syncProcessName = syncProcessName;
-            _runPrivileged = runPrivileged;
-        }
+		private readonly bool _runPrivileged;
+		private bool _updaterDoLogging;
+		private bool _updaterShowConsole;
 
-        public void SetOptions(bool updaterDoLogging, bool updaterShowConsole)
-        {
-            _updaterDoLogging = updaterDoLogging;
-            _updaterShowConsole = updaterShowConsole;
-        }
+		public UpdateStarter(string pathWhereUpdateExeShouldBeCreated,
+			Dictionary<string, object> updateData, string syncProcessName, bool runPrivileged)
+		{
+			_updaterPath = pathWhereUpdateExeShouldBeCreated;
+			_updateData = updateData;
+			_syncProcessName = syncProcessName;
+			_runPrivileged = runPrivileged;
+		}
 
-        public bool Start()
-        {
-            ExtractUpdaterFromResource(_updaterPath, UpdateManager.Instance.Config.UpdateProcessName);
+		public void SetOptions(bool updaterDoLogging, bool updaterShowConsole)
+		{
+			_updaterDoLogging = updaterDoLogging;
+			_updaterShowConsole = updaterShowConsole;
+		}
 
-            using (var clientPipeHandle = CreateNamedPipe(
-                   PIPE_NAME,
-                   WRITE_ONLY | FILE_FLAG_OVERLAPPED,
-                   0,
-                   1, // 1 max instance (only the updater utility is expected to connect)
-                   BUFFER_SIZE,
-                   BUFFER_SIZE,
-                   0,
-                   IntPtr.Zero))
-            {
-                //failed to create named pipe
-                if (clientPipeHandle.IsInvalid)
-                    return false;
+		public bool Start()
+		{
+			ExtractUpdaterFromResource(_updaterPath, UpdateManager.Instance.Config.UpdateProcessName);
 
-                var info = new ProcessStartInfo
-                           	{
-                           		UseShellExecute = true,
-                           		WorkingDirectory = Environment.CurrentDirectory,
+			using (var clientPipeHandle = CreateNamedPipe(
+				   PIPE_NAME,
+				   WRITE_ONLY | FILE_FLAG_OVERLAPPED,
+				   0,
+				   1, // 1 max instance (only the updater utility is expected to connect)
+				   BUFFER_SIZE,
+				   BUFFER_SIZE,
+				   0,
+				   IntPtr.Zero))
+			{
+				//failed to create named pipe
+				if (clientPipeHandle.IsInvalid)
+					return false;
+
+				var info = new ProcessStartInfo
+							{
+								UseShellExecute = true,
+								WorkingDirectory = Environment.CurrentDirectory,
 								FileName = Path.Combine(_updaterPath, UpdateManager.Instance.Config.UpdateProcessName),
-                           		Arguments = string.Format(@"""{0}"" {1} {2}", _syncProcessName,
-                                _updaterShowConsole ? "-showConsole" : "",
-                                _updaterDoLogging ? "-log" : ""),
-                           	};
-                if (!_updaterShowConsole)
-                {
-                    info.WindowStyle = ProcessWindowStyle.Hidden;
-                    info.CreateNoWindow = true;
-                }
+								Arguments = string.Format(@"""{0}"" {1} {2}", _syncProcessName,
+								_updaterShowConsole ? "-showConsole" : "",
+								_updaterDoLogging ? "-log" : ""),
+							};
+				if (!_updaterShowConsole)
+				{
+					info.WindowStyle = ProcessWindowStyle.Hidden;
+					info.CreateNoWindow = true;
+				}
 
 				//If we can't write to the destination folder, then lets try elevating priviledges.
 				if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory) || _runPrivileged) { info.Verb = "runas"; }
-            	
+
 				try
-                {
-                    Process.Start(info);
-                }
-                catch (Win32Exception)
-                {
-                    // Person denied UAC escallation
-                    return false;
-                }
+				{
+					Process.Start(info);
+				}
+				catch (Win32Exception)
+				{
+					// Person denied UAC escallation
+					return false;
+				}
 
-                while (true)
-                {
-                    var success = 0;
-                    try
-                    {
-                        success = ConnectNamedPipe(
-                           clientPipeHandle,
-                           IntPtr.Zero);
-                    }
-                    catch { }
+				while (true)
+				{
+					var success = 0;
+					try
+					{
+						success = ConnectNamedPipe(
+						   clientPipeHandle,
+						   IntPtr.Zero);
+					}
+					catch { }
 
-                    //failed to connect client pipe
-                    if (success == 0)
-                        break;
+					//failed to connect client pipe
+					if (success == 0)
+						break;
 
-                    //client connection successfull
-                    using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
-                    {
-                        new BinaryFormatter().Serialize(fStream, _updateData);
-                        fStream.Close();
-                    }
-                }
-            }
+					//client connection successfull
+					using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
+					{
+						new BinaryFormatter().Serialize(fStream, _updateData);
+						fStream.Close();
+					}
+				}
+			}
 
-            return true;
-        }
+			return true;
+		}
 
-        internal static void ExtractUpdaterFromResource(string updaterPath, string hostExeName)
-        {
+		internal static void ExtractUpdaterFromResource(string updaterPath, string hostExeName)
+		{
 			if (!Directory.Exists(updaterPath))
 				Directory.CreateDirectory(updaterPath);
 
-            //store the updater temporarily in the designated folder            
+			//store the updater temporarily in the designated folder            
 			using (var writer = new BinaryWriter(File.Open(Path.Combine(updaterPath, hostExeName), FileMode.Create)))
-                writer.Write(Resources.updater);
+				writer.Write(Resources.updater);
 
 			// Now copy the NAU DLL
-        	var assemblyLocation = typeof (UpdateStarter).Assembly.Location;
+			var assemblyLocation = typeof(UpdateStarter).Assembly.Location;
 			File.Copy(assemblyLocation, Path.Combine(updaterPath, "NAppUpdate.Framework.dll"));
 
 			// And also all other referenced DLLs (opt-in only)
 			// TODO typeof(UpdateStarter).Assembly.GetReferencedAssemblies()
-        }
-    }
+		}
+	}
 }
