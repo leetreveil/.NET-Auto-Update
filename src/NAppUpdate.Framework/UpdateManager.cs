@@ -423,10 +423,7 @@ namespace NAppUpdate.Framework
 					executeOnAppRestart["ENV:BackupFolder"] = BackupFolder;
 					executeOnAppRestart["ENV:RelaunchApplication"] = relaunchApplication;
 
-					if (!Directory.Exists(TempFolder))
-						Directory.CreateDirectory(TempFolder);
-
-					var updStarter = new UpdateStarter(Path.Combine(TempFolder, UpdateExecutableName),
+					var updStarter = new UpdateStarter(TempFolder,
 												executeOnAppRestart, UpdateProcessName, runPrivileged);
 					updStarter.SetOptions(updaterDoLogging, updaterShowConsole);
 					bool createdNew;

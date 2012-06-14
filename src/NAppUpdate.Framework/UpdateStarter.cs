@@ -76,7 +76,7 @@ namespace NAppUpdate.Framework
 
         public bool Start()
         {
-            ExtractUpdaterFromResource(); //take the update executable and extract it to the path where it should be created
+            ExtractUpdaterFromResource(_updaterPath, UpdateManager.Instance.UpdateProcessName);
 
             using (var clientPipeHandle = CreateNamedPipe(
                    PIPE_NAME,
@@ -96,7 +96,7 @@ namespace NAppUpdate.Framework
                            	{
                            		UseShellExecute = true,
                            		WorkingDirectory = Environment.CurrentDirectory,
-                           		FileName = _updaterPath,
+								FileName = Path.Combine(_updaterPath, UpdateManager.Instance.UpdateProcessName),
                            		Arguments = string.Format(@"""{0}"" {1} {2}", _syncProcessName,
                                 _updaterShowConsole ? "-showConsole" : "",
                                 _updaterDoLogging ? "-log" : ""),
@@ -147,11 +147,21 @@ namespace NAppUpdate.Framework
             return true;
         }
 
-        private void ExtractUpdaterFromResource()
+        internal static void ExtractUpdaterFromResource(string updaterPath, string hostExeName)
         {
+			if (!Directory.Exists(updaterPath))
+				Directory.CreateDirectory(updaterPath);
+
             //store the updater temporarily in the designated folder            
-            using (var writer = new BinaryWriter(File.Open(_updaterPath, FileMode.Create)))
+			using (var writer = new BinaryWriter(File.Open(Path.Combine(updaterPath, hostExeName), FileMode.Create)))
                 writer.Write(Resources.updater);
+
+			// Now copy the NAU DLL
+        	var assemblyLocation = typeof (UpdateStarter).Assembly.Location;
+			File.Copy(assemblyLocation, Path.Combine(updaterPath, "NAppUpdate.Framework.dll"));
+
+			// And also all other referenced DLLs (opt-in only)
+			// TODO typeof(UpdateStarter).Assembly.GetReferencedAssemblies()
         }
     }
 }
