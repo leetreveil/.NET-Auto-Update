@@ -134,14 +134,14 @@ namespace NAppUpdate.Framework.Tasks
             return true;
         }
 
-        public bool MustRunPrivileged() {
-            if (File.Exists(destinationFile)) {
+        public bool MustRunPrivileged()
+        {
+        	if (File.Exists(destinationFile)) {
                 return !Utils.PermissionsCheck.HaveWritePermissionsForFileOrFolder(destinationFile);
-            } else {
-                return false;
             }
+        	return false;
         }
-        
-        #endregion
+
+    	#endregion
     }
 }

@@ -511,32 +511,5 @@ namespace NAppUpdate.Framework
 				catch { }
 			}
 		}
-
-		/*
-		public void DownloadUpdateAsync(Action<bool> finishedCallback)
-		{
-			FileDownloader fileDownloader = GetFileDownloader();
-
-			fileDownloader.DownloadAsync(downloadedData =>
-											 {
-												 //validate that the downloaded data is actually valid and not erroneous
-												 this.UpdateData = downloadedData;
-												 finishedCallback(true);
-											 });
-		}
-
-		public void DownloadUpdateAsync(Action<bool> finishedCallback, Action<int> progressPercentageCallback)
-		{
-			FileDownloader fileDownloader = GetFileDownloader();
-
-			fileDownloader.DownloadAsync(downloadedData =>
-			{
-				//TODO: validate that the downloaded data is actually valid and not erroneous
-				this.UpdateData = downloadedData;
-				finishedCallback(true);
-			},
-			(arg1, arg2) => progressPercentageCallback((int)(100 * (arg1) / arg2)));
-		}
-		 */
 	}
 }
