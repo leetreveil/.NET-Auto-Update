@@ -27,5 +27,30 @@ namespace NAppUpdate.Framework.Utils
 					Directory.CreateDirectory(newPath);
 			}
 		}
+
+		/// <summary>
+		/// Safely delete a folder recuresively
+		/// See http://stackoverflow.com/questions/329355/cannot-delete-directory-with-directory-deletepath-true/329502#329502
+		/// </summary>
+		/// <param name="targetDir">Folder path to delete</param>
+		public static void DeleteDirectory(string targetDir)
+		{
+			string[] files = Directory.GetFiles(targetDir);
+			string[] dirs = Directory.GetDirectories(targetDir);
+
+			foreach (string file in files)
+			{
+				File.SetAttributes(file, FileAttributes.Normal);
+				File.Delete(file);
+			}
+
+			foreach (string dir in dirs)
+			{
+				DeleteDirectory(dir);
+			}
+
+			File.SetAttributes(targetDir, FileAttributes.Normal);
+			Directory.Delete(targetDir, false);
+		}
 	}
 }

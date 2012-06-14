@@ -164,6 +164,7 @@ namespace NAppUpdate.Updater
 				if (updateSuccessful)
 				{
 					if (Directory.Exists(backupFolder))
+						// TODO: use the Utils.FileSystem alternative
 						Directory.Delete(backupFolder, true);
 				}
 				else

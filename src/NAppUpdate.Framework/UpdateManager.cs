@@ -345,7 +345,7 @@ namespace NAppUpdate.Framework
 					try
 					{
 						if (Directory.Exists(BackupFolder))
-							Directory.Delete(BackupFolder, true);
+							Utils.FileSystem.DeleteDirectory(BackupFolder);
 						revertToDefaultBackupPath = false;
 					}
 					catch (UnauthorizedAccessException)
@@ -500,13 +500,13 @@ namespace NAppUpdate.Framework
 
 				try
 				{
-					Directory.Delete(TempFolder, true);
+					Utils.FileSystem.DeleteDirectory(TempFolder);
 				}
 				catch { }
 
 				try
 				{
-					Directory.Delete(BackupFolder, true);
+					Utils.FileSystem.DeleteDirectory(TempFolder);
 				}
 				catch { }
 			}
