@@ -462,13 +462,15 @@ namespace NAppUpdate.Framework
 
 				try
 				{
-					Utils.FileSystem.DeleteDirectory(Config.TempFolder);
+					if (Directory.Exists(Config.TempFolder))
+						Utils.FileSystem.DeleteDirectory(Config.TempFolder);
 				}
 				catch { }
 
 				try
 				{
-					Utils.FileSystem.DeleteDirectory(Config.TempFolder);
+					if (Directory.Exists(Config.BackupFolder))
+						Utils.FileSystem.DeleteDirectory(Config.BackupFolder);
 				}
 				catch { }
 			}
