@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using NAppUpdate.Framework.Common;
 using Microsoft.Win32;
+using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
 {
@@ -12,7 +11,7 @@ namespace NAppUpdate.Framework.Tasks
     {
         public RegistryTask()
         {
-            UpdateConditions = new Conditions.BooleanCondition();
+			ExecutionStatus = TaskExecutionStatus.Pending;
         }
 
         [NauField("keyName", "The full path to the registry key", true)]
@@ -54,8 +53,16 @@ namespace NAppUpdate.Framework.Tasks
         #region IUpdateTask Members
 
         public string Description { get; set; }
+		public TaskExecutionStatus ExecutionStatus { get; set; }
 
-        public Conditions.BooleanCondition UpdateConditions { get; set; }
+		[NonSerialized]
+		private BooleanCondition _updateConditions;
+		public BooleanCondition UpdateConditions
+		{
+			get { return _updateConditions ?? (_updateConditions = new BooleanCondition()); }
+			set { _updateConditions = value; }
+		}
+
     	public event ReportProgressDelegate OnProgress;
 
     	public bool Prepare(Sources.IUpdateSource source)
@@ -64,10 +71,10 @@ namespace NAppUpdate.Framework.Tasks
             return true;
         }
 
-        public bool Execute()
+		public TaskExecutionStatus Execute(bool coldRun /* unused */)
         {
             if (String.IsNullOrEmpty(KeyName) || String.IsNullOrEmpty(KeyValueName))
-                return true;
+				return ExecutionStatus = TaskExecutionStatus.Successful;
 
             try
             {
@@ -75,20 +82,15 @@ namespace NAppUpdate.Framework.Tasks
                 // This is also used to prematurely detect incorrect key and value paths
                 originalValue = Registry.GetValue(KeyName, KeyValueName, null);
             }
-            catch { return false; }
+            catch { return ExecutionStatus = TaskExecutionStatus.Failed; }
 
             try
             {
                 Registry.SetValue(KeyName, KeyValueName, ValueToSet, ValueKind);
             }
-            catch { return false; }
+			catch { return ExecutionStatus = TaskExecutionStatus.Failed; }
 
-            return true;
-        }
-
-        public IEnumerator<KeyValuePair<string, object>> GetColdUpdates()
-        {
-            yield break;
+			return ExecutionStatus = TaskExecutionStatus.Successful;
         }
 
         public bool Rollback()
@@ -99,11 +101,6 @@ namespace NAppUpdate.Framework.Tasks
             }
             catch { return false; }
             return true;
-        }
-
-        public bool MustRunPrivileged() {
-            // This may be changed if required, I don't use this task...
-            return false;
         }
 
         #endregion

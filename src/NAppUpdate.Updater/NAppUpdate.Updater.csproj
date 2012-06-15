@@ -9,7 +9,7 @@
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NAppUpdate.Updater</RootNamespace>
-    <AssemblyName>updater</AssemblyName>
+    <AssemblyName>NAppUpdate.Updater</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -72,9 +72,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Actions\FileCopyAction.cs" />
-    <Compile Include="Actions\FileDumpAction.cs" />
-    <Compile Include="Actions\IUpdateAction.cs" />
     <Compile Include="AppStart.cs" />
     <Compile Include="ArgumentsParser.cs" />
     <Compile Include="ConsoleForm.cs">
@@ -152,6 +149,6 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>mkdir "$(SolutionDir)src\NAppUpdate.Framework\Updater"
-copy /y "$(TargetDir)Updater.exe" "$(SolutionDir)src\NAppUpdate.Framework\Updater\"</PostBuildEvent>
+copy /y "$(TargetDir)NAppUpdate.Updater.exe" "$(SolutionDir)src\NAppUpdate.Framework\Updater\Updater.exe"</PostBuildEvent>
   </PropertyGroup>
 </Project>

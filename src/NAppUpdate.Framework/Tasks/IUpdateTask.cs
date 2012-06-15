@@ -1,13 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
 {
+	public enum TaskExecutionStatus
+	{
+		Pending,
+		FailedToPrepare,
+		Successful,
+		Failed,
+		RequiresAppRestart,
+		RequiresPrivilegedAppRestart,
+	};
+
     public interface IUpdateTask : INauFieldsHolder
     {
-        string Description { get; set; }
+    	string Description { get; set; }
         BooleanCondition UpdateConditions { get; set; }
+		TaskExecutionStatus ExecutionStatus { get; set; }
 		event ReportProgressDelegate OnProgress;
 
         /// <summary>
@@ -23,9 +34,7 @@ namespace NAppUpdate.Framework.Tasks
         /// to perform.
         /// </summary>
         /// <returns>True if successful, false otherwise</returns>
-        bool Execute();
-    	IEnumerator<KeyValuePair<string, object>> GetColdUpdates();
-        bool MustRunPrivileged();
+		TaskExecutionStatus Execute(bool coldRun);
 
         /// <summary>
         /// Rollback the update performed by this task.

@@ -60,23 +60,23 @@ namespace NAppUpdate.Framework
 		private const uint WRITE_ONLY = (0x00000002);
 		private const uint FILE_FLAG_OVERLAPPED = (0x40000000);
 
-		internal string PIPE_NAME { get { return string.Format("\\\\.\\pipe\\{0}", _syncProcessName); } }
-		internal uint BUFFER_SIZE = 4096;
+		const uint GENERIC_READ = (0x80000000);
+		//static readonly uint GENERIC_WRITE = (0x40000000);
+		const uint OPEN_EXISTING = 3;
 
-		private readonly string _updaterPath;
-		private readonly Dictionary<string, object> _updateData;
-		private readonly string _syncProcessName;
+		internal static string GetPipeName(string syncProcessName)
+		{
+			return string.Format("\\\\.\\pipe\\{0}", syncProcessName);
+		}
+
+		internal static uint BUFFER_SIZE = 4096;
 
 		private readonly bool _runPrivileged;
 		private bool _updaterDoLogging;
 		private bool _updaterShowConsole;
 
-		public UpdateStarter(string pathWhereUpdateExeShouldBeCreated,
-			Dictionary<string, object> updateData, string syncProcessName, bool runPrivileged)
+		public UpdateStarter(bool runPrivileged)
 		{
-			_updaterPath = pathWhereUpdateExeShouldBeCreated;
-			_updateData = updateData;
-			_syncProcessName = syncProcessName;
 			_runPrivileged = runPrivileged;
 		}
 
@@ -86,12 +86,14 @@ namespace NAppUpdate.Framework
 			_updaterShowConsole = updaterShowConsole;
 		}
 
-		public bool Start()
+		public Process Start(NauDto dto, string updaterPath, string syncProcessName)
 		{
-			ExtractUpdaterFromResource(_updaterPath, UpdateManager.Instance.Config.UpdateProcessName);
+			ExtractUpdaterFromResource(updaterPath, UpdateManager.Instance.Config.UpdateExecutableName);
+
+			Process p = null;
 
 			using (var clientPipeHandle = CreateNamedPipe(
-				   PIPE_NAME,
+				   GetPipeName(syncProcessName),
 				   WRITE_ONLY | FILE_FLAG_OVERLAPPED,
 				   0,
 				   1, // 1 max instance (only the updater utility is expected to connect)
@@ -102,34 +104,33 @@ namespace NAppUpdate.Framework
 			{
 				//failed to create named pipe
 				if (clientPipeHandle.IsInvalid)
-					return false;
+					return null;
 
 				var info = new ProcessStartInfo
 							{
 								UseShellExecute = true,
 								WorkingDirectory = Environment.CurrentDirectory,
-								FileName = Path.Combine(_updaterPath, UpdateManager.Instance.Config.UpdateProcessName),
-								Arguments = string.Format(@"""{0}"" {1} {2}", _syncProcessName,
-								_updaterShowConsole ? "-showConsole" : "",
-								_updaterDoLogging ? "-log" : ""),
+								FileName = Path.Combine(updaterPath, UpdateManager.Instance.Config.UpdateExecutableName),
+								Arguments = string.Format(@"""{0}"" {1} {2}", syncProcessName, _updaterShowConsole ? "-showConsole" : "", _updaterDoLogging ? "-log" : ""),
 							};
+
 				if (!_updaterShowConsole)
 				{
 					info.WindowStyle = ProcessWindowStyle.Hidden;
 					info.CreateNoWindow = true;
 				}
 
-				//If we can't write to the destination folder, then lets try elevating priviledges.
-				if (!Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory) || _runPrivileged) { info.Verb = "runas"; }
+				// If we can't write to the destination folder, then lets try elevating priviledges.
+				if (_runPrivileged || !Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory)) { info.Verb = "runas"; }
 
 				try
 				{
-					Process.Start(info);
+					p = Process.Start(info);
 				}
 				catch (Win32Exception)
 				{
 					// Person denied UAC escallation
-					return false;
+					return null;
 				}
 
 				while (true)
@@ -150,13 +151,35 @@ namespace NAppUpdate.Framework
 					//client connection successfull
 					using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
 					{
-						new BinaryFormatter().Serialize(fStream, _updateData);
+						new BinaryFormatter().Serialize(fStream, dto);
 						fStream.Close();
 					}
 				}
 			}
 
-			return true;
+			return p;
+		}
+
+		internal static object ReadDto(string syncProcessName)
+		{
+			using (SafeFileHandle pipeHandle = CreateFile(
+				GetPipeName(syncProcessName),
+				GENERIC_READ,
+				0,
+				IntPtr.Zero,
+				OPEN_EXISTING,
+				FILE_FLAG_OVERLAPPED,
+				IntPtr.Zero))
+			{
+
+				if (pipeHandle.IsInvalid)
+					return null;
+
+				using (var fStream = new FileStream(pipeHandle, FileAccess.Read, (int)BUFFER_SIZE, true))
+				{
+					return new BinaryFormatter().Deserialize(fStream);
+				}
+			}
 		}
 
 		internal static void ExtractUpdaterFromResource(string updaterPath, string hostExeName)

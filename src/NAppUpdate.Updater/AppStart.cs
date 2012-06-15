@@ -1,36 +1,16 @@
 ﻿using System;
 using System.ComponentModel;
 using System.IO;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Threading;
-
-using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
-using System.Runtime.Serialization.Formatters.Binary;
-using NAppUpdate.Updater.Actions;
+using NAppUpdate.Framework;
+using NAppUpdate.Framework.Tasks;
 
 namespace NAppUpdate.Updater
 {
 	internal static class AppStart
 	{
-		const uint GENERIC_READ = (0x80000000);
-		//static readonly uint GENERIC_WRITE = (0x40000000);
-		const uint OPEN_EXISTING = 3;
-		const uint FILE_FLAG_OVERLAPPED = (0x40000000);
-		const int BUFFER_SIZE = 4096;
-
-		[DllImport("kernel32.dll", SetLastError = true)]
-		public static extern SafeFileHandle CreateFile(
-		   String pipeName,
-		   uint dwDesiredAccess,
-		   uint dwShareMode,
-		   IntPtr lpSecurityAttributes,
-		   uint dwCreationDisposition,
-		   uint dwFlagsAndAttributes,
-		   IntPtr hTemplate);
-
 		private static ArgumentsParser _args;
 		private static Logger _logger;
 		private static ConsoleForm _console;
@@ -52,7 +32,7 @@ namespace NAppUpdate.Updater
 					_console = new ConsoleForm();
 					_console.Show();
 				}
-				Log("==========================================");
+
 				Log("Starting...");
 				if (_args.Log)
 					_console.WriteLine("Logging to {0}", logFile);
@@ -61,20 +41,14 @@ namespace NAppUpdate.Updater
 				// to quit
 				string syncProcessName = _args.ProcessName;
 
-
 				if (string.IsNullOrEmpty(syncProcessName))
 					//Application.Exit();
 					throw new ArgumentException("The command line needs to specify the mutex of the program to update.", "args");
-				//Log("The command line needs to specify the mutex of the program to update.");
-				Log("Object to update: '{0}'", syncProcessName);
+
+				Log("Update process name: '{0}'", syncProcessName);
 
 				// Connect to the named pipe and retrieve the updates list
-				var PIPE_NAME = string.Format("\\\\.\\pipe\\{0}", syncProcessName);
-				var o = GetUpdates(PIPE_NAME);
-
-				Log("Connecting to updater pipe: " + PIPE_NAME);
-				Log(o != null ? "Connected to updater pipe." : "Failed to read updates from the updater pipe.");
-				Log("Waiting for application to terminate.");
+				var o = UpdateStarter.ReadDto(syncProcessName);
 
 				// Make sure we start updating only once the application has completely terminated
 				bool createdNew;
@@ -94,78 +68,67 @@ namespace NAppUpdate.Updater
 				bool relaunchApp = true, updateSuccessful = true;
 				string appPath, appDir, backupFolder;
 				{
-					Dictionary<string, object> dict = null;
-					if (o is Dictionary<string, object>)
-						dict = o as Dictionary<string, object>;
+					UpdateStarter.NauDto dto = null;
+					if (o is UpdateStarter.NauDto)
+						dto = o as UpdateStarter.NauDto;
 
-					if (dict == null || dict.Count == 0)
+					if (dto == null || dto.Configs == null || dto.Tasks == null || dto.Tasks.Count == 0)
 					{
 						throw new Exception("Could not find the updates list (or it was empty).");
 						//Application.Exit();
 						//return;
 					}
 
+					Log("Got {0} task objects", dto.Tasks.Count);
+
 					// Get some required environment variables
-					appPath = dict["ENV:AppPath"].ToString();
-					appDir = dict["ENV:WorkingDirectory"] as string ?? Path.GetDirectoryName(appPath);
-					tempFolder = dict["ENV:TempFolder"].ToString();
-					backupFolder = dict["ENV:BackupFolder"].ToString();
-					relaunchApp = dict["ENV:RelaunchApplication"] as bool? ?? true;
+					appPath = dto.AppPath;
+					appDir = dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
+					tempFolder = dto.Configs.TempFolder;
+					backupFolder = dto.Configs.BackupFolder;
+					relaunchApp = dto.RelaunchApplication;
 
 					// Perform the actual off-line update process
 					Log("Starting the updates...");
-					var en = dict.GetEnumerator();
-					while (en.MoveNext())
-					{
-						if (en.Current.Key.StartsWith("ENV:"))
-							continue;
-						else
-						{
-							Log("* Updating {0} ({1})", en.Current.Key, en.Current.Value);
-							IUpdateAction a = null;
-							if (en.Current.Value is string)
-							{
-								Log("\tCopying {0} {1}", en.Current.Value, Path.Combine(appDir, en.Current.Key));
-								a = new FileCopyAction(en.Current.Value.ToString(), Path.Combine(appDir, en.Current.Key));
-							}
-							else if (en.Current.Value is byte[])
-							{
-								Log("\tDumping {0}", en.Current.Value);
-								a = new FileDumpAction(Path.Combine(appDir, en.Current.Key), (byte[])en.Current.Value);
-							}
 
-							if (a == null)
-								Log("\tUpdate action: null");
-							else
-							{
-								Log("\tUpdate action: {0}", a.ToString());
-								try
-								{
-									if (!a.Do())
-									{
-										Log("\tUpdate action failed: {0}", en.Current.Value);
-										updateSuccessful = false;
-										break;
-									}
-									else Log("\tUpdate action succeeded: {0}", en.Current.Value);
-								}
-								catch (Exception e)
-								{
-									MessageBox.Show("Update failed: " + e.Message);
-									Log("\tUpdate failed: {0}", e.Message);
-									updateSuccessful = false;
-									break;
-								}
-							}
+					foreach (var t in dto.Tasks)
+					{
+						Log("Task \"{0}\": {1}", t.Description, t.ExecutionStatus);
+
+						if (t.ExecutionStatus != TaskExecutionStatus.RequiresAppRestart
+						    && t.ExecutionStatus != TaskExecutionStatus.RequiresPrivilegedAppRestart)
+							continue;
+
+						Log("\tExecuting...");
+
+						try
+						{
+							t.ExecutionStatus = t.Execute(true);
+						}
+						catch (Exception ex)
+						{
+							// TODO: Log message
+							Log("\tFailed: {0}", ex.Message);
+							updateSuccessful = false;
+							t.ExecutionStatus = TaskExecutionStatus.Failed;
+							MessageBox.Show("Update failed: " + ex.Message);
+						}
+
+						if (t.ExecutionStatus != TaskExecutionStatus.Successful)
+						{
+							Log("\tTask execution failed failed");
+							updateSuccessful = false;
+							break;
 						}
 					}
 				}
 
 				if (updateSuccessful)
 				{
+					Log("Finished");
+					Log("Removing backup folder");
 					if (Directory.Exists(backupFolder))
-						// TODO: use the Utils.FileSystem alternative
-						Directory.Delete(backupFolder, true);
+						NAppUpdate.Framework.Utils.FileSystem.DeleteDirectory(backupFolder);
 				}
 				else
 				{
@@ -245,28 +208,6 @@ namespace NAppUpdate.Updater
 			}
 			catch
 			{
-			}
-		}
-
-		private static object GetUpdates(string PIPE_NAME)
-		{
-			using (SafeFileHandle pipeHandle = CreateFile(
-				PIPE_NAME,
-				GENERIC_READ,
-				0,
-				IntPtr.Zero,
-				OPEN_EXISTING,
-				FILE_FLAG_OVERLAPPED,
-				IntPtr.Zero))
-			{
-
-				if (pipeHandle.IsInvalid)
-					return null;
-
-				using (var fStream = new FileStream(pipeHandle, FileAccess.Read, BUFFER_SIZE, true))
-				{
-					return new BinaryFormatter().Deserialize(fStream);
-				}
 			}
 		}
 

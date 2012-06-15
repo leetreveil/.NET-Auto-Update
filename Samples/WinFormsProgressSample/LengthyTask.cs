@@ -13,11 +13,15 @@ namespace WinFormsProgressSample
 		public LengthyTask()
 		{
 			UpdateConditions = new BooleanCondition();
+			ExecutionStatus = TaskExecutionStatus.Pending;
 		}
 
 		public string Description{get; set; }
 
 		public BooleanCondition UpdateConditions { get; set; }
+
+		public TaskExecutionStatus ExecutionStatus { get; set; }
+
 		public event ReportProgressDelegate OnProgress;
 
 		public bool Prepare(IUpdateSource source)
@@ -43,19 +47,9 @@ namespace WinFormsProgressSample
 			return true;
 		}
 
-		public bool Execute()
+		public TaskExecutionStatus Execute(bool coldRun)
 		{
-			return true;
-		}
-
-		public IEnumerator<KeyValuePair<string, object>> GetColdUpdates()
-		{
-			yield break;
-		}
-
-		public bool MustRunPrivileged()
-		{
-			return false;
+			return coldRun ? TaskExecutionStatus.Successful : TaskExecutionStatus.RequiresAppRestart;
 		}
 
 		public bool Rollback()

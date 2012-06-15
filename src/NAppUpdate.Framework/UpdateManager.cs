@@ -27,11 +27,18 @@ namespace NAppUpdate.Framework
 			Config = new NauConfigurations
 			         	{
 			         		TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()),
-							BackupFolder = Path.Combine(Path.GetDirectoryName(ApplicationPath) ?? string.Empty, "Backup" + DateTime.Now.Ticks),
 			         		UpdateProcessName = "NAppUpdateProcess",
 			         		UpdateExecutableName = "foo.exe", // Naming it updater.exe seem to trigger the UAC, and we don't want that
 			         	};
+
+			// Need to do this manually here because the BackupFolder property is protected using the static instance, which we are
+			// in the middle of creating
+			string backupPath = Path.Combine(Path.GetDirectoryName(ApplicationPath) ?? string.Empty, "Backup" + DateTime.Now.Ticks);
+			backupPath = backupPath.TrimEnd(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+			Config._backupFolder = Path.IsPathRooted(backupPath) ? backupPath : Path.Combine(Config.TempFolder, backupPath);
 		}
+
+		static UpdateManager() {}
 
 		/// <summary>
 		/// The singleton update manager instance to used by consumer applications
@@ -220,10 +227,17 @@ namespace NAppUpdate.Framework
 
 				foreach (var task in UpdatesToApply)
 				{
+					if (ShouldStop)
+						return false;
+
 					var t = task;
 					task.OnProgress += status => TaskProgressCallback(status, t);
-					if (ShouldStop || !task.Prepare(UpdateSource))
+
+					if (!task.Prepare(UpdateSource))
+					{
+						task.ExecutionStatus = TaskExecutionStatus.FailedToPrepare;
 						return false;
+					}
 				}
 
 				State = UpdateProcessState.Prepared;
@@ -338,7 +352,7 @@ namespace NAppUpdate.Framework
 				{
 					Config._backupFolder = Path.Combine(
 						Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-						Config.UpdateProcessName + "UpdateBackups" + DateTime.Now.Ticks);
+						Config.UpdateProcessName + "UpdateBackups" + DateTime.UtcNow.Ticks);
 
 					try
 					{
@@ -352,49 +366,60 @@ namespace NAppUpdate.Framework
 					}
 				}
 
-				bool runPrivileged = false;
-				var executeOnAppRestart = new Dictionary<string, object>();
+				bool runPrivileged = false, hasColdUpdates = false;
 				State = UpdateProcessState.RollbackRequired;
 				foreach (var task in UpdatesToApply)
 				{
 					IUpdateTask t = task;
 					task.OnProgress += status => TaskProgressCallback(status, t);
 
-					// First, execute the task
-					if (!task.Execute())
+					try
 					{
-						// TODO: notify about task execution failure using exceptions
+						// Execute the task
+						task.ExecutionStatus = task.Execute(false);
+					}
+					catch (Exception ex)
+					{
+						// TODO: Log error
+						task.ExecutionStatus = TaskExecutionStatus.Failed;
+					}
+
+					if (task.ExecutionStatus == TaskExecutionStatus.RequiresAppRestart
+						|| task.ExecutionStatus == TaskExecutionStatus.RequiresPrivilegedAppRestart)
+					{
+						// Record that we have cold updates to run, and if required to run any of them privileged
+						runPrivileged = runPrivileged || task.ExecutionStatus == TaskExecutionStatus.RequiresPrivilegedAppRestart;
+						hasColdUpdates = true;
 						continue;
 					}
 
-					// run updater privileged if required
-					runPrivileged = runPrivileged || task.MustRunPrivileged();
-
-					// Add any pending cold updates to the list
-					var en = task.GetColdUpdates();
-					while (en.MoveNext())
+					// We are being quite explicit here - only Successful return values are considered
+					// to be Ok (cold updates are already handled above)
+					if (task.ExecutionStatus != TaskExecutionStatus.Successful)
 					{
-						// Last write wins
-						executeOnAppRestart[en.Current.Key] = en.Current.Value;
+						// TODO: notify about task execution failure using exceptions
+						return false;
 					}
 				}
 
 				// If an application restart is required
-				if (executeOnAppRestart.Count > 0)
+				if (hasColdUpdates)
 				{
-					// Add some environment variables to the dictionary object which will be passed to the updater
-					executeOnAppRestart["ENV:AppPath"] = ApplicationPath;
-					executeOnAppRestart["ENV:WorkingDirectory"] = Environment.CurrentDirectory;
-					executeOnAppRestart["ENV:TempFolder"] = Config.TempFolder;
-					executeOnAppRestart["ENV:BackupFolder"] = Config.BackupFolder;
-					executeOnAppRestart["ENV:RelaunchApplication"] = relaunchApplication;
+					var dto = new UpdateStarter.NauDto
+					          	{
+					          		Configs = Instance.Config,
+					          		Tasks = Instance.UpdatesToApply,
+									AppPath = ApplicationPath,
+									WorkingDirectory = Environment.CurrentDirectory,
+									RelaunchApplication = relaunchApplication,
+					          	};
 
-					var updStarter = new UpdateStarter(Config.TempFolder, executeOnAppRestart, Config.UpdateProcessName, runPrivileged);
+					var updStarter = new UpdateStarter(runPrivileged);
 					updStarter.SetOptions(updaterDoLogging, updaterShowConsole);
 					bool createdNew;
 					using (var _ = new Mutex(true, Config.UpdateProcessName, out createdNew))
 					{
-						if (!updStarter.Start())
+						if (updStarter.Start(dto, Config.TempFolder, Config.UpdateProcessName) == null)
 							return false;
 
 						Environment.Exit(0);

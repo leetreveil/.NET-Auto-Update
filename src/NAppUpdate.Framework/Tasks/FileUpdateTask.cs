@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.IO;
 using NAppUpdate.Framework.Common;
+using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
 {
@@ -12,7 +11,7 @@ namespace NAppUpdate.Framework.Tasks
     {
         public FileUpdateTask()
         {
-            UpdateConditions = new Conditions.BooleanCondition();
+			ExecutionStatus = TaskExecutionStatus.Pending;
         }
 
         [NauField("localPath", "The local path of the file to update", true)]
@@ -32,13 +31,21 @@ namespace NAppUpdate.Framework.Tasks
         public bool CanHotSwap { get; set; }
 
         internal string tempFile;
-        private string destinationFile;
+        private string destinationFile, backupFile;
 
         #region IUpdateTask Members
 
         public string Description { get; set; }
+		public TaskExecutionStatus ExecutionStatus { get; set; }
+		
+		[NonSerialized]
+		private BooleanCondition _updateConditions;
+		public BooleanCondition UpdateConditions
+		{
+			get { return _updateConditions ?? (_updateConditions = new BooleanCondition()); }
+			set { _updateConditions = value; }
+		}
 
-        public Conditions.BooleanCondition UpdateConditions { get; set; }
     	public event ReportProgressDelegate OnProgress;
 
     	public bool Prepare(Sources.IUpdateSource source)
@@ -76,51 +83,62 @@ namespace NAppUpdate.Framework.Tasks
                     return false;
             }
 
-            return true;
+			return tempFile != null;
         }
 
-        public bool Execute()
-        {
-            if (string.IsNullOrEmpty(LocalPath))
-                return true;
+		public TaskExecutionStatus Execute(bool coldRun)
+		{
+			if (string.IsNullOrEmpty(LocalPath))
+				return TaskExecutionStatus.Successful;
 
-            destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
-
+			destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
 			if (!Directory.Exists(Path.GetDirectoryName(destinationFile)))
 				Utils.FileSystem.CreateDirectoryStructure(Path.GetDirectoryName(destinationFile), false);
 
-            // Create a backup copy if target exists
-            if (File.Exists(destinationFile))
-            {
-                if (!Directory.Exists(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath))))
-                    Utils.FileSystem.CreateDirectoryStructure(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath)), false);
-                File.Copy(destinationFile, Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath), true);
-            }
+			// Create a backup copy if target exists
+			if (backupFile == null && File.Exists(destinationFile))
+			{
+				if (!Directory.Exists(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath))))
+					Utils.FileSystem.CreateDirectoryStructure(
+						Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath)), false);
+				backupFile = Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath);
+				File.Copy(destinationFile, backupFile, true);
+			}
 
-            // Only enable execution if the apply attribute was set to hot-swap
-            if (CanHotSwap)
-            {
-                try
-                {
-                    if (File.Exists(destinationFile))
-                        File.Delete(destinationFile);
-                    File.Move(tempFile, destinationFile);
-                	tempFile = null;
-                }
-                catch
-                {
+			// Only allow execution if the apply attribute was set to hot-swap, or if this is a cold run
+			if (CanHotSwap || coldRun)
+			{
+				try
+				{
+					if (File.Exists(destinationFile))
+						File.Delete(destinationFile);
+					File.Move(tempFile, destinationFile);
+					tempFile = null;
+				}
+				catch (Exception ex)
+				{
+					if (coldRun)
+					{
+						// TODO: log error
+						return TaskExecutionStatus.Failed;
+					}
+
 					// Failed hot swap file tasks should now downgrade to cold tasks automatically
 					CanHotSwap = false;
 				}
-            }
-            return true;
-        }
+			}
 
-    	public IEnumerator<KeyValuePair<string, object>> GetColdUpdates()
-    	{
-            if (tempFile != null && !string.IsNullOrEmpty(LocalPath) && !CanHotSwap)
-					yield return new KeyValuePair<string, object>(LocalPath, tempFile);
-    	}
+			if (coldRun || CanHotSwap)
+				// If we got thus far, we have completed execution
+				return TaskExecutionStatus.Successful;
+
+			// Otherwise, figure out what restart method to use
+			if (File.Exists(destinationFile) && !Utils.PermissionsCheck.HaveWritePermissionsForFileOrFolder(destinationFile))
+			{
+				return TaskExecutionStatus.RequiresPrivilegedAppRestart;
+			}
+			return TaskExecutionStatus.RequiresAppRestart;
+		}
 
     	public bool Rollback()
         {
@@ -130,17 +148,9 @@ namespace NAppUpdate.Framework.Tasks
             // Copy the backup copy back to its original position
             if (File.Exists(destinationFile))
                 File.Delete(destinationFile);
-            File.Copy(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath), destinationFile);
+			File.Copy(backupFile, destinationFile, true);
 
             return true;
-        }
-
-        public bool MustRunPrivileged()
-        {
-        	if (File.Exists(destinationFile)) {
-                return !Utils.PermissionsCheck.HaveWritePermissionsForFileOrFolder(destinationFile);
-            }
-        	return false;
         }
 
     	#endregion
