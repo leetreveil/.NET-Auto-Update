@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
+	[Serializable]
     public class FileSizeCondition : IUpdateCondition
     {
         [NauField("localPath",

@@ -6,6 +6,7 @@ using Microsoft.Win32;
 
 namespace NAppUpdate.Framework.Tasks
 {
+	[Serializable]
     [UpdateTaskAlias("registryUpdate")]
     public class RegistryTask : IUpdateTask
     {

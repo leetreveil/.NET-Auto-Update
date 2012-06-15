@@ -6,6 +6,7 @@ using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Tasks
 {
+	[Serializable]
     [UpdateTaskAlias("fileUpdate")]
     public class FileUpdateTask : IUpdateTask
     {

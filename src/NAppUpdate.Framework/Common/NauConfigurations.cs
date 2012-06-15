@@ -3,6 +3,7 @@ using System.IO;
 
 namespace NAppUpdate.Framework.Common
 {
+	[Serializable]
 	public class NauConfigurations
 	{
 		public string TempFolder { get; set; }

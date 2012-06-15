@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
+	[Serializable]
     [UpdateConditionAlias("exists")]
     public class FileExistsCondition : IUpdateCondition
     {

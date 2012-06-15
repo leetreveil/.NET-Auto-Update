@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace NAppUpdate.Framework.Conditions
 {
+	[Serializable]
     public sealed class BooleanCondition : IUpdateCondition
     {
         #region Condition types

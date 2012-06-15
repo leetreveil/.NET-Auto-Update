@@ -5,6 +5,7 @@ using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
+	[Serializable]
     [UpdateConditionAlias("version")]
     public class FileVersionCondition : IUpdateCondition
     {

@@ -5,6 +5,7 @@ using NAppUpdate.Framework.Tasks;
 
 namespace NAppUpdate.Framework.Conditions
 {
+	[Serializable]
     public class FileChecksumCondition : IUpdateCondition
     {
         [NauField("localPath",

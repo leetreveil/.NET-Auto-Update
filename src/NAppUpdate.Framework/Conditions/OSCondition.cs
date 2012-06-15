@@ -4,6 +4,7 @@ using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
+	[Serializable]
     public class OSCondition : IUpdateCondition
     {
 		[NauField("bit", "File size to compare with (in bytes)", true)]

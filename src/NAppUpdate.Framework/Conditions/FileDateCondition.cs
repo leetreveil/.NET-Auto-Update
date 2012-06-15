@@ -4,6 +4,7 @@ using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Conditions
 {
+	[Serializable]
 	public class FileDateCondition : IUpdateCondition
 	{
 		public FileDateCondition()
