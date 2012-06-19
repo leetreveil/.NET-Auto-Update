@@ -47,6 +47,7 @@ namespace NAppUpdate.Tests.Core
 			if (Directory.Exists(path))
 				FileSystem.DeleteDirectory(path);
 
+			NauIpc.ExtractUpdaterFromResource(path, dto.Configs.UpdateExecutableName);
 			var info = new ProcessStartInfo
 			{
 				UseShellExecute = true,
@@ -55,8 +56,7 @@ namespace NAppUpdate.Tests.Core
 				Arguments = string.Format(@"""{0}"" -showConsole", dto.Configs.UpdateProcessName),
 			};
 
-			NauIpc.ExtractUpdaterFromResource(path, dto.Configs.UpdateExecutableName);
-			var p = NauIpc.LaunchProcessAndSendDto(dto, info, "NAppUpdate-Tests");
+			var p = NauIpc.LaunchProcessAndSendDto(dto, info, dto.Configs.UpdateProcessName);
 			Assert.IsNotNull(p);
 			p.WaitForExit();
 

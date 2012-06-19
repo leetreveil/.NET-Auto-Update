@@ -66,11 +66,9 @@ namespace NAppUpdate.Updater
 
 				bool updateSuccessful = true;
 
-				if (dto == null || dto.Configs == null || dto.Tasks == null || dto.Tasks.Count == 0)
+				if (dto == null || dto.Configs == null)
 				{
-					throw new Exception("Could not find the updates list (or it was empty).");
-					//Application.Exit();
-					//return;
+					throw new Exception("Invalid DTO received");
 				}
 
 				Log("Got {0} task objects", dto.Tasks.Count);
@@ -81,6 +79,11 @@ namespace NAppUpdate.Updater
 				tempFolder = dto.Configs.TempFolder;
 				string backupFolder = dto.Configs.BackupFolder;
 				bool relaunchApp = dto.RelaunchApplication;
+
+				if (dto.Tasks == null || dto.Tasks.Count == 0)
+				{
+					throw new Exception("Could not find the updates list (or it was empty).");
+				}
 
 				// Perform the actual off-line update process
 				Log("Starting the updates...");
@@ -180,7 +183,7 @@ namespace NAppUpdate.Updater
 					_console.WriteLine("Press any key or close this window to exit.");
 					_console.ReadKey();
 				}
-				SelfCleanUp(tempFolder);
+				if (!string.IsNullOrEmpty(tempFolder)) SelfCleanUp(tempFolder);
 				Application.Exit();
 			}
 		}
@@ -190,7 +193,7 @@ namespace NAppUpdate.Updater
 			try
 			{
 				// Delete the updater EXE and the temp folder)
-				Log("Removing updater and temp folder...");
+				Log("Removing updater and temp folder... {0}", tempFolder);
 				try
 				{
 					var Info = new ProcessStartInfo();

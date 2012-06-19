@@ -109,7 +109,7 @@ namespace NAppUpdate.Framework.Utils
 					//failed to connect client pipe
 					if (success == 0)
 						// TODO Log error
-						return null;
+						break;
 
 					//client connection successfull
 					using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
@@ -117,7 +117,6 @@ namespace NAppUpdate.Framework.Utils
 						new BinaryFormatter().Serialize(fStream, dto);
 						fStream.Close();
 					}
-					break;
 				}
 			}
 
