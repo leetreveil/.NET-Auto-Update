@@ -24,12 +24,13 @@ namespace NAppUpdate.Framework
 			State = UpdateProcessState.NotChecked;
 			UpdatesToApply = new List<IUpdateTask>();
 			ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+			UpdateFeedReader = new NauXmlFeedReader();
 			Config = new NauConfigurations
-			         	{
-			         		TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()),
-			         		UpdateProcessName = "NAppUpdateProcess",
-			         		UpdateExecutableName = "foo.exe", // Naming it updater.exe seem to trigger the UAC, and we don't want that
-			         	};
+						{
+							TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()),
+							UpdateProcessName = "NAppUpdateProcess",
+							UpdateExecutableName = "foo.exe", // Naming it updater.exe seem to trigger the UAC, and we don't want that
+						};
 
 			// Need to do this manually here because the BackupFolder property is protected using the static instance, which we are
 			// in the middle of creating
@@ -38,7 +39,7 @@ namespace NAppUpdate.Framework
 			Config._backupFolder = Path.IsPathRooted(backupPath) ? backupPath : Path.Combine(Config.TempFolder, backupPath);
 		}
 
-		static UpdateManager() {}
+		static UpdateManager() { }
 
 		/// <summary>
 		/// The singleton update manager instance to used by consumer applications
