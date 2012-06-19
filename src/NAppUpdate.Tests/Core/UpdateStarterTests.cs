@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NAppUpdate.Framework;
 using NAppUpdate.Framework.Tasks;
+using NAppUpdate.Framework.Utils;
 
 namespace NAppUpdate.Tests.Core
 {
@@ -15,7 +17,7 @@ namespace NAppUpdate.Tests.Core
 		{
 			var path = Path.Combine(Path.GetTempPath(), "NAppUpdate-Tests");
 
-			UpdateStarter.ExtractUpdaterFromResource(path, "Foo.exe");
+			NauIpc.ExtractUpdaterFromResource(path, "Foo.exe");
 
 			Assert.IsTrue(Directory.Exists(path));
 			Assert.IsTrue(File.Exists(Path.Combine(path, "Foo.exe")));
@@ -28,10 +30,7 @@ namespace NAppUpdate.Tests.Core
 		[TestMethod]
 		public void UpdaterDeploymentAndIPCWorks()
 		{
-			var ud = new UpdateStarter(false);
-			ud.SetOptions(true, true);
-
-			var dto = new UpdateStarter.NauDto
+			var dto = new NauIpc.NauDto
 			          	{
 			          		Configs = UpdateManager.Instance.Config,
 			          		Tasks = new List<IUpdateTask>
@@ -46,9 +45,19 @@ namespace NAppUpdate.Tests.Core
 			var path = dto.Configs.TempFolder;
 
 			if (Directory.Exists(path))
-				NAppUpdate.Framework.Utils.FileSystem.DeleteDirectory(path);
+				FileSystem.DeleteDirectory(path);
 
-			var p = ud.Start(dto, dto.Configs.TempFolder, "NAppUpdate-Tests");
+			var info = new ProcessStartInfo
+			{
+				UseShellExecute = true,
+				WorkingDirectory = Environment.CurrentDirectory,
+				FileName = Path.Combine(path, dto.Configs.UpdateExecutableName),
+				Arguments = string.Format(@"""{0}"" -showConsole", dto.Configs.UpdateProcessName),
+			};
+
+			NauIpc.ExtractUpdaterFromResource(path, dto.Configs.UpdateExecutableName);
+			var p = NauIpc.LaunchProcessAndSendDto(dto, info, "NAppUpdate-Tests");
+			Assert.IsNotNull(p);
 			p.WaitForExit();
 
 			Assert.IsTrue(Directory.Exists(path));
@@ -56,7 +65,7 @@ namespace NAppUpdate.Tests.Core
 			Assert.IsTrue(File.Exists(Path.Combine(path, "NAppUpdate.Framework.dll")));
 
 			// Cleanup test
-			NAppUpdate.Framework.Utils.FileSystem.DeleteDirectory(path);
+			FileSystem.DeleteDirectory(path);
 		}
 	}
 }

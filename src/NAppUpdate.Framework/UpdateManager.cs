@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System;
 using System.Threading;
@@ -6,6 +7,7 @@ using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.FeedReaders;
 using NAppUpdate.Framework.Sources;
 using NAppUpdate.Framework.Tasks;
+using NAppUpdate.Framework.Utils;
 
 namespace NAppUpdate.Framework
 {
@@ -23,7 +25,7 @@ namespace NAppUpdate.Framework
 		{
 			State = UpdateProcessState.NotChecked;
 			UpdatesToApply = new List<IUpdateTask>();
-			ApplicationPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+			ApplicationPath = Process.GetCurrentProcess().MainModule.FileName;
 			UpdateFeedReader = new NauXmlFeedReader();
 			Config = new NauConfigurations
 						{
@@ -60,6 +62,7 @@ namespace NAppUpdate.Framework
 			NotChecked,
 			Checked,
 			Prepared,
+			AfterRestart,
 			AppliedSuccessfully,
 			RollbackRequired,
 		}
@@ -91,7 +94,7 @@ namespace NAppUpdate.Framework
 			currentStatus.TaskDescription = task.Description;
 			currentStatus.TaskId = UpdatesToApply.IndexOf(task) + 1;
 
-			var taskPerc = 100/UpdatesToApply.Count;
+			var taskPerc = 100 / UpdatesToApply.Count;
 			currentStatus.Percentage = (currentStatus.Percentage * taskPerc / 100) + (currentStatus.TaskId - 1) * taskPerc;
 
 			ReportProgress(currentStatus);
@@ -406,21 +409,41 @@ namespace NAppUpdate.Framework
 				// If an application restart is required
 				if (hasColdUpdates)
 				{
-					var dto = new UpdateStarter.NauDto
-					          	{
-					          		Configs = Instance.Config,
-					          		Tasks = Instance.UpdatesToApply,
+					var dto = new NauIpc.NauDto
+								{
+									Configs = Instance.Config,
+									Tasks = Instance.UpdatesToApply,
 									AppPath = ApplicationPath,
 									WorkingDirectory = Environment.CurrentDirectory,
 									RelaunchApplication = relaunchApplication,
-					          	};
+								};
 
-					var updStarter = new UpdateStarter(runPrivileged);
-					updStarter.SetOptions(updaterDoLogging, updaterShowConsole);
+					NauIpc.ExtractUpdaterFromResource(Config.TempFolder, Instance.Config.UpdateExecutableName);
+
+					var info = new ProcessStartInfo
+					           	{
+					           		UseShellExecute = true,
+					           		WorkingDirectory = Environment.CurrentDirectory,
+					           		FileName = Path.Combine(Config.TempFolder, Instance.Config.UpdateExecutableName),
+					           		Arguments =
+					           			string.Format(@"""{0}"" {1} {2}", Config.UpdateProcessName,
+					           			              updaterShowConsole ? "-showConsole" : string.Empty,
+					           			              updaterDoLogging ? "-log" : string.Empty),
+					           	};
+
+					if (!updaterShowConsole)
+					{
+						info.WindowStyle = ProcessWindowStyle.Hidden;
+						info.CreateNoWindow = true;
+					}
+
+					// If we can't write to the destination folder, then lets try elevating priviledges.
+					if (runPrivileged || !Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory)) { info.Verb = "runas"; }
+
 					bool createdNew;
 					using (var _ = new Mutex(true, Config.UpdateProcessName, out createdNew))
 					{
-						if (updStarter.Start(dto, Config.TempFolder, Config.UpdateProcessName) == null)
+						if (NauIpc.LaunchProcessAndSendDto(dto, info, Config.UpdateProcessName) == null)
 							return false;
 
 						Environment.Exit(0);
@@ -435,6 +458,20 @@ namespace NAppUpdate.Framework
 		}
 
 		#endregion
+
+		public void ReinstateIfRestarted()
+		{
+			lock (UpdatesToApply)
+			{
+				var dto = NauIpc.ReadDto(Config.UpdateProcessName) as NauIpc.NauDto;
+				if (dto != null)
+				{
+					Config = dto.Configs;
+					UpdatesToApply = dto.Tasks;
+					State = UpdateProcessState.AfterRestart;
+				}
+			}
+		}
 
 		/// <summary>
 		/// Rollback executed updates in case of an update failure

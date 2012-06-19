@@ -4,8 +4,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Threading;
-using NAppUpdate.Framework;
 using NAppUpdate.Framework.Tasks;
+using NAppUpdate.Framework.Utils;
 
 namespace NAppUpdate.Updater
 {
@@ -40,7 +40,6 @@ namespace NAppUpdate.Updater
 				// Get the update process name, to be used to create a named pipe and to wait on the application
 				// to quit
 				string syncProcessName = _args.ProcessName;
-
 				if (string.IsNullOrEmpty(syncProcessName))
 					//Application.Exit();
 					throw new ArgumentException("The command line needs to specify the mutex of the program to update.", "args");
@@ -48,7 +47,7 @@ namespace NAppUpdate.Updater
 				Log("Update process name: '{0}'", syncProcessName);
 
 				// Connect to the named pipe and retrieve the updates list
-				var o = UpdateStarter.ReadDto(syncProcessName);
+				var dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
 
 				// Make sure we start updating only once the application has completely terminated
 				bool createdNew;
@@ -65,61 +64,55 @@ namespace NAppUpdate.Updater
 					}
 				}
 
-				bool relaunchApp = true, updateSuccessful = true;
-				string appPath, appDir, backupFolder;
-				{
-					UpdateStarter.NauDto dto = null;
-					if (o is UpdateStarter.NauDto)
-						dto = o as UpdateStarter.NauDto;
+				bool updateSuccessful = true;
 
-					if (dto == null || dto.Configs == null || dto.Tasks == null || dto.Tasks.Count == 0)
+				if (dto == null || dto.Configs == null || dto.Tasks == null || dto.Tasks.Count == 0)
+				{
+					throw new Exception("Could not find the updates list (or it was empty).");
+					//Application.Exit();
+					//return;
+				}
+
+				Log("Got {0} task objects", dto.Tasks.Count);
+
+				// Get some required environment variables
+				string appPath = dto.AppPath;
+				string appDir = dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
+				tempFolder = dto.Configs.TempFolder;
+				string backupFolder = dto.Configs.BackupFolder;
+				bool relaunchApp = dto.RelaunchApplication;
+
+				// Perform the actual off-line update process
+				Log("Starting the updates...");
+
+				foreach (var t in dto.Tasks)
+				{
+					Log("Task \"{0}\": {1}", t.Description, t.ExecutionStatus);
+
+					if (t.ExecutionStatus != TaskExecutionStatus.RequiresAppRestart
+						&& t.ExecutionStatus != TaskExecutionStatus.RequiresPrivilegedAppRestart)
+						continue;
+
+					Log("\tExecuting...");
+
+					try
 					{
-						throw new Exception("Could not find the updates list (or it was empty).");
-						//Application.Exit();
-						//return;
+						t.ExecutionStatus = t.Execute(true);
+					}
+					catch (Exception ex)
+					{
+						// TODO: Log message
+						Log("\tFailed: {0}", ex.Message);
+						updateSuccessful = false;
+						t.ExecutionStatus = TaskExecutionStatus.Failed;
+						MessageBox.Show("Update failed: " + ex.Message);
 					}
 
-					Log("Got {0} task objects", dto.Tasks.Count);
-
-					// Get some required environment variables
-					appPath = dto.AppPath;
-					appDir = dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
-					tempFolder = dto.Configs.TempFolder;
-					backupFolder = dto.Configs.BackupFolder;
-					relaunchApp = dto.RelaunchApplication;
-
-					// Perform the actual off-line update process
-					Log("Starting the updates...");
-
-					foreach (var t in dto.Tasks)
+					if (t.ExecutionStatus != TaskExecutionStatus.Successful)
 					{
-						Log("Task \"{0}\": {1}", t.Description, t.ExecutionStatus);
-
-						if (t.ExecutionStatus != TaskExecutionStatus.RequiresAppRestart
-						    && t.ExecutionStatus != TaskExecutionStatus.RequiresPrivilegedAppRestart)
-							continue;
-
-						Log("\tExecuting...");
-
-						try
-						{
-							t.ExecutionStatus = t.Execute(true);
-						}
-						catch (Exception ex)
-						{
-							// TODO: Log message
-							Log("\tFailed: {0}", ex.Message);
-							updateSuccessful = false;
-							t.ExecutionStatus = TaskExecutionStatus.Failed;
-							MessageBox.Show("Update failed: " + ex.Message);
-						}
-
-						if (t.ExecutionStatus != TaskExecutionStatus.Successful)
-						{
-							Log("\tTask execution failed failed");
-							updateSuccessful = false;
-							break;
-						}
+						Log("\tTask execution failed failed");
+						updateSuccessful = false;
+						break;
 					}
 				}
 
@@ -128,7 +121,7 @@ namespace NAppUpdate.Updater
 					Log("Finished");
 					Log("Removing backup folder");
 					if (Directory.Exists(backupFolder))
-						NAppUpdate.Framework.Utils.FileSystem.DeleteDirectory(backupFolder);
+						FileSystem.DeleteDirectory(backupFolder);
 				}
 				else
 				{
@@ -141,13 +134,20 @@ namespace NAppUpdate.Updater
 				{
 					try
 					{
-						Log("Relaunching the application...");
-						Process.Start(new ProcessStartInfo
-										{
-											UseShellExecute = true,
-											WorkingDirectory = appDir,
-											FileName = appPath,
-										});
+						Log("Re-launching process {0} with working dir {1}", appPath, appDir);
+
+						var info = new ProcessStartInfo
+						           	{
+						           		UseShellExecute = true,
+						           		WorkingDirectory = appDir,
+						           		FileName = appPath,
+						           	};
+
+						var p = NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
+						if (p == null)
+						{
+							Log("Unable to relaunch application");
+						}
 					}
 					catch (Win32Exception e)
 					{
@@ -155,8 +155,6 @@ namespace NAppUpdate.Updater
 						Log("Update failed: " + e);
 					}
 				}
-
-				//MessageBox.Show(string.Format("Re-launched process {0} with working dir {1}", appPath, appDir));
 
 				Log("All done.");
 				//Application.Exit();
@@ -182,12 +180,12 @@ namespace NAppUpdate.Updater
 					_console.WriteLine("Press any key or close this window to exit.");
 					_console.ReadKey();
 				}
-				CleanUp(tempFolder);
+				SelfCleanUp(tempFolder);
 				Application.Exit();
 			}
 		}
 
-		private static void CleanUp(string tempFolder)
+		private static void SelfCleanUp(string tempFolder)
 		{
 			try
 			{

@@ -2,23 +2,20 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-
-// Used for the named pipes implementation
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
 using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Tasks;
 
-namespace NAppUpdate.Framework
+namespace NAppUpdate.Framework.Utils
 {
 	/// <summary>
 	/// Starts the cold update process by extracting the updater app from the library's resources,
 	/// passing it all the data it needs and terminating the current application
 	/// </summary>
-	internal class UpdateStarter
+	internal static class NauIpc
 	{
 		[Serializable]
 		internal class NauDto
@@ -71,27 +68,9 @@ namespace NAppUpdate.Framework
 
 		internal static uint BUFFER_SIZE = 4096;
 
-		private readonly bool _runPrivileged;
-		private bool _updaterDoLogging;
-		private bool _updaterShowConsole;
-
-		public UpdateStarter(bool runPrivileged)
+		public static Process LaunchProcessAndSendDto(NauDto dto, ProcessStartInfo processStartInfo, string syncProcessName)
 		{
-			_runPrivileged = runPrivileged;
-		}
-
-		public void SetOptions(bool updaterDoLogging, bool updaterShowConsole)
-		{
-			_updaterDoLogging = updaterDoLogging;
-			_updaterShowConsole = updaterShowConsole;
-		}
-
-		public Process Start(NauDto dto, string updaterPath, string syncProcessName)
-		{
-			ExtractUpdaterFromResource(updaterPath, UpdateManager.Instance.Config.UpdateExecutableName);
-
-			Process p = null;
-
+			Process p;
 			using (var clientPipeHandle = CreateNamedPipe(
 				   GetPipeName(syncProcessName),
 				   WRITE_ONLY | FILE_FLAG_OVERLAPPED,
@@ -106,26 +85,9 @@ namespace NAppUpdate.Framework
 				if (clientPipeHandle.IsInvalid)
 					return null;
 
-				var info = new ProcessStartInfo
-							{
-								UseShellExecute = true,
-								WorkingDirectory = Environment.CurrentDirectory,
-								FileName = Path.Combine(updaterPath, UpdateManager.Instance.Config.UpdateExecutableName),
-								Arguments = string.Format(@"""{0}"" {1} {2}", syncProcessName, _updaterShowConsole ? "-showConsole" : "", _updaterDoLogging ? "-log" : ""),
-							};
-
-				if (!_updaterShowConsole)
-				{
-					info.WindowStyle = ProcessWindowStyle.Hidden;
-					info.CreateNoWindow = true;
-				}
-
-				// If we can't write to the destination folder, then lets try elevating priviledges.
-				if (_runPrivileged || !Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory)) { info.Verb = "runas"; }
-
 				try
 				{
-					p = Process.Start(info);
+					p = Process.Start(processStartInfo);
 				}
 				catch (Win32Exception)
 				{
@@ -146,7 +108,8 @@ namespace NAppUpdate.Framework
 
 					//failed to connect client pipe
 					if (success == 0)
-						break;
+						// TODO Log error
+						return null;
 
 					//client connection successfull
 					using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
@@ -154,6 +117,7 @@ namespace NAppUpdate.Framework
 						new BinaryFormatter().Serialize(fStream, dto);
 						fStream.Close();
 					}
+					break;
 				}
 			}
 
@@ -192,7 +156,7 @@ namespace NAppUpdate.Framework
 				writer.Write(Resources.updater);
 
 			// Now copy the NAU DLL
-			var assemblyLocation = typeof(UpdateStarter).Assembly.Location;
+			var assemblyLocation = typeof(NauIpc).Assembly.Location;
 			File.Copy(assemblyLocation, Path.Combine(updaterPath, "NAppUpdate.Framework.dll"));
 
 			// And also all other referenced DLLs (opt-in only)

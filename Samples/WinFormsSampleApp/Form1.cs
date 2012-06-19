@@ -37,9 +37,9 @@ namespace WinFormsSampleApp
 
             // UpdateManager initialization
             UpdateManager updManager = UpdateManager.Instance;
-            updManager.UpdateFeedReader = new NAppUpdate.Framework.FeedReaders.NauXmlFeedReader();
             updManager.UpdateSource = new NAppUpdate.Framework.Sources.SimpleWebSource(/* update feed URL */);
-            updManager.TempFolder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NAppUpdateWinFormsSample\\Updates");
+            updManager.Config.TempFolder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NAppUpdateWinFormsSample\\Updates");
+			updManager.ReinstateIfRestarted();
         }
 
         protected override void OnLoad(EventArgs e)
