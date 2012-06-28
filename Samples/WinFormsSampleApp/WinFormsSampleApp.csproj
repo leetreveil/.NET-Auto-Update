@@ -107,6 +107,7 @@
   <ItemGroup>
     <Content Include="SampleUpdateFeed.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </Content>
   </ItemGroup>
   <ItemGroup>
