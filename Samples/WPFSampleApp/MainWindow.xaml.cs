@@ -24,10 +24,7 @@ namespace NAppUpdate.SampleApp
         {
             // Normally this would be a web based source.
             // But for the demo app, we prepare an in-memory source.
-
             var source = new NAppUpdate.Framework.Sources.MemorySource(File.ReadAllText("SampleAppUpdateFeed.xml"));
-
-            // Add the update file.
             source.AddTempFile(new Uri("http://SomeSite.com/Files/NewVersion.txt"), "NewVersion.txt");
 
             return source;
@@ -35,13 +32,13 @@ namespace NAppUpdate.SampleApp
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            //CheckForUpdates();
+        	var updManager = UpdateManager.Instance;
+			updManager.UpdateSource = PrepareUpdateSource();
+			updManager.ReinstateIfRestarted();
         }
 
         private void btnCheckForUpdates_Click(object sender, RoutedEventArgs e)
         {
-            //UpdateManager updManager = UpdateManager.Instance;
-            //updManager.Abort();
             CheckForUpdates();
         }
 
@@ -49,13 +46,9 @@ namespace NAppUpdate.SampleApp
         {
             UpdateManager updManager = UpdateManager.Instance;
 
-            //update configuration
-			updManager.UpdateSource = PrepareUpdateSource();
-
-
             updManager.CheckForUpdateAsync(updatesCount =>
             {
-                Action showUpdateAction = () => ShowUpdateWindow();
+                Action showUpdateAction = ShowUpdateWindow;
 
                 if (updatesCount > 0)
                 {

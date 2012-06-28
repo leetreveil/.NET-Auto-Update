@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Sources
@@ -29,8 +28,8 @@ namespace NAppUpdate.Framework.Sources
             return Feed;
         }
 
-        public bool GetData(string filePath, string basePath, ref string tempFile)
-        {
+		public bool GetData(string filePath, string basePath, Action<UpdateProgressInfo> onProgress, ref string tempFile)
+    	{
             Uri uriKey = null;
 
             if (Uri.IsWellFormedUriString(filePath, UriKind.Absolute))

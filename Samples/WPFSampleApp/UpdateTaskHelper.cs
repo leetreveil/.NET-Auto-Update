@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using NAppUpdate.Framework;
 using NAppUpdate.Framework.Tasks;
-using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.SampleApp
 {
     public class UpdateTaskHelper
     {
-        private UpdateManager _manager;
+        private readonly UpdateManager _manager;
 
         public IList<UpdateTaskInfo> TaskListInfo { get; private set; }
         public string CurrentVersion { get; private set; }
@@ -36,12 +33,11 @@ namespace NAppUpdate.SampleApp
                 var fileTask = task as FileUpdateTask;
                 if (fileTask == null) continue;
 
-                var taskInfo = new UpdateTaskInfo();
-                taskInfo.FileName = fileTask.LocalPath;
-                taskInfo.FileDescription = fileTask.Description;
+            	var taskInfo = new UpdateTaskInfo
+            	               	{FileName = fileTask.LocalPath, FileDescription = fileTask.Description};
 
-                string appExe = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                bool isAppExe = fileTask.LocalPath == null ? true : appExe == new FileInfo(fileTask.LocalPath).FullName;
+            	string appExe = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                bool isAppExe = fileTask.LocalPath == null || appExe == new FileInfo(fileTask.LocalPath).FullName;
                 if (isAppExe)
                 {
                     this.UpdateFileName = taskInfo.FileName;

@@ -15,34 +15,58 @@ namespace NAppUpdate.SampleApp
     public partial class UpdateWindow : Window
     {
         private readonly UpdateManager _updateManager;
-        private UpdateTaskHelper _helper;
+        private readonly UpdateTaskHelper _helper;
         private IList<UpdateTaskInfo> _updates;
         private int _downloadProgress;
 
-        public UpdateWindow(UpdateManager updateManager)
+        public UpdateWindow()
         {
             _updateManager = UpdateManager.Instance;
             _helper = new UpdateTaskHelper();
             InitializeComponent();
-            System.IO.Stream iconStream = _updateManager.IconStream;
-            this.Icon = new IconBitmapDecoder(iconStream, BitmapCreateOptions.None, BitmapCacheOption.Default).Frames[0];
-            this.grdUpdates.ItemsSource = _helper.TaskListInfo;
+
+			var iconStream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("NAppUpdate.Framework.updateicon.ico");
+        	if (iconStream != null)
+        		this.Icon = new IconBitmapDecoder(iconStream, BitmapCreateOptions.None, BitmapCacheOption.Default).Frames[0];
+        	this.grdUpdates.ItemsSource = _helper.TaskListInfo;
             this.DataContext = _helper;
         }
 
         // TODO: Reimplement download progress bar
         private void InstallNow_Click(object sender, RoutedEventArgs e)
         {
-            UpdateManager updateManager = UpdateManager.Instance;
+			ShowThrobber();
+			// dummy time delay for demonstration purposes
+        	var t = new System.Timers.Timer(5000) {AutoReset = false};
+        	t.Start();
+			while (t.Enabled) { DoEvents(); }
 
-            updateManager.PrepareUpdatesAsync(finished =>
+			_updateManager.PrepareUpdatesAsync(finished =>
             {
                 if (finished)
-                    updateManager.ApplyUpdates();
+				{
+					_updateManager.ApplyUpdates();
+					// ApplyUpdates is a synchronous method by design. Make sure to save all user work before calling
+					// it as it might restart your application
+					// get out of the way so the console window isn't obstructed
+					Dispatcher d = Application.Current.Dispatcher;
+					d.BeginInvoke(new Action(Hide));
+					if (!_updateManager.ApplyUpdates(true, true, true))
+					{
+						d.BeginInvoke(new Action(this.Show)); // this.WindowState = WindowState.Normal;
+						MessageBox.Show("An error occurred while trying to install software updates");
+					}
+					else
+					{
+						d.BeginInvoke(new Action(Close));
+					}
+					_updateManager.CleanUp();
+					App.Current.Dispatcher.BeginInvoke(new Action(this.Close));
+				}
                 else
-                    updateManager.CleanUp();
+					_updateManager.CleanUp();
 
-                Action close = () => Close();
+                Action close = Close;
 
                 if (Dispatcher.CheckAccess())
                     close();
@@ -51,66 +75,19 @@ namespace NAppUpdate.SampleApp
             });
         }
 
-        private void InstallNow_Click(object sender, RoutedEventArgs e)
-        {
-            ShowThrobber();
-            // dummy time delay for demonstration purposes
-            System.Timers.Timer t = new System.Timers.Timer(5000);
-            t.AutoReset = false;
-            t.Start();
-            while (t.Enabled) { DoEvents(); }
-
-            _updateManager.PrepareUpdatesAsync(finished =>
-                                                   {
-                                                       try
-                                                       {
-                                                           if (finished)
-                                                           {
-                                                               _updateManager.ApplyUpdates();
-                                                               // ApplyUpdates is a synchronous method by design. Make sure to save all user work before calling
-                                                               // it as it might restart your application
-                                                               // get out of the way so the console window isn't obstructed
-                                                               Dispatcher d = Application.Current.Dispatcher;
-                                                               d.BeginInvoke(new Action(() => this.Hide()));
-                                                               if (!_updateManager.ApplyUpdates(true, true, true))
-                                                               {
-                                                                   d.BeginInvoke(new Action(() => this.Show())); // this.WindowState = WindowState.Normal;
-                                                                   MessageBox.Show("An error occurred while trying to install software updates");
-                                                               }
-                                                               else
-                                                               {
-                                                                   d.BeginInvoke(new Action(() => this.Close()));
-                                                               }
-                                                               _updateManager.CleanUp();
-                                                               App.Current.Dispatcher.BeginInvoke(new Action(() => this.Close()));
-                                                           }
-                                                           else
-                                                               _updateManager.CleanUp();
-                                                       }
-                                                       catch (System.Exception ex)
-                                                       {
-                                                           MessageBox.Show("Error", "There was a problem with the update: \n" + ex.Message);
-                                                       }
-                                                   });
-                                                /*progressPercent =>
-                                                   {
-                                                       this.DownloadProgress = progressPercent;
-                                                   }*/
-        }
-
         static void DoEvents()
         {
-            DispatcherFrame frame = new DispatcherFrame(true);
-            Dispatcher.CurrentDispatcher.BeginInvoke
-            (
-            DispatcherPriority.Background,
-            (System.Threading.SendOrPostCallback)delegate(object arg)
-            {
-                var f = arg as DispatcherFrame;
-                f.Continue = false;
-            },
-            frame
-            );
+            var frame = new DispatcherFrame(true);
+        	Dispatcher.CurrentDispatcher.BeginInvoke
+        		(
+        			DispatcherPriority.Background,
+        			(System.Threading.SendOrPostCallback) delegate(object arg)
+        			                                      	{
+        			                                      		var f = arg as DispatcherFrame;
+        			                                      		if (f != null) f.Continue = false;
+        			                                      	},
+        			frame
+        		);
             Dispatcher.PushFrame(frame);
         }
 
@@ -126,9 +103,8 @@ namespace NAppUpdate.SampleApp
         private void InstallAtExit_Click(object sender, RoutedEventArgs e)
         {
             // TODO: the main application needs to know this was clicked?
-            this.Close();
+            Close();
         }
-
 
         #region INotifyPropertyChanged implementation
 
@@ -138,11 +114,6 @@ namespace NAppUpdate.SampleApp
         {
             PropertyChangedEventHandler handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private void InstallOnExit_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
         }
 
         #endregion
