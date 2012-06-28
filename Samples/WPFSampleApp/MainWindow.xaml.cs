@@ -11,8 +11,17 @@ namespace NAppUpdate.SampleApp
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public string AppVersion { get { return File.ReadAllText("CurrentVersion.txt"); } }
-        private bool applyUpdates;
+    	public string AppVersion
+    	{
+    		get
+    		{
+    			if (File.Exists("CurrentVersion.txt"))
+    				return File.ReadAllText("CurrentVersion.txt");
+    			return "1.0";
+    		}
+    	}
+
+    	private bool applyUpdates;
 
         public MainWindow()
         {
