@@ -87,6 +87,7 @@
     <Compile Include="Sources\IUpdateSource.cs" />
     <Compile Include="Sources\MemorySource.cs" />
     <Compile Include="Sources\SimpleWebSource.cs" />
+    <Compile Include="Sources\UncSource.cs" />
     <Compile Include="Tasks\FileUpdateTask.cs" />
     <Compile Include="Tasks\IUpdateTask.cs" />
     <Compile Include="Tasks\RegistryTask.cs" />
