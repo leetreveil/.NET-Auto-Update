@@ -28,55 +28,12 @@ namespace NAppUpdate.SampleApp
         public IList<UpdateTaskInfo> GetUpdateTaskInfo()
         {
             var taskListInfo = new List<UpdateTaskInfo>();
-            foreach (IUpdateTask task in _manager.UpdatesToApply)
+            foreach (IUpdateTask task in _manager.Tasks)
             {
                 var fileTask = task as FileUpdateTask;
                 if (fileTask == null) continue;
 
-            	var taskInfo = new UpdateTaskInfo
-            	               	{FileName = fileTask.LocalPath, FileDescription = fileTask.Description};
-
-            	string appExe = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                bool isAppExe = fileTask.LocalPath == null || appExe == new FileInfo(fileTask.LocalPath).FullName;
-                if (isAppExe)
-                {
-                    this.UpdateFileName = taskInfo.FileName;
-                    this.UpdateDescription = taskInfo.FileDescription;
-                }
-
-                /*
-                foreach (BooleanCondition.ConditionItem condition in task.UpdateConditions.ChildConditions)
-                {
-                    var fileSize = condition._Condition as FileSizeCondition;
-                    if (fileSize != null)
-                    {
-                        taskInfo.FileSize = FormatCondition(condition, fileSize.FileSize);
-                        this.UpdateFileSize += fileSize.FileSize;
-                        continue;
-                    }
-                    var fileVersion = condition._Condition as FileVersionCondition;
-                    if (fileVersion != null)
-                    {
-                        taskInfo.FileVersion = FormatCondition(condition, fileVersion.Version);
-                        if (isAppExe) this.UpdateVersion = fileVersion.Version.ToString();
-                        continue;
-                    }
-                    var fileDate = condition._Condition as FileDateCondition;
-                    if (fileDate != null)
-                    {
-                        taskInfo.FileDate = FormatCondition(condition, fileDate.Timestamp);
-                        if (isAppExe) this.UpdateDate = fileDate.Timestamp == DateTime.MinValue ? (DateTime?)null : fileDate.Timestamp;
-                        continue;
-                    }
-
-                    var fileChecksum = condition._Condition as FileChecksumCondition;
-                    if (fileChecksum != null)
-                    {
-                        taskInfo.FileChecksum = FormatCondition(condition, fileChecksum.Checksum);
-                    }
-                }
-                taskListInfo.Add(taskInfo);
-            */
+            	this.UpdateDescription = fileTask.Description;
             }
             this.TaskListInfo = taskListInfo;
             return taskListInfo;

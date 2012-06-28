@@ -5,7 +5,7 @@
     Title="SampleApp Update" Height="350" Width="400" ResizeMode="CanResize" Topmost="True"
         MinHeight="350" MinWidth="300"
         >
-    <Grid Margin="10">
+    <Grid Margin="10" Height="307">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -33,37 +33,14 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Text="Current version:  "/>
             <TextBlock Grid.Row="0" Grid.Column="1" FontSize="12" FontWeight="Bold" Text="{Binding CurrentVersion}"/>
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="New version: "/>
-            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" >
-                <TextBlock FontSize="12" FontWeight="Bold" Text="{Binding UpdateVersion}"/>
-                <TextBlock Text="    " /> <!-- just need some space -->
-                <TextBlock Text="{Binding UpdateDate}" />
-            </StackPanel>
             <TextBlock Grid.Row="2" Grid.Column="0" Text="Description: "/>
             <ScrollViewer Grid.Row="2" Grid.Column="1" VerticalScrollBarVisibility="Auto" MaxHeight="60" >
                 <TextBlock FontSize="12" Text="{Binding UpdateDescription}" TextWrapping="Wrap" />
             </ScrollViewer>
-            <TextBlock Grid.Row="3" Grid.Column="0" Text="Size of update: "/>
-            <TextBlock Grid.Row="3" Grid.Column="1" FontSize="12" Text="{Binding UpdateSize}"/>
         </Grid>
-
-        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" >
-            <ListView x:Name="grdUpdates" ItemsSource="{Binding TaskListInfo}" SelectionMode="Single">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="File "     DisplayMemberBinding="{Binding FileName}" />
-                        <GridViewColumn Header="Version "  DisplayMemberBinding="{Binding FileVersion}" />
-                        <GridViewColumn Header="Date "     DisplayMemberBinding="{Binding FileDate}" />
-                        <GridViewColumn Header="Size "     DisplayMemberBinding="{Binding FileSize}" />
-                        <GridViewColumn Header="Checksum " DisplayMemberBinding="{Binding FileChecksum}" />
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </ScrollViewer>
-
         <Line Grid.Row="4" Margin="0,10,0,0"/>
 
-        <Grid Grid.Row="5" VerticalAlignment="Bottom">
+        <Grid Grid.Row="3" VerticalAlignment="Bottom" Margin="-1,0,-3,13">
             <Grid.RowDefinitions>
                 <RowDefinition Height="43" />
                 <RowDefinition Height="43" />

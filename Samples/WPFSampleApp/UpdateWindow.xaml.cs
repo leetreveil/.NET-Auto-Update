@@ -28,7 +28,6 @@ namespace NAppUpdate.SampleApp
 			var iconStream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("NAppUpdate.Framework.updateicon.ico");
         	if (iconStream != null)
         		this.Icon = new IconBitmapDecoder(iconStream, BitmapCreateOptions.None, BitmapCacheOption.Default).Frames[0];
-        	this.grdUpdates.ItemsSource = _helper.TaskListInfo;
             this.DataContext = _helper;
         }
 
