@@ -74,13 +74,15 @@ namespace NAppUpdate.Framework
 		public NauConfigurations Config { get; set; }
 
 		internal string BaseUrl { get; set; }
-		public IList<IUpdateTask> UpdatesToApply { get; private set; }
+		internal IList<IUpdateTask> UpdatesToApply { get; private set; }
 		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
 		public UpdateProcessState State { get; private set; }
 		public string LatestError { get; set; }
 
 		public IUpdateSource UpdateSource { get; set; }
 		public IUpdateFeedReader UpdateFeedReader { get; set; }
+
+		public IEnumerable<IUpdateTask> Tasks { get { return UpdatesToApply; } }
 
 		private Thread _updatesThread;
 		internal volatile bool ShouldStop;
