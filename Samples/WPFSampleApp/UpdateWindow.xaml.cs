@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
@@ -11,7 +12,7 @@ namespace NAppUpdate.SampleApp
     /// <summary>
     /// Interaction logic for UpdateWindow.xaml
     /// </summary>
-    public partial class UpdateWindow : Window, INotifyPropertyChanged
+    public partial class UpdateWindow : Window
     {
         private readonly UpdateManager _updateManager;
         private UpdateTaskHelper _helper;
@@ -30,14 +31,24 @@ namespace NAppUpdate.SampleApp
         }
 
         // TODO: Reimplement download progress bar
-        public int DownloadProgress
+        private void InstallNow_Click(object sender, RoutedEventArgs e)
         {
-            get { return _downloadProgress; }
-            set
+            UpdateManager updateManager = UpdateManager.Instance;
+
+            updateManager.PrepareUpdatesAsync(finished =>
             {
-                _downloadProgress = value;
-                InvokePropertyChanged("DownloadProgress");
-            }
+                if (finished)
+                    updateManager.ApplyUpdates();
+                else
+                    updateManager.CleanUp();
+
+                Action close = () => Close();
+
+                if (Dispatcher.CheckAccess())
+                    close();
+                else
+                    Dispatcher.Invoke(close);
+            });
         }
 
         private void InstallNow_Click(object sender, RoutedEventArgs e)
@@ -127,6 +138,11 @@ namespace NAppUpdate.SampleApp
         {
             PropertyChangedEventHandler handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void InstallOnExit_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
 
         #endregion

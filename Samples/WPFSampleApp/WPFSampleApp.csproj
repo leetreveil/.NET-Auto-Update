@@ -139,8 +139,13 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CurrentVersion.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NewVersion.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Resource Include="throbber.gif" />
-    <None Include="app.config" />
     <Content Include="SampleAppUpdateFeed.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
