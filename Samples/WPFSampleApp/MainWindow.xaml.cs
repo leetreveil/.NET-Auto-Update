@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using NAppUpdate.Framework;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.SampleApp
 {
@@ -55,20 +56,29 @@ namespace NAppUpdate.SampleApp
         {
             UpdateManager updManager = UpdateManager.Instance;
 
-            updManager.CheckForUpdateAsync(updatesCount =>
-            {
-                Action showUpdateAction = ShowUpdateWindow;
+			updManager.CheckForUpdateAsync(hasUpdates =>
+			{
+				Action showUpdateAction = ShowUpdateWindow;
 
-                if (updatesCount > 0)
-                {
-                    applyUpdates = true;
+				if (!hasUpdates)
+				{
+					// No updates were found, or an error has occured. We might want to check that...
+					if (updManager.LatestError == Errors.NoUpdatesFound)
+					{
+						MessageBox.Show("All is up to date!");
+						return;
+					}
 
-                    if (Dispatcher.CheckAccess())
-                        showUpdateAction();
-                    else
-                        Dispatcher.Invoke(showUpdateAction);
-                }
-            });
+					MessageBox.Show(updManager.LatestError);
+				}
+
+				applyUpdates = true;
+
+				if (Dispatcher.CheckAccess())
+					showUpdateAction();
+				else
+					Dispatcher.Invoke(showUpdateAction);
+			});
 		}
 
         private void ShowUpdateWindow()

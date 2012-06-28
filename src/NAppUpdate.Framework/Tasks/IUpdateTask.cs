@@ -1,5 +1,4 @@
-﻿using System;
-using NAppUpdate.Framework.Common;
+﻿using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
