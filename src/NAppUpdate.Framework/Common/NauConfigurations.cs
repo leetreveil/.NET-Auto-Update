@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace NAppUpdate.Framework.Common
@@ -39,5 +40,14 @@ namespace NAppUpdate.Framework.Common
 		/// an UAC prompt in all cases.
 		/// </summary>
 		public string UpdateExecutableName { get; set; }
+
+		/// <summary>
+		/// A list of files (relative paths only) to be copied along with the NAppUpdate DLL and updater host
+		/// when performing cold updates. You need to set this only when you have a custom IUpdateTask that
+		/// takes dependency of an external DLL, or require other files side by side with them.
+		/// Custom IUpdateTasks taking dependencies of external DLLs which may require cold update, MUST reside
+		/// in an external class-library, never in the application EXE, for that reason.
+		/// </summary>
+		public List<string> DependenciesForColdUpdate { get; set; }
 	}
 }

@@ -159,7 +159,21 @@ namespace NAppUpdate.Framework.Utils
 			File.Copy(assemblyLocation, Path.Combine(updaterPath, "NAppUpdate.Framework.dll"));
 
 			// And also all other referenced DLLs (opt-in only)
-			// TODO typeof(UpdateStarter).Assembly.GetReferencedAssemblies()
+			var assemblyPath = Path.GetDirectoryName(assemblyLocation) ?? string.Empty;
+			if (UpdateManager.Instance.Config.DependenciesForColdUpdate != null)
+			{
+				// TODO Maybe we can back this up with typeof(UpdateStarter).Assembly.GetReferencedAssemblies()
+
+				foreach (var dep in UpdateManager.Instance.Config.DependenciesForColdUpdate)
+				{
+					string fullPath = Path.Combine(assemblyPath, dep);
+					if (!File.Exists(fullPath)) continue;
+
+					var dest = Path.Combine(updaterPath, dep);
+					FileSystem.CreateDirectoryStructure(dest);
+					File.Copy(fullPath, Path.Combine(updaterPath, dep));
+				}
+			}
 		}
 	}
 }
