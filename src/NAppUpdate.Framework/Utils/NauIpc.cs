@@ -156,7 +156,7 @@ namespace NAppUpdate.Framework.Utils
 
 			// Now copy the NAU DLL
 			var assemblyLocation = typeof(NauIpc).Assembly.Location;
-			File.Copy(assemblyLocation, Path.Combine(updaterPath, "NAppUpdate.Framework.dll"));
+			File.Copy(assemblyLocation, Path.Combine(updaterPath, "NAppUpdate.Framework.dll"), true);
 
 			// And also all other referenced DLLs (opt-in only)
 			var assemblyPath = Path.GetDirectoryName(assemblyLocation) ?? string.Empty;
