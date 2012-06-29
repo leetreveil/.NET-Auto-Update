@@ -51,7 +51,7 @@ namespace NAppUpdate.Updater
 
 				// Make sure we start updating only once the application has completely terminated
 				bool createdNew;
-				using (var mutex = new Mutex(false, syncProcessName, out createdNew))
+				using (var mutex = new Mutex(false, syncProcessName + "Mutex", out createdNew))
 				{
 					try
 					{

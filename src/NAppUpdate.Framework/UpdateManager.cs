@@ -484,7 +484,7 @@ namespace NAppUpdate.Framework
 						}
 
 						bool createdNew;
-						using (var _ = new Mutex(true, Config.UpdateProcessName, out createdNew))
+						using (var _ = new Mutex(true, Config.UpdateProcessName + "Mutex", out createdNew))
 						{
 							if (NauIpc.LaunchProcessAndSendDto(dto, info, Config.UpdateProcessName) == null)
 								return false;
