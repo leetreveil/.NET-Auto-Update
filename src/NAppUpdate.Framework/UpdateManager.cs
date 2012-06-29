@@ -59,6 +59,7 @@ namespace NAppUpdate.Framework
 		/// <summary>
 		/// State of the update process
 		/// </summary>
+		[Serializable]
 		public enum UpdateProcessState
 		{
 			NotChecked,

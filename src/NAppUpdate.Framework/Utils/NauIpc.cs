@@ -115,6 +115,7 @@ namespace NAppUpdate.Framework.Utils
 					using (var fStream = new FileStream(clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
 					{
 						new BinaryFormatter().Serialize(fStream, dto);
+						fStream.Flush();
 						fStream.Close();
 					}
 				}

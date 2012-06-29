@@ -1,8 +1,10 @@
-﻿using NAppUpdate.Framework.Common;
+﻿using System;
+using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
 {
+	[Serializable]
 	public enum TaskExecutionStatus
 	{
 		Pending,

@@ -46,6 +46,7 @@ namespace NAppUpdate.Framework.Tasks
 			set { _updateConditions = value; }
 		}
 
+		[field:NonSerialized]
     	public event ReportProgressDelegate OnProgress;
 
     	public bool Prepare(Sources.IUpdateSource source)

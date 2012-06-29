@@ -3,8 +3,6 @@ using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.Framework.Sources
 {
-
-
     public interface IUpdateSource
     {
         string GetUpdatesFeed();
