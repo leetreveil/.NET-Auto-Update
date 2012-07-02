@@ -132,6 +132,10 @@
     <EmbeddedResource Include="updateicon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>if not exist "$(SolutionDir)src\NAppUpdate.Framework\Updater" (mkdir "$(SolutionDir)src\NAppUpdate.Framework\Updater")
+if not exist "$(SolutionDir)src\NAppUpdate.Framework\Updater\updater.exe" (echo This is a dummy file &gt; "$(SolutionDir)src\NAppUpdate.Framework\Updater\updater.exe")</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
