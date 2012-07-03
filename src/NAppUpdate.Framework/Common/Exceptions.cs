@@ -3,6 +3,7 @@ using System.Runtime.Serialization;
 
 namespace NAppUpdate.Framework
 {
+	[Serializable]
     public class NAppUpdateException : Exception
     {
         public NAppUpdateException() : base() { }
@@ -11,6 +12,7 @@ namespace NAppUpdate.Framework
         public NAppUpdateException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
+	[Serializable]
     public class UpdateProcessFailedException : NAppUpdateException
     {
         public UpdateProcessFailedException() : base() { }
@@ -19,6 +21,7 @@ namespace NAppUpdate.Framework
         public UpdateProcessFailedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
+	[Serializable]
 	public class FeedReaderException : NAppUpdateException
 	{
 		public FeedReaderException() : base() { }
