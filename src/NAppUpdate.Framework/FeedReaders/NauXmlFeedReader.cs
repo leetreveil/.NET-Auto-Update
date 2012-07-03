@@ -84,10 +84,14 @@ namespace NAppUpdate.Framework.FeedReaders
                         IUpdateCondition conditionObject = ReadCondition(node["Conditions"]);
                         if (conditionObject != null)
                         {
-                            if (conditionObject is BooleanCondition)
-                                task.UpdateConditions = conditionObject as BooleanCondition;
-                            else
-                                task.UpdateConditions.AddCondition(conditionObject);
+                        	var boolCond = conditionObject as BooleanCondition;
+							if (boolCond != null)
+								task.UpdateConditions = boolCond;
+							else
+							{
+								if (task.UpdateConditions == null) task.UpdateConditions = new BooleanCondition();
+								task.UpdateConditions.AddCondition(conditionObject);
+							}
                         }
                     }
                 }

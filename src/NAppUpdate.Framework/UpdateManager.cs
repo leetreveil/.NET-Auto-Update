@@ -162,7 +162,7 @@ namespace NAppUpdate.Framework
 							return false;
 						}
 
-						if (t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met
+						if (t.UpdateConditions == null || t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met
 							UpdatesToApply.Add(t);
 					}
 				}

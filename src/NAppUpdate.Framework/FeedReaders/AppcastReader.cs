@@ -1,8 +1,5 @@
-using System;
 using System.Xml;
 using System.Collections.Generic;
-
-using NAppUpdate.Framework.FeedReaders;
 using NAppUpdate.Framework.Tasks;
 using NAppUpdate.Framework.Conditions;
 
@@ -26,11 +23,11 @@ namespace NAppUpdate.Framework.FeedReaders
             {
                 FileUpdateTask task = new FileUpdateTask();
                 task.Description = n["description"].InnerText;
-                //task.UpdateTo = n["enclosure"].Attributes["url"].Value;
                 task.UpdateTo = n["enclosure"].Attributes["url"].Value;
 
                 FileVersionCondition cnd = new FileVersionCondition();
                 cnd.Version = n["appcast:version"].InnerText;
+				if (task.UpdateConditions == null) task.UpdateConditions = new BooleanCondition();
                 task.UpdateConditions.AddCondition(cnd, BooleanCondition.ConditionType.AND);
 
                 ret.Add(task);
