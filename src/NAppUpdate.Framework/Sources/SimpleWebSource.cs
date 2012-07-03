@@ -52,11 +52,8 @@ namespace NAppUpdate.Framework.Sources
 				fd = new FileDownloader(url);
 			else if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute))
 				fd = new FileDownloader(new Uri(new Uri(baseUrl, UriKind.Absolute), url));
-			else if (Uri.IsWellFormedUriString(new Uri(new Uri(baseUrl), url).AbsoluteUri, UriKind.Absolute))
-				fd = new FileDownloader(new Uri(new Uri(baseUrl), url));
-
-			if (fd == null)
-				throw new ArgumentException("The requested URI does not look valid: " + url, "url");
+			else
+				fd = string.IsNullOrEmpty(baseUrl) ? new FileDownloader(url) : new FileDownloader(new Uri(new Uri(baseUrl), url));
 
 			fd.Proxy = Proxy;
 
