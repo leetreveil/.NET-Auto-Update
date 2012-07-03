@@ -92,6 +92,7 @@
     <Compile Include="Tasks\IUpdateTask.cs" />
     <Compile Include="Tasks\RegistryTask.cs" />
     <Compile Include="Tasks\UpdateTaskAliasAttribute.cs" />
+    <Compile Include="Tasks\UpdateTaskBase.cs" />
     <Compile Include="UpdateManager.cs" />
     <Compile Include="Utils\FileChecksum.cs" />
     <Compile Include="Utils\FileDownloader.cs" />

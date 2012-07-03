@@ -265,7 +265,7 @@ namespace NAppUpdate.Framework
 						}
 
 						var t = task;
-						task.OnProgress += status => TaskProgressCallback(status, t);
+						task.ProgressDelegate += status => TaskProgressCallback(status, t);
 
 						if (!task.Prepare(UpdateSource))
 						{
@@ -416,7 +416,7 @@ namespace NAppUpdate.Framework
 					foreach (var task in UpdatesToApply)
 					{
 						IUpdateTask t = task;
-						task.OnProgress += status => TaskProgressCallback(status, t);
+						task.ProgressDelegate += status => TaskProgressCallback(status, t);
 
 						try
 						{

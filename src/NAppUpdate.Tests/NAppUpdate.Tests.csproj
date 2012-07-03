@@ -76,6 +76,7 @@
     <Compile Include="FeedReaders\NauXmlFeedReaderTests.cs" />
     <Compile Include="Integration\FileDownloaderTests.cs" />
     <Compile Include="Integration\SimpleWebSourceTests.cs" />
+    <Compile Include="Tasks\BasicTaskTests.cs" />
     <Compile Include="UtilTests\PermissionsCheckTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FeedReaders\AppcastReaderTests.cs" />

@@ -1,19 +1,13 @@
 ﻿using System;
 using System.IO;
 using NAppUpdate.Framework.Common;
-using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
 {
 	[Serializable]
     [UpdateTaskAlias("fileUpdate")]
-    public class FileUpdateTask : IUpdateTask
+    public class FileUpdateTask : UpdateTaskBase
     {
-        public FileUpdateTask()
-        {
-			ExecutionStatus = TaskExecutionStatus.Pending;
-        }
-
         [NauField("localPath", "The local path of the file to update", true)]
         public string LocalPath { get; set; }
 
@@ -30,26 +24,9 @@ namespace NAppUpdate.Framework.Tasks
             , false)]
         public bool CanHotSwap { get; set; }
 
-        internal string tempFile;
-        private string destinationFile, backupFile;
+		private string destinationFile, backupFile, tempFile;
 
-        #region IUpdateTask Members
-
-        public string Description { get; set; }
-		public TaskExecutionStatus ExecutionStatus { get; set; }
-		
-		[NonSerialized]
-		private BooleanCondition _updateConditions;
-		public BooleanCondition UpdateConditions
-		{
-			get { return _updateConditions ?? (_updateConditions = new BooleanCondition()); }
-			set { _updateConditions = value; }
-		}
-
-		[field:NonSerialized]
-    	public event ReportProgressDelegate OnProgress;
-
-    	public bool Prepare(Sources.IUpdateSource source)
+    	public override bool Prepare(Sources.IUpdateSource source)
         {
             if (string.IsNullOrEmpty(LocalPath))
                 return true; // Errorneous case, but there's nothing to prepare to...
@@ -66,7 +43,7 @@ namespace NAppUpdate.Framework.Tasks
             {
                 string tempFileLocal = Path.Combine(UpdateManager.Instance.Config.TempFolder, Guid.NewGuid().ToString());
                 if (!source.GetData(fileName, UpdateManager.Instance.BaseUrl, 
-					p => OnProgress(p),
+					OnProgress,
 					ref tempFileLocal))
                     return false;
 
@@ -87,7 +64,7 @@ namespace NAppUpdate.Framework.Tasks
 			return tempFile != null;
         }
 
-		public TaskExecutionStatus Execute(bool coldRun)
+		public override TaskExecutionStatus Execute(bool coldRun)
 		{
 			if (string.IsNullOrEmpty(LocalPath))
 				return TaskExecutionStatus.Successful;
@@ -141,7 +118,7 @@ namespace NAppUpdate.Framework.Tasks
 			return TaskExecutionStatus.RequiresAppRestart;
 		}
 
-    	public bool Rollback()
+    	public override bool Rollback()
         {
             if (string.IsNullOrEmpty(destinationFile))
                 return true;
@@ -153,7 +130,5 @@ namespace NAppUpdate.Framework.Tasks
 
             return true;
         }
-
-    	#endregion
     }
 }

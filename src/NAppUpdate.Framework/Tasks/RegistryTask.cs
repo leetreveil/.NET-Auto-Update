@@ -1,19 +1,13 @@
 ﻿using System;
 using NAppUpdate.Framework.Common;
 using Microsoft.Win32;
-using NAppUpdate.Framework.Conditions;
 
 namespace NAppUpdate.Framework.Tasks
 {
 	[Serializable]
     [UpdateTaskAlias("registryUpdate")]
-    public class RegistryTask : IUpdateTask
+	public class RegistryTask : UpdateTaskBase
     {
-        public RegistryTask()
-        {
-			ExecutionStatus = TaskExecutionStatus.Pending;
-        }
-
         [NauField("keyName", "The full path to the registry key", true)]
         public string KeyName { get; set; }
 
@@ -50,28 +44,13 @@ namespace NAppUpdate.Framework.Tasks
         }
         private object originalValue;
 
-        #region IUpdateTask Members
-
-        public string Description { get; set; }
-		public TaskExecutionStatus ExecutionStatus { get; set; }
-
-		[NonSerialized]
-		private BooleanCondition _updateConditions;
-		public BooleanCondition UpdateConditions
-		{
-			get { return _updateConditions ?? (_updateConditions = new BooleanCondition()); }
-			set { _updateConditions = value; }
-		}
-
-    	public event ReportProgressDelegate OnProgress;
-
-    	public bool Prepare(Sources.IUpdateSource source)
+    	public override bool Prepare(Sources.IUpdateSource source)
         {
             // No preparation required
             return true;
         }
 
-		public TaskExecutionStatus Execute(bool coldRun /* unused */)
+		public override TaskExecutionStatus Execute(bool coldRun /* unused */)
         {
             if (String.IsNullOrEmpty(KeyName) || String.IsNullOrEmpty(KeyValueName))
 				return ExecutionStatus = TaskExecutionStatus.Successful;
@@ -93,7 +72,7 @@ namespace NAppUpdate.Framework.Tasks
 			return ExecutionStatus = TaskExecutionStatus.Successful;
         }
 
-        public bool Rollback()
+        public override bool Rollback()
         {
             try
             {
@@ -102,7 +81,5 @@ namespace NAppUpdate.Framework.Tasks
             catch { return false; }
             return true;
         }
-
-        #endregion
     }
 }
