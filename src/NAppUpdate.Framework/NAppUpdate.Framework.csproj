@@ -60,10 +60,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Common\Errors.cs" />
     <Compile Include="Common\INauFieldsHolder.cs" />
     <Compile Include="Common\NauConfigurations.cs" />
     <Compile Include="Common\NauFieldAttribute.cs" />
+    <Compile Include="Common\UpdateProcessAsyncResult.cs" />
     <Compile Include="Common\UpdateProgressInfo.cs" />
     <Compile Include="Common\WorkScope.cs" />
     <Compile Include="Conditions\FileChecksumCondition.cs" />

@@ -8,7 +8,6 @@ using NAppUpdate.Framework.FeedReaders;
 using NAppUpdate.Framework.Sources;
 using NAppUpdate.Framework.Tasks;
 using NAppUpdate.Framework.Utils;
-using ThreadState = System.Threading.ThreadState;
 
 namespace NAppUpdate.Framework
 {
@@ -78,14 +77,12 @@ namespace NAppUpdate.Framework
 		internal IList<IUpdateTask> UpdatesToApply { get; private set; }
 		public int UpdatesAvailable { get { return UpdatesToApply == null ? 0 : UpdatesToApply.Count; } }
 		public UpdateProcessState State { get; private set; }
-		public string LatestError { get; set; }
 
 		public IUpdateSource UpdateSource { get; set; }
 		public IUpdateFeedReader UpdateFeedReader { get; set; }
 
 		public IEnumerable<IUpdateTask> Tasks { get { return UpdatesToApply; } }
 
-		private Thread _updatesThread;
 		internal volatile bool ShouldStop;
 
 		public bool IsWorking { get { return _isWorking; } private set { _isWorking = value; } }
@@ -114,41 +111,30 @@ namespace NAppUpdate.Framework
 		/// <summary>
 		/// Check for update synchronously, using the default update source
 		/// </summary>
-		/// <returns>true if successful and updates exist</returns>
-		public bool CheckForUpdates()
+		public void CheckForUpdates()
 		{
-			return CheckForUpdates(UpdateSource, null);
-		}
-
-		/// <summary>
-		/// Check for updates synchronously
-		/// </summary>
-		/// <param name="source">An update source to use</param>
-		/// <returns>true if successful and updates exist</returns>
-		public bool CheckForUpdates(IUpdateSource source)
-		{
-			return CheckForUpdates(source ?? UpdateSource, null);
+			CheckForUpdates(UpdateSource);
 		}
 
 		/// <summary>
 		/// Check for updates synchronouly
 		/// </summary>
 		/// <param name="source">Updates source to use</param>
-		/// <param name="callback">Callback function to call when done</param>
-		/// <returns>true if successful and updates exist</returns>
-		private bool CheckForUpdates(IUpdateSource source, Action<bool> callback)
+		public void CheckForUpdates(IUpdateSource source)
 		{
-			if (IsWorking) return false;
+			if (IsWorking)
+				throw new InvalidOperationException("Another update process is already in progress");
 			
 			using (WorkScope.New(isWorking => IsWorking = isWorking))
 			{
-				LatestError = null;
-
 				if (UpdateFeedReader == null)
 					throw new ArgumentException("An update feed reader is required; please set one before checking for updates");
 
 				if (source == null)
 					throw new ArgumentException("An update source was not specified");
+
+				if (State != UpdateProcessState.NotChecked)
+					throw new InvalidOperationException("Already checked for updates; to reset the current state call CleanUp()");
 
 				lock (UpdatesToApply)
 				{
@@ -157,64 +143,67 @@ namespace NAppUpdate.Framework
 					foreach (var t in tasks)
 					{
 						if (ShouldStop)
-						{
-							LatestError = Errors.UserAborted;
-							return false;
-						}
+							throw new UserAbortException();
 
 						if (t.UpdateConditions == null || t.UpdateConditions.IsMet(t)) // Only execute if all conditions are met
 							UpdatesToApply.Add(t);
 					}
 				}
 
-				if (ShouldStop)
-				{
-					LatestError = Errors.UserAborted;
-					return false;
-				}
-
 				State = UpdateProcessState.Checked;
-
-				if (UpdatesToApply.Count == 0)
-					LatestError = Errors.NoUpdatesFound;
 			}
-
-			if (callback != null) callback(LatestError == null);
-			return LatestError == null;
-		}
-
-		/// <summary>
-		/// Check for updates asynchronously
-		/// </summary>
-		/// <param name="callback">Callback function to call when done</param>
-		public void CheckForUpdateAsync(Action<bool> callback)
-		{
-			CheckForUpdateAsync(UpdateSource, callback);
 		}
 
 		/// <summary>
 		/// Check for updates asynchronously
 		/// </summary>
 		/// <param name="source">Update source to use</param>
-		/// <param name="callback">Callback function to call when done</param>
-		private void CheckForUpdateAsync(IUpdateSource source, Action<bool> callback)
+		/// <param name="callback">Callback function to call when done; can be null</param>
+		/// <param name="state">Allows the caller to preserve state; can be null</param>
+		public IAsyncResult BeginCheckForUpdates(IUpdateSource source, AsyncCallback callback, Object state)
 		{
-			if (IsWorking) return;
+			// Create IAsyncResult object identifying the 
+			// asynchronous operation
+			var ar = new UpdateProcessAsyncResult(callback, state);
 
-			_updatesThread = new Thread(delegate()
-											{
-												try
-												{
-													CheckForUpdates(source, callback);
-												}
-												catch (Exception ex)
-												{
-													// TODO: Better error handling
-													LatestError = ex.ToString();
-													if (callback != null) callback(false);
-												}
-											});
-			_updatesThread.Start();
+			// Use a thread pool thread to perform the operation
+			ThreadPool.QueueUserWorkItem(o =>
+			                             	{
+			                             		try
+			                             		{
+			                             			// Perform the operation; if sucessful set the result
+			                             			CheckForUpdates(source ?? UpdateSource);
+			                             			ar.SetAsCompleted(null, false);
+			                             		}
+			                             		catch (Exception e)
+			                             		{
+			                             			// If operation fails, set the exception
+			                             			ar.SetAsCompleted(e, false);
+			                             		}
+			                             	}, ar);
+
+			return ar;  // Return the IAsyncResult to the caller
+		}
+
+		/// <summary>
+		/// Check for updates asynchronously
+		/// </summary>
+		/// <param name="callback">Callback function to call when done; can be null</param>
+		/// <param name="state">Allows the caller to preserve state; can be null</param>
+		public IAsyncResult BeginCheckForUpdates(AsyncCallback callback, Object state)
+		{
+			return BeginCheckForUpdates(UpdateSource, callback, state);
+		}
+
+		/// <summary>
+		/// Block until previously-called CheckForUpdates complete
+		/// </summary>
+		/// <param name="asyncResult"></param>
+		public void EndCheckForUpdates(IAsyncResult asyncResult)
+		{
+			// Wait for operation to complete, then return or throw exception
+			var ar = (UpdateProcessAsyncResult)asyncResult;
+			ar.EndInvoke();
 		}
 
 		#endregion
@@ -224,34 +213,20 @@ namespace NAppUpdate.Framework
 		/// <summary>
 		/// Prepare updates synchronously
 		/// </summary>
-		/// <returns>true if successful</returns>
-		public bool PrepareUpdates()
+		public void PrepareUpdates()
 		{
-			return PrepareUpdates(null);
-		}
+			if (IsWorking)
+				throw new InvalidOperationException("Another update process is already in progress");
 
-		/// <summary>
-		/// Prepare updates synchronously, calling the provided callback when done
-		/// </summary>
-		/// <param name="callback">A callback function to execute when done</param>
-		/// <returns>true if successful</returns>
-		private bool PrepareUpdates(Action<bool> callback)
-		{
-			if (IsWorking) return false;
-
-			using (var _ = WorkScope.New(isWorking => IsWorking = isWorking))
+			using (WorkScope.New(isWorking => IsWorking = isWorking))
 			{
-				LatestError = null;
-
 				lock (UpdatesToApply)
 				{
+					if (State != UpdateProcessState.Checked)
+						throw new InvalidOperationException("Invalid state when calling PrepareUpdates(): " + State);
+
 					if (UpdatesToApply.Count == 0)
-					{
-						_.Dispose(); // HACK
-						LatestError = Errors.NoUpdatesFound;
-						if (callback != null) callback(false);
-						return false;
-					}
+						throw new InvalidOperationException("No updates to prepare");
 
 					if (!Directory.Exists(Config.TempFolder))
 						Directory.CreateDirectory(Config.TempFolder);
@@ -259,60 +234,62 @@ namespace NAppUpdate.Framework
 					foreach (var task in UpdatesToApply)
 					{
 						if (ShouldStop)
-						{
-							LatestError = Errors.UserAborted;
-							return false;
-						}
+							throw new UserAbortException();
 
 						var t = task;
 						task.ProgressDelegate += status => TaskProgressCallback(status, t);
 
 						if (!task.Prepare(UpdateSource))
 						{
-							_.Dispose(); // HACK
-							task.ExecutionStatus = TaskExecutionStatus.FailedToPrepare;
-							if (callback != null) callback(false);
-							return false;
+							task.ExecutionStatus = TaskExecutionStatus.FailedToPrepare; // TODO: lose this and rely on exceptions thrown from within Prepare()
+							throw new UpdateProcessFailedException("Failed to prepare task: " + task.Description);
 						}
-					}
-
-					if (ShouldStop)
-					{
-						LatestError = Errors.UserAborted;
-						return false;
 					}
 
 					State = UpdateProcessState.Prepared;
 				}
 			}
-
-			if (callback != null) callback(true);
-			return true;
 		}
 
 		/// <summary>
 		/// Prepare updates asynchronously
 		/// </summary>
-		/// <param name="callback">callback function to call when done</param>
-		public void PrepareUpdatesAsync(Action<bool> callback)
+		/// <param name="callback">Callback function to call when done; can be null</param>
+		/// <param name="state">Allows the caller to preserve state; can be null</param>
+		public IAsyncResult BeginPrepareUpdates(AsyncCallback callback, Object state)
 		{
-			if (IsWorking) return;
+			// Create IAsyncResult object identifying the 
+			// asynchronous operation
+			var ar = new UpdateProcessAsyncResult(callback, state);
 
-			_updatesThread = new Thread(delegate()
-											{
-												try
-												{
-													PrepareUpdates(callback);
-												}
-												catch (Exception ex)
-												{
-													// TODO: Better error handling
-													LatestError = ex.ToString();
-													if (callback != null) callback(false);
-												}
-											});
+			// Use a thread pool thread to perform the operation
+			ThreadPool.QueueUserWorkItem(o =>
+			{
+				try
+				{
+					// Perform the operation; if sucessful set the result
+					PrepareUpdates();
+					ar.SetAsCompleted(null, false);
+				}
+				catch (Exception e)
+				{
+					// If operation fails, set the exception
+					ar.SetAsCompleted(e, false);
+				}
+			}, ar);
 
-			_updatesThread.Start();
+			return ar;  // Return the IAsyncResult to the caller
+		}
+
+		/// <summary>
+		/// Block until previously-called PrepareUpdates complete
+		/// </summary>
+		/// <param name="asyncResult"></param>
+		public void EndPrepareUpdates(IAsyncResult asyncResult)
+		{
+			// Wait for operation to complete, then return or throw exception
+			var ar = (UpdateProcessAsyncResult)asyncResult;
+			ar.EndInvoke();
 		}
 
 		#endregion
@@ -323,9 +300,9 @@ namespace NAppUpdate.Framework
 		/// Starts the updater executable and sends update data to it, and relaunch the caller application as soon as its done
 		/// </summary>
 		/// <returns>True if successful (unless a restart was required</returns>
-		public bool ApplyUpdates()
+		public void ApplyUpdates()
 		{
-			return ApplyUpdates(true);
+			ApplyUpdates(true);
 		}
 
 		/// <summary>
@@ -333,9 +310,9 @@ namespace NAppUpdate.Framework
 		/// </summary>
 		/// <param name="relaunchApplication">true if relaunching the caller application is required; false otherwise</param>
 		/// <returns>True if successful (unless a restart was required</returns>
-		public bool ApplyUpdates(bool relaunchApplication)
+		public void ApplyUpdates(bool relaunchApplication)
 		{
-			return ApplyUpdates(relaunchApplication, false, false);
+			ApplyUpdates(relaunchApplication, false, false);
 		}
 
 		/// <summary>
@@ -345,15 +322,15 @@ namespace NAppUpdate.Framework
 		/// <param name="updaterDoLogging">true if the updater writes to a log file; false otherwise</param>
 		/// <param name="updaterShowConsole">true if the updater shows the console window; false otherwise</param>
 		/// <returns>True if successful (unless a restart was required</returns>
-		public bool ApplyUpdates(bool relaunchApplication, bool updaterDoLogging, bool updaterShowConsole)
+		public void ApplyUpdates(bool relaunchApplication, bool updaterDoLogging, bool updaterShowConsole)
 		{
-			if (IsWorking) return false;
+			if (IsWorking)
+				throw new InvalidOperationException("Another update process is already in progress");
 
 			lock (UpdatesToApply)
 			{
-				using (WorkScope.New((isWorking) => this.IsWorking = isWorking))
+				using (WorkScope.New(isWorking => IsWorking = isWorking))
 				{
-					LatestError = null;
 					bool revertToDefaultBackupPath = true;
 
 					// Set current directory the the application directory
@@ -406,8 +383,7 @@ namespace NAppUpdate.Framework
 						catch (UnauthorizedAccessException ex)
 						{
 							// We can't backup, so we abort
-							LatestError = ex.ToString();
-							return false;
+							throw new UpdateProcessFailedException("Could not create backup folder " + Config.BackupFolder, ex);
 						}
 					}
 
@@ -425,8 +401,8 @@ namespace NAppUpdate.Framework
 						}
 						catch (Exception ex)
 						{
-							// TODO: Log error
-							task.ExecutionStatus = TaskExecutionStatus.Failed;
+							task.ExecutionStatus = TaskExecutionStatus.Failed; // mark the failing task before rethrowing
+							throw new UpdateProcessFailedException("Update task execution failed: " + task.Description, ex);
 						}
 
 						if (task.ExecutionStatus == TaskExecutionStatus.RequiresAppRestart
@@ -441,10 +417,7 @@ namespace NAppUpdate.Framework
 						// We are being quite explicit here - only Successful return values are considered
 						// to be Ok (cold updates are already handled above)
 						if (task.ExecutionStatus != TaskExecutionStatus.Successful)
-						{
-							// TODO: notify about task execution failure using exceptions
-							return false;
-						}
+							throw new UpdateProcessFailedException("Update task execution failed: " + task.Description);
 					}
 
 					// If an application restart is required
@@ -479,16 +452,16 @@ namespace NAppUpdate.Framework
 						}
 
 						// If we can't write to the destination folder, then lets try elevating priviledges.
-						if (runPrivileged || !Utils.PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory))
+						if (runPrivileged || !PermissionsCheck.HaveWritePermissionsForFolder(Environment.CurrentDirectory))
 						{
 							info.Verb = "runas";
 						}
 
 						bool createdNew;
-						using (var _ = new Mutex(true, Config.UpdateProcessName + "Mutex", out createdNew))
+						using (new Mutex(true, Config.UpdateProcessName + "Mutex", out createdNew))
 						{
 							if (NauIpc.LaunchProcessAndSendDto(dto, info, Config.UpdateProcessName) == null)
-								return false;
+								throw new UpdateProcessFailedException("Could not launch cold update process");
 
 							Environment.Exit(0);
 						}
@@ -497,8 +470,6 @@ namespace NAppUpdate.Framework
 					State = UpdateProcessState.AppliedSuccessfully;
 					UpdatesToApply.Clear();
 				}
-
-				return true;
 			}
 		}
 
@@ -550,18 +521,7 @@ namespace NAppUpdate.Framework
 		/// <param name="waitForTermination">If true, blocks the calling thread until the current process terminates</param>
 		public void Abort(bool waitForTermination)
 		{
-			// If Abort was called from the worker thread itself, all we need to do is return,
-			// as obviously there isn't much else going on anyway
-			if (Thread.CurrentThread == _updatesThread)
-				return;
-
 			ShouldStop = true;
-			if (waitForTermination && _updatesThread != null && _updatesThread.ThreadState != ThreadState.Stopped)
-			{
-				_updatesThread.Join(); // TODO perhaps we should support timeout here instead of per process
-				_updatesThread = null;
-				ShouldStop = false;
-			}
 		}
 
 		/// <summary>

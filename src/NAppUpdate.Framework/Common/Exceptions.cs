@@ -29,4 +29,12 @@ namespace NAppUpdate.Framework
 		public FeedReaderException(string message, Exception ex) : base(message, ex) { }
 		public FeedReaderException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 	}
+
+	[Serializable]
+	public class UserAbortException : NAppUpdateException
+	{
+		public UserAbortException() : base("User abort")
+		{
+		}
+	}
 }

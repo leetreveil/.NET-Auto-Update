@@ -97,8 +97,8 @@ namespace NAppUpdate.Framework.Tasks
 				{
 					if (coldRun)
 					{
-						// TODO: log error
-						return TaskExecutionStatus.Failed;
+						ExecutionStatus = TaskExecutionStatus.Failed;
+						throw new UpdateProcessFailedException("Could not replace the file", ex);
 					}
 
 					// Failed hot swap file tasks should now downgrade to cold tasks automatically
