@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows.Forms;
 
 using NAppUpdate.Framework;
+using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Sources;
 
 namespace WinFormsSampleApp
@@ -95,53 +96,58 @@ namespace WinFormsSampleApp
             }
         }
 
-        private void CheckForUpdates(IUpdateSource source)
-        {
-            // Get a local pointer to the UpdateManager instance
-            UpdateManager updManager = UpdateManager.Instance;
+		private void CheckForUpdates(IUpdateSource source)
+		{
+			// Get a local pointer to the UpdateManager instance
+			UpdateManager updManager = UpdateManager.Instance;
 
-            // Only check for updates if we haven't done so already
-            if (updManager.State != UpdateManager.UpdateProcessState.NotChecked)
-            {
-                MessageBox.Show("Update process has already initialized; current state: " + updManager.State.ToString());
-                return;
-            }
+			// Only check for updates if we haven't done so already
+			if (updManager.State != UpdateManager.UpdateProcessState.NotChecked)
+			{
+				MessageBox.Show("Update process has already initialized; current state: " + updManager.State.ToString());
+				return;
+			}
 
-            try
-            {
-                // Check for updates - returns true if relevant updates are found (after processing all the tasks and
-                // conditions)
-                // Throws exceptions in case of bad arguments or unexpected results
-                if (updManager.CheckForUpdates(source))
-                {
-                    DialogResult dr = MessageBox.Show(
-                        string.Format("Updates are available to your software ({0} total). Do you want to download and prepare them now? You can always do this at a later time.",
-                        updManager.UpdatesAvailable),
-                        "Software updates available",
-                         MessageBoxButtons.YesNo);
+			try
+			{
+				// Check for updates - returns true if relevant updates are found (after processing all the tasks and
+				// conditions)
+				// Throws exceptions in case of bad arguments or unexpected results
+				updManager.CheckForUpdates(source);
 
-                    if (dr == DialogResult.Yes)
-                    {
-                        updManager.PrepareUpdatesAsync(OnPrepareUpdatesCompleted);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Your software is up to date");
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is NAppUpdateException)
-                { 
-                    // This indicates a feed or network error; ex will contain all the info necessary
-                    // to deal with that
-                }
-                else MessageBox.Show(ex.ToString());
-            }
-        }
+			}
+			catch (Exception ex)
+			{
+				if (ex is NAppUpdateException)
+				{
+					// This indicates a feed or network error; ex will contain all the info necessary
+					// to deal with that
+				}
+				else MessageBox.Show(ex.ToString());
+				return;
+			}
 
-        private void btnPrepareUpdates_Click(object sender, EventArgs e)
+
+			if (updManager.UpdatesAvailable == 0)
+			{
+				MessageBox.Show("Your software is up to date");
+				return;
+			}
+
+			DialogResult dr = MessageBox.Show(
+				string.Format(
+					"Updates are available to your software ({0} total). Do you want to download and prepare them now? You can always do this at a later time.",
+					updManager.UpdatesAvailable),
+				"Software updates available",
+				MessageBoxButtons.YesNo);
+
+			if (dr == DialogResult.Yes)
+			{
+				updManager.BeginPrepareUpdates(OnPrepareUpdatesCompleted, null);
+			}
+		}
+
+    	private void btnPrepareUpdates_Click(object sender, EventArgs e)
         {
             UpdateManager updManager = UpdateManager.Instance;
 
@@ -157,7 +163,7 @@ namespace WinFormsSampleApp
                 return;
             }
 
-            updManager.PrepareUpdatesAsync(OnPrepareUpdatesCompleted);
+            updManager.BeginPrepareUpdates(OnPrepareUpdatesCompleted, null);
         }
 
         private void btnInstallUpdates_Click(object sender, EventArgs e)
@@ -170,37 +176,46 @@ namespace WinFormsSampleApp
                 return;
             }
 
-            if (updManager.ApplyUpdates())
-                MessageBox.Show("Error while trying to install software updates");
+        	updManager.ApplyUpdates();
         }
 
-        private void OnPrepareUpdatesCompleted(bool succeeded)
-        {
-            if (!succeeded)
-            {
-                MessageBox.Show("Updates preperation failed. Check the feed and try again.");
-            }
-            else
-            {
-                // Get a local pointer to the UpdateManager instance
-                UpdateManager updManager = UpdateManager.Instance;
+		private void OnPrepareUpdatesCompleted(IAsyncResult asyncResult)
+		{
+			try
+			{
+				((UpdateProcessAsyncResult) asyncResult).EndInvoke();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(string.Format("Updates preperation failed. Check the feed and try again.{0}{1}", Environment.NewLine,
+				                              ex));
+				return;
+			}
 
-                DialogResult dr = MessageBox.Show(
-                        "Updates are ready to install. Do you wish to install them now?",
-                        "Software updates ready",
-                         MessageBoxButtons.YesNo);
+			// Get a local pointer to the UpdateManager instance
+			UpdateManager updManager = UpdateManager.Instance;
 
-                if (dr == DialogResult.Yes)
-                {
-                    // This is a synchronous method by design, make sure to save all user work before calling
-                    // it as it might restart your application
-                    if (!updManager.ApplyUpdates())
-                        MessageBox.Show("Error while trying to install software updates");
-                }
-            }
-        }
+			DialogResult dr = MessageBox.Show(
+				"Updates are ready to install. Do you wish to install them now?",
+				"Software updates ready",
+				MessageBoxButtons.YesNo);
 
-        private void btnQuit_Click(object sender, EventArgs e)
+			if (dr == DialogResult.Yes)
+			{
+				// This is a synchronous method by design, make sure to save all user work before calling
+				// it as it might restart your application
+				try
+				{
+					updManager.ApplyUpdates();
+				}
+				catch (Exception ex)
+				{
+					MessageBox.Show(string.Format("Error while trying to install software updates{0}{1}", Environment.NewLine, ex));
+				}
+			}
+		}
+
+    	private void btnQuit_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }

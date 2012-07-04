@@ -1,30 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using NAppUpdate.Framework.Common;
-using NAppUpdate.Framework.Conditions;
 using NAppUpdate.Framework.Sources;
 using NAppUpdate.Framework.Tasks;
 
 namespace WinFormsProgressSample
 {
-	public class LengthyTask : IUpdateTask
+	public class LengthyTask : UpdateTaskBase
 	{
-		public LengthyTask()
-		{
-			UpdateConditions = new BooleanCondition();
-			ExecutionStatus = TaskExecutionStatus.Pending;
-		}
-
-		public string Description{get; set; }
-
-		public BooleanCondition UpdateConditions { get; set; }
-
-		public TaskExecutionStatus ExecutionStatus { get; set; }
-
-		public event ReportProgressDelegate OnProgress;
-
-		public bool Prepare(IUpdateSource source)
+		public override bool Prepare(IUpdateSource source)
 		{
 			for (int i = 0; i < 50; i++)
 			{
@@ -47,12 +30,12 @@ namespace WinFormsProgressSample
 			return true;
 		}
 
-		public TaskExecutionStatus Execute(bool coldRun)
+		public override TaskExecutionStatus Execute(bool coldRun)
 		{
 			return coldRun ? TaskExecutionStatus.Successful : TaskExecutionStatus.RequiresAppRestart;
 		}
 
-		public bool Rollback()
+		public override bool Rollback()
 		{
 			return true;
 		}

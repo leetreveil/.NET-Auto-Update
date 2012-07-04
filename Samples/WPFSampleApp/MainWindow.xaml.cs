@@ -56,30 +56,31 @@ namespace NAppUpdate.SampleApp
         {
             UpdateManager updManager = UpdateManager.Instance;
 
-			updManager.CheckForUpdateAsync(hasUpdates =>
-			{
-				Action showUpdateAction = ShowUpdateWindow;
+        	updManager.BeginCheckForUpdates(asyncResult =>
+        	                                	{
+        	                                		Action showUpdateAction = ShowUpdateWindow;
 
-				if (!hasUpdates)
-				{
-					// No updates were found, or an error has occured. We might want to check that...
-					if (updManager.LatestError == Errors.NoUpdatesFound)
-					{
-						MessageBox.Show("All is up to date!");
-						return;
-					}
+        	                                		if (asyncResult.IsCompleted)
+        	                                		{
+        	                                			// still need to check for caught exceptions if any and rethrow
+        	                                			((UpdateProcessAsyncResult) asyncResult).EndInvoke();
 
-					MessageBox.Show(updManager.LatestError);
-				}
+        	                                			// No updates were found, or an error has occured. We might want to check that...
+        	                                			if (updManager.UpdatesAvailable == 0)
+        	                                			{
+        	                                				MessageBox.Show("All is up to date!");
+        	                                				return;
+        	                                			}
+        	                                		}
 
-				applyUpdates = true;
+        	                                		applyUpdates = true;
 
-				if (Dispatcher.CheckAccess())
-					showUpdateAction();
-				else
-					Dispatcher.Invoke(showUpdateAction);
-			});
-		}
+        	                                		if (Dispatcher.CheckAccess())
+        	                                			showUpdateAction();
+        	                                		else
+        	                                			Dispatcher.Invoke(showUpdateAction);
+        	                                	}, null);
+        }
 
         private void ShowUpdateWindow()
         {
@@ -106,10 +107,16 @@ namespace NAppUpdate.SampleApp
             // Do any updates.
             if (applyUpdates)
             {
-                if (UpdateManager.Instance.PrepareUpdates())
-                    UpdateManager.Instance.ApplyUpdates(false);
-                else
-                    UpdateManager.Instance.CleanUp();
+				try
+				{
+					UpdateManager.Instance.PrepareUpdates();
+				}
+				catch
+				{
+					UpdateManager.Instance.CleanUp();
+					return;
+				}
+            	UpdateManager.Instance.ApplyUpdates(false);
             }
         }
 

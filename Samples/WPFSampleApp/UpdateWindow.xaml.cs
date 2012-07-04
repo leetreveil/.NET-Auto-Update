@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Media.Imaging;
 using NAppUpdate.Framework;
+using NAppUpdate.Framework.Common;
 
 namespace NAppUpdate.SampleApp
 {
@@ -40,37 +41,38 @@ namespace NAppUpdate.SampleApp
         	t.Start();
 			while (t.Enabled) { DoEvents(); }
 
-			_updateManager.PrepareUpdatesAsync(finished =>
-            {
-                if (finished)
-				{
-					// ApplyUpdates is a synchronous method by design. Make sure to save all user work before calling
-					// it as it might restart your application
-					// get out of the way so the console window isn't obstructed
-					Dispatcher d = Application.Current.Dispatcher;
-					d.BeginInvoke(new Action(Hide));
-					if (!_updateManager.ApplyUpdates(true))
-					{
-						d.BeginInvoke(new Action(this.Show)); // this.WindowState = WindowState.Normal;
-						MessageBox.Show("An error occurred while trying to install software updates");
-					}
-					else
-					{
-						d.BeginInvoke(new Action(Close));
-					}
-					_updateManager.CleanUp();
-					d.BeginInvoke(new Action(this.Close));
-				}
-                else
-					_updateManager.CleanUp();
+        	_updateManager.BeginPrepareUpdates(asyncResult =>
+        	                                   	{
+													((UpdateProcessAsyncResult)asyncResult).EndInvoke();
 
-                Action close = Close;
+        	                                   		// ApplyUpdates is a synchronous method by design. Make sure to save all user work before calling
+        	                                   		// it as it might restart your application
+        	                                   		// get out of the way so the console window isn't obstructed
+        	                                   		Dispatcher d = Application.Current.Dispatcher;
+        	                                   		d.BeginInvoke(new Action(Hide));
+        	                                   		try
+        	                                   		{
+        	                                   			_updateManager.ApplyUpdates(true);
+        	                                   			d.BeginInvoke(new Action(Close));
+        	                                   		}
+        	                                   		catch
+        	                                   		{
+        	                                   			d.BeginInvoke(new Action(this.Show));
+        	                                   				// this.WindowState = WindowState.Normal;
+        	                                   			MessageBox.Show(
+        	                                   				"An error occurred while trying to install software updates");
+        	                                   		}
 
-                if (Dispatcher.CheckAccess())
-                    close();
-                else
-                    Dispatcher.Invoke(close);
-            });
+        	                                   		_updateManager.CleanUp();
+        	                                   		d.BeginInvoke(new Action(this.Close));
+
+        	                                   		Action close = Close;
+
+        	                                   		if (Dispatcher.CheckAccess())
+        	                                   			close();
+        	                                   		else
+        	                                   			Dispatcher.Invoke(close);
+        	                                   	}, null);
         }
 
         static void DoEvents()

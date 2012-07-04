@@ -51,19 +51,13 @@ namespace WinFormsProgressSample
 			btnStart.Enabled = false;
 			progressBar1.Step = 0;
 
-			UpdateManager.Instance.CheckForUpdateAsync(count => UpdateManager.Instance.PrepareUpdatesAsync(hasUpdates =>
+			UpdateManager.Instance.BeginCheckForUpdates(asyncResult => UpdateManager.Instance.BeginPrepareUpdates(ar2 =>
 			                                                                                               	{
-			                                                                                               		if (hasUpdates)
-			                                                                                               		{
 																													//UpdateManager.
 																													//    Instance.
 																													//    ApplyUpdates(false);
-			                                                                                               		}
 			                                                                                               	}
-			                                                    	)
-				);
+			                                                    	, null), null);
 		}
-
-
 	}
 }
