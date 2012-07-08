@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Xml;
 
 using NAppUpdate.Framework.Tasks;
@@ -13,11 +12,7 @@ namespace NAppUpdate.Framework.FeedReaders
         private Dictionary<string, Type> _updateConditions { get; set; }
         private Dictionary<string, Type> _updateTasks { get; set; }
 
-        public NauXmlFeedReader()
-        {
-        }
-
-        #region IUpdateFeedReader Members
+    	#region IUpdateFeedReader Members
 
         public IList<IUpdateTask> Read(string feed)
         {
