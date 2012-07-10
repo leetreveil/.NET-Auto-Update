@@ -61,6 +61,8 @@ namespace NAppUpdate.Framework.Tasks
                     return false;
             }
 
+			destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
+
 			return tempFile != null;
         }
 
@@ -69,9 +71,9 @@ namespace NAppUpdate.Framework.Tasks
 			if (string.IsNullOrEmpty(LocalPath))
 				return TaskExecutionStatus.Successful;
 
-			destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
-			if (!Directory.Exists(Path.GetDirectoryName(destinationFile)))
-				Utils.FileSystem.CreateDirectoryStructure(Path.GetDirectoryName(destinationFile), false);
+			var dirName = Path.GetDirectoryName(destinationFile);
+			if (!Directory.Exists(dirName))
+				Utils.FileSystem.CreateDirectoryStructure(dirName, false);
 
 			// Create a backup copy if target exists
 			if (backupFile == null && File.Exists(destinationFile))
