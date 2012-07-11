@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Diagnostics;
-using System.IO;
 using System.Text.RegularExpressions;
 namespace NAppUpdate.Updater
 {
@@ -20,8 +17,7 @@ namespace NAppUpdate.Updater
 
         public static ArgumentsParser Get()
         {
-            if (_instance == null) _instance = new ArgumentsParser();
-            return _instance;
+        	return _instance ?? (_instance = new ArgumentsParser());
         }
 
 		public ArgumentsParser(string[] args)
@@ -64,7 +60,7 @@ namespace NAppUpdate.Updater
 			}
 		}
 
-		private string CleanArg(string arg)
+		private static string CleanArg(string arg)
 		{
 			const string pattern1 = "^(.*)([=,:](true|0))";
 			arg = arg.ToLower();
