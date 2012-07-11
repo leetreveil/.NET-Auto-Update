@@ -4,6 +4,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Threading;
+using NAppUpdate.Framework;
+using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Tasks;
 using NAppUpdate.Framework.Utils;
 
@@ -18,25 +20,31 @@ namespace NAppUpdate.Updater
 		private static void Main()
 		{
 			//Debugger.Launch();
-			string tempFolder = "";
+			string tempFolder = string.Empty;
+			string logFile = string.Empty;
+			_args = ArgumentsParser.Get();
+
+			_logger = new Logger();
+			_args.ParseCommandLineArgs();
+			if (_args.ShowConsole)
+			{
+				_console = new ConsoleForm();
+				_console.Show();
+			}
+
+			Log("Starting to process cold updates...");
+
+			if (_args.Log)
+			{
+				logFile = System.Reflection.Assembly.GetEntryAssembly().Location;
+				logFile = Path.Combine(Path.GetDirectoryName(logFile), @"logs\NauUpdate.log");
+
+				_console.WriteLine("Logging to {0}", logFile);
+				_console.WriteLine();
+			}
+
 			try
 			{
-				_args = ArgumentsParser.Get();
-				string logFile = System.Reflection.Assembly.GetEntryAssembly().Location;
-				logFile = Path.Combine(Path.GetDirectoryName(logFile), "logs");
-				logFile = Path.Combine(logFile, "NauUpdate.log");
-				_logger = new Logger(logFile);
-				_args.ParseCommandLineArgs();
-				if (_args.ShowConsole)
-				{
-					_console = new ConsoleForm();
-					_console.Show();
-				}
-
-				Log("Starting...");
-				if (_args.Log)
-					_console.WriteLine("Logging to {0}", logFile);
-
 				// Get the update process name, to be used to create a named pipe and to wait on the application
 				// to quit
 				string syncProcessName = _args.ProcessName;
@@ -60,7 +68,7 @@ namespace NAppUpdate.Updater
 					catch (AbandonedMutexException)
 					{
 						// An abandoned mutex is exactly what we are expecting...
-						Log("The application has terminated (as expected).");
+						Log("The application has terminated (as expected)");
 					}
 				}
 
@@ -71,7 +79,11 @@ namespace NAppUpdate.Updater
 					throw new Exception("Invalid DTO received");
 				}
 
-				Log("Got {0} task objects", dto.Tasks.Count);
+				if (dto.LogItems != null) // shouldn't really happen
+				{
+					dto.LogItems.AddRange(_logger.LogItems);
+					_logger = new Logger(dto.LogItems);
+				}
 
 				// Get some required environment variables
 				string appPath = dto.AppPath;
@@ -85,35 +97,37 @@ namespace NAppUpdate.Updater
 					throw new Exception("Could not find the updates list (or it was empty).");
 				}
 
-				// Perform the actual off-line update process
-				Log("Starting the updates...");
+				Log("Got {0} task objects", dto.Tasks.Count);
 
+				// Perform the actual off-line update process
 				foreach (var t in dto.Tasks)
 				{
 					Log("Task \"{0}\": {1}", t.Description, t.ExecutionStatus);
 
 					if (t.ExecutionStatus != TaskExecutionStatus.RequiresAppRestart
 						&& t.ExecutionStatus != TaskExecutionStatus.RequiresPrivilegedAppRestart)
+					{
+						Log("\tSkipping");
 						continue;
+					}
 
 					Log("\tExecuting...");
 
+					// TODO: Better handling on failure: logging, rollbacks
 					try
 					{
 						t.ExecutionStatus = t.Execute(true);
 					}
 					catch (Exception ex)
 					{
-						// TODO: Log message
-						Log("\tFailed: {0}", ex.Message);
+						Log(ex);
 						updateSuccessful = false;
 						t.ExecutionStatus = TaskExecutionStatus.Failed;
-						MessageBox.Show("Update failed: " + ex.Message);
 					}
 
 					if (t.ExecutionStatus != TaskExecutionStatus.Successful)
 					{
-						Log("\tTask execution failed failed");
+						Log("\tTask execution failed");
 						updateSuccessful = false;
 						break;
 					}
@@ -121,59 +135,41 @@ namespace NAppUpdate.Updater
 
 				if (updateSuccessful)
 				{
-					Log("Finished");
+					Log("Finished successfully");
 					Log("Removing backup folder");
 					if (Directory.Exists(backupFolder))
 						FileSystem.DeleteDirectory(backupFolder);
 				}
 				else
 				{
-					MessageBox.Show("Update Failed.");
-					Log("Update failed.");
+					MessageBox.Show("Update Failed");
+					Log(Logger.SeverityLevel.Error, "Update failed");
 				}
 
 				// Start the application only if requested to do so
 				if (relaunchApp)
 				{
-					try
-					{
-						Log("Re-launching process {0} with working dir {1}", appPath, appDir);
+					Log("Re-launching process {0} with working dir {1}", appPath, appDir);
 
-						var info = new ProcessStartInfo
-						           	{
-						           		UseShellExecute = true,
-						           		WorkingDirectory = appDir,
-						           		FileName = appPath,
-						           	};
+					var info = new ProcessStartInfo
+					           	{
+					           		UseShellExecute = true,
+					           		WorkingDirectory = appDir,
+					           		FileName = appPath,
+					           	};
 
-						var p = NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
-						if (p == null)
-						{
-							Log("Unable to relaunch application");
-						}
-					}
-					catch (Win32Exception e)
-					{
-						MessageBox.Show(e.ToString());
-						Log("Update failed: " + e);
-					}
+					var p = NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
+					if (p == null)
+						throw new UpdateProcessFailedException("Unable to relaunch application");
 				}
 
-				Log("All done.");
+				Log("All done");
 				//Application.Exit();
 			}
 			catch (Exception ex)
 			{
-				//supressing catch because if at any point we get an error the update has failed
-				Log("*********************************");
-				Log("   An error has occurred:");
-				Log("   " + ex.Message);
-				Log("*********************************");
-				if (_args.ShowConsole)
-				{
-					_console.WriteLine();
-					_console.WriteLine("The updater will close when you close this window.");
-				}
+				// supressing catch because if at any point we get an error the update has failed
+				Log(ex);
 			}
 			finally
 			{
@@ -192,17 +188,18 @@ namespace NAppUpdate.Updater
 		{
 			try
 			{
-				// Delete the updater EXE and the temp folder)
+				// Delete the updater EXE and the temp folder
 				Log("Removing updater and temp folder... {0}", tempFolder);
 				try
 				{
-					var Info = new ProcessStartInfo();
-					//Application.ExecutablePath
-					Info.Arguments = string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}"""
-								   , tempFolder);
-					Info.WindowStyle = ProcessWindowStyle.Hidden;
-					Info.CreateNoWindow = true;
-					Info.FileName = "cmd.exe";
+					var Info = new ProcessStartInfo
+					           	{
+					           		Arguments = string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}""", tempFolder),
+					           		WindowStyle = ProcessWindowStyle.Hidden,
+					           		CreateNoWindow = true,
+					           		FileName = "cmd.exe"
+					           	};
+
 					Process.Start(Info);
 				}
 				catch { /* ignore exceptions thrown while trying to clean up */ }
@@ -214,12 +211,34 @@ namespace NAppUpdate.Updater
 
 		private static void Log(string message, params object[] args)
 		{
+			Log(Logger.SeverityLevel.Debug, message, args);
+		}
+
+		private static void Log(Logger.SeverityLevel severity, string message, params object[] args)
+		{
 			message = string.Format(message, args);
-			if (_args.Log)
-				_logger.Log(message);
+
+			_logger.Log(severity, message);
 			if (_args.ShowConsole)
 				_console.WriteLine(message);
+
 			Application.DoEvents();
+		}
+
+		private static void Log(Exception ex)
+		{
+			_logger.Log(ex);
+
+			if (_args.ShowConsole)
+			{
+				_console.WriteLine("*********************************");
+				_console.WriteLine("   An error has occurred:");
+				_console.WriteLine("   " + ex.Message);
+				_console.WriteLine("*********************************");
+
+				_console.WriteLine();
+				_console.WriteLine("The updater will close when you close this window.");
+			}
 		}
 	}
 }

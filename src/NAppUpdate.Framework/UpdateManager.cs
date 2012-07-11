@@ -80,6 +80,8 @@ namespace NAppUpdate.Framework
 
 		public IUpdateSource UpdateSource { get; set; }
 		public IUpdateFeedReader UpdateFeedReader { get; set; }
+		
+		private Logger _logger = new Logger();
 
 		public IEnumerable<IUpdateTask> Tasks { get { return UpdatesToApply; } }
 
@@ -430,6 +432,7 @@ namespace NAppUpdate.Framework
 						          		AppPath = ApplicationPath,
 						          		WorkingDirectory = Environment.CurrentDirectory,
 						          		RelaunchApplication = relaunchApplication,
+										LogItems = _logger.LogItems,
 						          	};
 
 						NauIpc.ExtractUpdaterFromResource(Config.TempFolder, Instance.Config.UpdateExecutableName);
@@ -484,6 +487,7 @@ namespace NAppUpdate.Framework
 				{
 					Config = dto.Configs;
 					UpdatesToApply = dto.Tasks;
+					_logger = new Logger(dto.LogItems);
 					State = UpdateProcessState.AfterRestart;
 				}
 			}

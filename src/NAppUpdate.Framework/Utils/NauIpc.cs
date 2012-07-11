@@ -22,6 +22,7 @@ namespace NAppUpdate.Framework.Utils
 		{
 			public NauConfigurations Configs { get; set; }
 			public IList<IUpdateTask> Tasks { get; set; }
+			public List<Logger.LogItem> LogItems { get; set; }
 			public string AppPath { get; set; }
 			public string WorkingDirectory { get; set; }
 			public bool RelaunchApplication { get; set; }
