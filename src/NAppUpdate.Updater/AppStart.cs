@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO;
 using System.Diagnostics;
 using System.Windows.Forms;
@@ -39,8 +38,11 @@ namespace NAppUpdate.Updater
 				logFile = System.Reflection.Assembly.GetEntryAssembly().Location;
 				logFile = Path.Combine(Path.GetDirectoryName(logFile), @"logs\NauUpdate.log");
 
-				_console.WriteLine("Logging to {0}", logFile);
-				_console.WriteLine();
+				if (_args.ShowConsole)
+				{
+					_console.WriteLine("Logging to {0}", logFile);
+					_console.WriteLine();
+				}
 			}
 
 			try
@@ -186,26 +188,25 @@ namespace NAppUpdate.Updater
 
 		private static void SelfCleanUp(string tempFolder)
 		{
+			// Delete the updater EXE and the temp folder
+			Log("Removing updater and temp folder... {0}", tempFolder);
 			try
 			{
-				// Delete the updater EXE and the temp folder
-				Log("Removing updater and temp folder... {0}", tempFolder);
-				try
-				{
-					var Info = new ProcessStartInfo
-					           	{
-					           		Arguments = string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}""", tempFolder),
-					           		WindowStyle = ProcessWindowStyle.Hidden,
-					           		CreateNoWindow = true,
-					           		FileName = "cmd.exe"
-					           	};
+				var info = new ProcessStartInfo
+				           	{
+				           		Arguments =
+				           			string.Format(@"/C ping 1.1.1.1 -n 1 -w 3000 > Nul & echo Y|del ""{0}\*.*"" & rmdir ""{0}""",
+				           			              tempFolder),
+				           		WindowStyle = ProcessWindowStyle.Hidden,
+				           		CreateNoWindow = true,
+				           		FileName = "cmd.exe"
+				           	};
 
-					Process.Start(Info);
-				}
-				catch { /* ignore exceptions thrown while trying to clean up */ }
+				Process.Start(info);
 			}
 			catch
 			{
+				/* ignore exceptions thrown while trying to clean up */
 			}
 		}
 
@@ -239,6 +240,8 @@ namespace NAppUpdate.Updater
 				_console.WriteLine();
 				_console.WriteLine("The updater will close when you close this window.");
 			}
+
+			Application.DoEvents();
 		}
 	}
 }
