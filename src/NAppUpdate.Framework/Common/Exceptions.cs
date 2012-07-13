@@ -10,6 +10,17 @@ namespace NAppUpdate.Framework
         public NAppUpdateException(string message) : base(message) { }
         public NAppUpdateException(string message, Exception ex) : base(message, ex) { }
         public NAppUpdateException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+
+		public override string ToString()
+		{
+			var ret = Message;
+			if (!string.IsNullOrEmpty(ret)) ret += Environment.NewLine;
+			if (InnerException != null)
+				ret += InnerException;
+			else
+				ret += StackTrace;
+			return ret;
+		}
     }
 
 	[Serializable]

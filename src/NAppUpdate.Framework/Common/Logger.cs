@@ -13,14 +13,28 @@ namespace NAppUpdate.Framework.Common
 			Error
 		}
 
-		[Serializable]
-		public class LogItem
-		{
-			public DateTime Timestamp { get; set; }
-			public string Message { get; set; }
-			public Exception Exception { get; set; }
-			public SeverityLevel Severity { get; set; }
-		}
+    	[Serializable]
+    	public class LogItem
+    	{
+    		public DateTime Timestamp { get; set; }
+    		public string Message { get; set; }
+    		public Exception Exception { get; set; }
+    		public SeverityLevel Severity { get; set; }
+
+    		public override string ToString()
+    		{
+    			if (Exception == null)
+    				return string.Format("{0,-25}\t{1}\t{2}",
+    				                     Timestamp.ToShortDateString() + " " + Timestamp.ToString("HH:mm:ss.fff"),
+    				                     Severity,
+    				                     Message);
+
+    			return string.Format("{0,-25}\t{1}\t{2}{3}{4}",
+    			                     Timestamp.ToShortDateString() + " " + Timestamp.ToString("HH:mm:ss.fff"),
+    			                     Severity,
+    			                     Message, Environment.NewLine, Exception);
+    		}
+    	}
 
     	public List<LogItem> LogItems { get; private set; }
 
