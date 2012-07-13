@@ -35,14 +35,9 @@ namespace NAppUpdate.Updater
 
 			if (_args.Log)
 			{
+				// Setup a temporary location for the log file, until we can get the DTO
 				logFile = System.Reflection.Assembly.GetEntryAssembly().Location;
-				logFile = Path.Combine(Path.GetDirectoryName(logFile), @"logs\NauUpdate.log");
-
-				if (_args.ShowConsole)
-				{
-					_console.WriteLine("Logging to {0}", logFile);
-					_console.WriteLine();
-				}
+				logFile = Path.Combine(Path.GetDirectoryName(logFile), @"NauUpdate.log");
 			}
 
 			try
@@ -77,9 +72,7 @@ namespace NAppUpdate.Updater
 				bool updateSuccessful = true;
 
 				if (dto == null || dto.Configs == null)
-				{
 					throw new Exception("Invalid DTO received");
-				}
 
 				if (dto.LogItems != null) // shouldn't really happen
 				{
@@ -94,10 +87,11 @@ namespace NAppUpdate.Updater
 				string backupFolder = dto.Configs.BackupFolder;
 				bool relaunchApp = dto.RelaunchApplication;
 
+				if (!string.IsNullOrEmpty(dto.AppPath))
+					logFile = Path.Combine(dto.AppPath, @"NauUpdate.log"); // now we can log to a more accessible location
+
 				if (dto.Tasks == null || dto.Tasks.Count == 0)
-				{
 					throw new Exception("Could not find the updates list (or it was empty).");
-				}
 
 				Log("Got {0} task objects", dto.Tasks.Count);
 
@@ -175,8 +169,15 @@ namespace NAppUpdate.Updater
 			}
 			finally
 			{
+				if (_args.Log) _logger.Dump(logFile);
 				if (_args.ShowConsole)
 				{
+					if (_args.Log)
+					{
+						_console.WriteLine();
+						_console.WriteLine("Log file was saved to {0}", logFile);
+						_console.WriteLine();
+					}
 					_console.WriteLine();
 					_console.WriteLine("Press any key or close this window to exit.");
 					_console.ReadKey();
