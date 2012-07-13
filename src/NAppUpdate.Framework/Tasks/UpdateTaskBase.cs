@@ -28,7 +28,7 @@ namespace NAppUpdate.Framework.Tasks
 				ProgressDelegate(pi);
 		}
 
-		public abstract bool Prepare(IUpdateSource source);
+		public abstract void Prepare(IUpdateSource source);
 		public abstract TaskExecutionStatus Execute(bool coldRun);
 		public abstract bool Rollback();
 	}

@@ -9,6 +9,7 @@ namespace NAppUpdate.Framework.Tasks
 	{
 		Pending,
 		FailedToPrepare,
+		Prepared,
 		Successful,
 		Failed,
 		RequiresAppRestart,
@@ -27,8 +28,7 @@ namespace NAppUpdate.Framework.Tasks
         /// the final trivial operations required to actually perform the update.
         /// </summary>
         /// <param name="source">An update source object, in case more data is required</param>
-        /// <returns>True if successful, false otherwise</returns>
-        bool Prepare(Sources.IUpdateSource source);
+        void Prepare(Sources.IUpdateSource source);
         
         /// <summary>
         /// Execute the update. After all preparation is done, this call should be quite a short one

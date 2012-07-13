@@ -23,7 +23,7 @@ namespace NAppUpdate.Updater
 			string logFile = string.Empty;
 			_args = ArgumentsParser.Get();
 
-			_logger = new Logger();
+			_logger = UpdateManager.Instance.Logger;
 			_args.ParseCommandLineArgs();
 			if (_args.ShowConsole)
 			{
@@ -76,9 +76,9 @@ namespace NAppUpdate.Updater
 
 				if (dto.LogItems != null) // shouldn't really happen
 				{
-					dto.LogItems.AddRange(_logger.LogItems);
-					_logger = new Logger(dto.LogItems);
+					_logger.LogItems.InsertRange(0, dto.LogItems);
 				}
+				dto.LogItems = _logger.LogItems;
 
 				// Get some required environment variables
 				string appPath = dto.AppPath;
@@ -235,7 +235,7 @@ namespace NAppUpdate.Updater
 			{
 				_console.WriteLine("*********************************");
 				_console.WriteLine("   An error has occurred:");
-				_console.WriteLine("   " + ex.Message);
+				_console.WriteLine("   " + ex);
 				_console.WriteLine("*********************************");
 
 				_console.WriteLine();

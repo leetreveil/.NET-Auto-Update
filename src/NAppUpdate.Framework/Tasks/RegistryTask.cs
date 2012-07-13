@@ -42,12 +42,11 @@ namespace NAppUpdate.Framework.Tasks
 				return null;
 			}
 		}
-		private object originalValue;
+		private object _originalValue;
 
-		public override bool Prepare(Sources.IUpdateSource source)
+		public override void Prepare(Sources.IUpdateSource source)
 		{
 			// No preparation required
-			return true;
 		}
 
 		public override TaskExecutionStatus Execute(bool coldRun /* unused */)
@@ -59,7 +58,7 @@ namespace NAppUpdate.Framework.Tasks
 			// Get the current value and store in case we need to rollback
 			// This is also used to prematurely detect incorrect key and value paths
 			// Any exception thrown in this stage would just keep this task in Pending state
-			originalValue = Registry.GetValue(KeyName, KeyValueName, null);
+			_originalValue = Registry.GetValue(KeyName, KeyValueName, null);
 
 			try
 			{
@@ -76,7 +75,7 @@ namespace NAppUpdate.Framework.Tasks
 
 		public override bool Rollback()
 		{
-			Registry.SetValue(KeyName, KeyValueName, originalValue);
+			Registry.SetValue(KeyName, KeyValueName, _originalValue);
 			return true;
 		}
 	}

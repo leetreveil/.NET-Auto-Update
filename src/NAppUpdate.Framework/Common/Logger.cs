@@ -49,6 +49,11 @@ namespace NAppUpdate.Framework.Common
 			LogItems = logItems;
 		}
 
+		public void Log(string message, params object[] args)
+		{
+			Log(SeverityLevel.Debug, message, args);
+		}
+
 		public void Log(SeverityLevel severity, string message, params object[] args)
 		{
 			LogItems.Add(new LogItem

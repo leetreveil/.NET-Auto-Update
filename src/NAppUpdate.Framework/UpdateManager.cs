@@ -28,6 +28,7 @@ namespace NAppUpdate.Framework
 			UpdatesToApply = new List<IUpdateTask>();
 			ApplicationPath = Process.GetCurrentProcess().MainModule.FileName;
 			UpdateFeedReader = new NauXmlFeedReader();
+			Logger = new Logger();
 			Config = new NauConfigurations
 						{
 							TempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()),
@@ -80,8 +81,8 @@ namespace NAppUpdate.Framework
 
 		public IUpdateSource UpdateSource { get; set; }
 		public IUpdateFeedReader UpdateFeedReader { get; set; }
-		
-		private Logger _logger = new Logger();
+
+		public Logger Logger { get; private set; }
 
 		public IEnumerable<IUpdateTask> Tasks { get { return UpdatesToApply; } }
 
@@ -231,7 +232,14 @@ namespace NAppUpdate.Framework
 						throw new InvalidOperationException("No updates to prepare");
 
 					if (!Directory.Exists(Config.TempFolder))
+					{
+						Logger.Log("Creating Temp directory {0}", Config.TempFolder);
 						Directory.CreateDirectory(Config.TempFolder);
+					}
+					else
+					{
+						Logger.Log("Using existing Temp directory {0}", Config.TempFolder);
+					}
 
 					foreach (var task in UpdatesToApply)
 					{
@@ -241,11 +249,18 @@ namespace NAppUpdate.Framework
 						var t = task;
 						task.ProgressDelegate += status => TaskProgressCallback(status, t);
 
-						if (!task.Prepare(UpdateSource))
+						try
 						{
-							task.ExecutionStatus = TaskExecutionStatus.FailedToPrepare; // TODO: lose this and rely on exceptions thrown from within Prepare()
-							throw new UpdateProcessFailedException("Failed to prepare task: " + task.Description);
+							task.Prepare(UpdateSource);
 						}
+						catch (Exception ex)
+						{
+							task.ExecutionStatus = TaskExecutionStatus.FailedToPrepare;
+							Logger.Log(ex);
+							throw new UpdateProcessFailedException("Failed to prepare task: " + task.Description, ex);
+						}
+
+						task.ExecutionStatus = TaskExecutionStatus.Prepared;
 					}
 
 					State = UpdateProcessState.Prepared;
@@ -432,7 +447,7 @@ namespace NAppUpdate.Framework
 						          		AppPath = ApplicationPath,
 						          		WorkingDirectory = Environment.CurrentDirectory,
 						          		RelaunchApplication = relaunchApplication,
-										LogItems = _logger.LogItems,
+										LogItems = Logger.LogItems,
 						          	};
 
 						NauIpc.ExtractUpdaterFromResource(Config.TempFolder, Instance.Config.UpdateExecutableName);
@@ -487,7 +502,7 @@ namespace NAppUpdate.Framework
 				{
 					Config = dto.Configs;
 					UpdatesToApply = dto.Tasks;
-					_logger = new Logger(dto.LogItems);
+					Logger = new Logger(dto.LogItems);
 					State = UpdateProcessState.AfterRestart;
 				}
 			}

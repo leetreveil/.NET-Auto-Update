@@ -7,7 +7,7 @@ namespace WinFormsProgressSample
 {
 	public class LengthyTask : UpdateTaskBase
 	{
-		public override bool Prepare(IUpdateSource source)
+		public override void Prepare(IUpdateSource source)
 		{
 			for (int i = 0; i < 50; i++)
 			{
@@ -26,8 +26,6 @@ namespace WinFormsProgressSample
 			             		Percentage = 100,
 			             		StillWorking = false,
 			             	});
-
-			return true;
 		}
 
 		public override TaskExecutionStatus Execute(bool coldRun)

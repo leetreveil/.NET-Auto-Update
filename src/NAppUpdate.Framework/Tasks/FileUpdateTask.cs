@@ -5,84 +5,86 @@ using NAppUpdate.Framework.Common;
 namespace NAppUpdate.Framework.Tasks
 {
 	[Serializable]
-    [UpdateTaskAlias("fileUpdate")]
-    public class FileUpdateTask : UpdateTaskBase
-    {
-        [NauField("localPath", "The local path of the file to update", true)]
-        public string LocalPath { get; set; }
+	[UpdateTaskAlias("fileUpdate")]
+	public class FileUpdateTask : UpdateTaskBase
+	{
+		[NauField("localPath", "The local path of the file to update", true)]
+		public string LocalPath { get; set; }
 
-        [NauField("updateTo",
-            "File name on the remote location; same name as local path will be used if left blank"
-            , false)]
-        public string UpdateTo { get; set; }
+		[NauField("updateTo",
+			"File name on the remote location; same name as local path will be used if left blank"
+			, false)]
+		public string UpdateTo { get; set; }
 
-        [NauField("sha256-checksum", "SHA-256 checksum to validate the file after download (optional)", false)]
-        public string Sha256Checksum { get; set; }
+		[NauField("sha256-checksum", "SHA-256 checksum to validate the file after download (optional)", false)]
+		public string Sha256Checksum { get; set; }
 
-        [NauField("hotswap",
-            "Default update action is a cold update; check here if a hot file swap should be attempted"
-            , false)]
-        public bool CanHotSwap { get; set; }
+		[NauField("hotswap",
+			"Default update action is a cold update; check here if a hot file swap should be attempted"
+			, false)]
+		public bool CanHotSwap { get; set; }
 
-		private string destinationFile, backupFile, tempFile;
+		private string _destinationFile, _backupFile, _tempFile;
 
-    	public override bool Prepare(Sources.IUpdateSource source)
-        {
-            if (string.IsNullOrEmpty(LocalPath))
-                return true; // Errorneous case, but there's nothing to prepare to...
+		public override void Prepare(Sources.IUpdateSource source)
+		{
+			if (string.IsNullOrEmpty(LocalPath))
+			{
+				UpdateManager.Instance.Logger.Log(Logger.SeverityLevel.Warning, "FileUpdateTask: LocalPath is empty, task is a noop");
+				return; // Errorneous case, but there's nothing to prepare to, and by default we prefer a noop over an error
+			}
 
-            string fileName;
-            if (!string.IsNullOrEmpty(UpdateTo))
-                fileName = UpdateTo;
-            else
-                fileName = LocalPath;
+			string fileName;
+			if (!string.IsNullOrEmpty(UpdateTo))
+				fileName = UpdateTo;
+			else
+				fileName = LocalPath;
 
-            tempFile = null;
+			_tempFile = null;
 
-            try
-            {
-                string tempFileLocal = Path.Combine(UpdateManager.Instance.Config.TempFolder, Guid.NewGuid().ToString());
-                if (!source.GetData(fileName, UpdateManager.Instance.BaseUrl, 
-					OnProgress,
-					ref tempFileLocal))
-                    return false;
+			string baseUrl = UpdateManager.Instance.BaseUrl;
+			string tempFileLocal = Path.Combine(UpdateManager.Instance.Config.TempFolder, Guid.NewGuid().ToString());
 
-                tempFile = tempFileLocal;
-            }
-            catch (Exception ex)
-            {
-                throw new UpdateProcessFailedException("Couldn't get Data from source", ex);
-            }
+			UpdateManager.Instance.Logger.Log("FileUpdateTask: Downloading {0} with BaseUrl of {1} to {2}", fileName, baseUrl, tempFileLocal);
 
-            if (!string.IsNullOrEmpty(Sha256Checksum))
-            {
-                string checksum = Utils.FileChecksum.GetSHA256Checksum(tempFile);
-                if (!checksum.Equals(Sha256Checksum))
-                    return false;
-            }
+			if (!source.GetData(fileName, baseUrl, OnProgress, ref tempFileLocal))
+				throw new UpdateProcessFailedException("FileUpdateTask: Failed to get file from source");
 
-			destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
+			_tempFile = tempFileLocal;
+			if (_tempFile == null)
+				throw new UpdateProcessFailedException("FileUpdateTask: Failed to get file from source");
 
-			return tempFile != null;
-        }
+			if (!string.IsNullOrEmpty(Sha256Checksum))
+			{
+				string checksum = Utils.FileChecksum.GetSHA256Checksum(_tempFile);
+				if (!checksum.Equals(Sha256Checksum))
+					throw new UpdateProcessFailedException(string.Format("FileUpdateTask: Checksums do not match; expected {0} but got {1}", Sha256Checksum, checksum));
+			}
+
+			_destinationFile = Path.Combine(Path.GetDirectoryName(UpdateManager.Instance.ApplicationPath), LocalPath);
+			UpdateManager.Instance.Logger.Log("FileUpdateTask: Prepared successfully; destination file: {0}", _destinationFile);
+		}
 
 		public override TaskExecutionStatus Execute(bool coldRun)
 		{
 			if (string.IsNullOrEmpty(LocalPath))
-				return TaskExecutionStatus.Successful;
+			{
+				UpdateManager.Instance.Logger.Log(Logger.SeverityLevel.Warning, "FileUpdateTask: LocalPath is empty, task is a noop");
+				return TaskExecutionStatus.Successful; // Errorneous case, but there's nothing to prepare to, and by default we prefer a noop over an error
+			}
 
-			var dirName = Path.GetDirectoryName(destinationFile);
+			var dirName = Path.GetDirectoryName(_destinationFile);
 			if (!Directory.Exists(dirName))
 				Utils.FileSystem.CreateDirectoryStructure(dirName, false);
 
 			// Create a backup copy if target exists
-			if (backupFile == null && File.Exists(destinationFile))
+			if (_backupFile == null && File.Exists(_destinationFile))
 			{
 				if (!Directory.Exists(Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath))))
 					Utils.FileSystem.CreateDirectoryStructure(
 						Path.GetDirectoryName(Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath)), false);
-				backupFile = Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath);
-				File.Copy(destinationFile, backupFile, true);
+				_backupFile = Path.Combine(UpdateManager.Instance.Config.BackupFolder, LocalPath);
+				File.Copy(_destinationFile, _backupFile, true);
 			}
 
 			// Only allow execution if the apply attribute was set to hot-swap, or if this is a cold run
@@ -90,10 +92,10 @@ namespace NAppUpdate.Framework.Tasks
 			{
 				try
 				{
-					if (File.Exists(destinationFile))
-						File.Delete(destinationFile);
-					File.Move(tempFile, destinationFile);
-					tempFile = null;
+					if (File.Exists(_destinationFile))
+						File.Delete(_destinationFile);
+					File.Move(_tempFile, _destinationFile);
+					_tempFile = null;
 				}
 				catch (Exception ex)
 				{
@@ -113,24 +115,24 @@ namespace NAppUpdate.Framework.Tasks
 				return TaskExecutionStatus.Successful;
 
 			// Otherwise, figure out what restart method to use
-			if (File.Exists(destinationFile) && !Utils.PermissionsCheck.HaveWritePermissionsForFileOrFolder(destinationFile))
+			if (File.Exists(_destinationFile) && !Utils.PermissionsCheck.HaveWritePermissionsForFileOrFolder(_destinationFile))
 			{
 				return TaskExecutionStatus.RequiresPrivilegedAppRestart;
 			}
 			return TaskExecutionStatus.RequiresAppRestart;
 		}
 
-    	public override bool Rollback()
-        {
-            if (string.IsNullOrEmpty(destinationFile))
-                return true;
+		public override bool Rollback()
+		{
+			if (string.IsNullOrEmpty(_destinationFile))
+				return true;
 
-            // Copy the backup copy back to its original position
-            if (File.Exists(destinationFile))
-                File.Delete(destinationFile);
-			File.Copy(backupFile, destinationFile, true);
+			// Copy the backup copy back to its original position
+			if (File.Exists(_destinationFile))
+				File.Delete(_destinationFile);
+			File.Copy(_backupFile, _destinationFile, true);
 
-            return true;
-        }
-    }
+			return true;
+		}
+	}
 }
