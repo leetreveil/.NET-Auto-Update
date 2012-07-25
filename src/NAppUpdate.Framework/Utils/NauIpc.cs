@@ -69,7 +69,7 @@ namespace NAppUpdate.Framework.Utils
 
 		internal static uint BUFFER_SIZE = 4096;
 
-		public static Process LaunchProcessAndSendDto(NauDto dto, ProcessStartInfo processStartInfo, string syncProcessName, bool sendDto)
+		public static Process LaunchProcessAndSendDto(NauDto dto, ProcessStartInfo processStartInfo, string syncProcessName)
 		{
 			Process p;
 			using (var clientPipeHandle = CreateNamedPipe(
@@ -96,7 +96,6 @@ namespace NAppUpdate.Framework.Utils
 					return null;
 				}
 
-				if (sendDto)
 				while (true)
 				{
 					var success = 0;

@@ -479,7 +479,7 @@ namespace NAppUpdate.Framework
 						bool createdNew;
 						using (new Mutex(true, Config.UpdateProcessName + "Mutex", out createdNew))
 						{
-							if (NauIpc.LaunchProcessAndSendDto(dto, info, Config.UpdateProcessName, true) == null)
+							if (NauIpc.LaunchProcessAndSendDto(dto, info, Config.UpdateProcessName) == null)
 								throw new UpdateProcessFailedException("Could not launch cold update process");
 
 							Environment.Exit(0);
