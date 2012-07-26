@@ -82,12 +82,10 @@ namespace NAppUpdate.Framework.Common
 
 		public void Dump(string filePath)
 		{
+			using (StreamWriter w = File.CreateText(filePath))
 			foreach (var logItem in LogItems)
 			{
-				using (StreamWriter w = File.CreateText(filePath))
-				{
 					w.WriteLine(logItem.ToString());
-				}
 			}
 		}
 	}
