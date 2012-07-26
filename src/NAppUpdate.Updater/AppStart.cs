@@ -112,7 +112,7 @@ namespace NAppUpdate.Updater
 				bool relaunchApp = dto.RelaunchApplication;
 
 				if (!string.IsNullOrEmpty(dto.AppPath))
-					logFile = Path.Combine(dto.AppPath, @"NauUpdate.log"); // now we can log to a more accessible location
+					logFile = Path.Combine(Path.GetDirectoryName(dto.AppPath), @"NauUpdate.log"); // now we can log to a more accessible location
 
 				if (dto.Tasks == null || dto.Tasks.Count == 0)
 					throw new Exception("Could not find the updates list (or it was empty).");
@@ -193,7 +193,13 @@ namespace NAppUpdate.Updater
 			}
 			finally
 			{
-				if (_args.Log) _logger.Dump(logFile);
+				if (_args.Log)
+				{
+					// at this stage we can't make any assumptions on correctness of the path
+					FileSystem.CreateDirectoryStructure(logFile, true);
+					_logger.Dump(logFile);
+				}
+
 				if (_args.ShowConsole)
 				{
 					if (_args.Log)
