@@ -39,11 +39,13 @@ namespace NAppUpdate.Updater
                 // Skip any args that are our own executable (first arg should be this).
                 // In Visual Studio, the arg will be the VS host starter instead of
                 // actually ourself.
-                if (arg.ToLower() == System.Reflection.Assembly.GetEntryAssembly().Location.ToLower()
-                    || arg.ToLower().Contains(".vshost.exe"))
-					continue;
+                if (arg.Equals(System.Reflection.Assembly.GetEntryAssembly().Location, StringComparison.InvariantCultureIgnoreCase)
+                    || arg.EndsWith(".vshost.exe", StringComparison.InvariantCultureIgnoreCase))
+                {
+                	continue;
+                }
 
-				arg = CleanArg(arg);
+            	arg = CleanArg(arg);
 				if (arg == "log") {
 					this.Log = true;
 					this.HasArgs = true;

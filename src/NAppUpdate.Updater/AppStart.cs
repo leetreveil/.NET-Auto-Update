@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Diagnostics;
+using System.Reflection;
 using System.Windows.Forms;
 using System.Threading;
 using NAppUpdate.Framework;
@@ -33,11 +34,11 @@ namespace NAppUpdate.Updater
 
 			Log("Starting to process cold updates...");
 
+			var workingDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
 			if (_args.Log)
 			{
 				// Setup a temporary location for the log file, until we can get the DTO
-				logFile = System.Reflection.Assembly.GetEntryAssembly().Location;
-				logFile = Path.Combine(Path.GetDirectoryName(logFile), @"NauUpdate.log");
+				logFile = Path.Combine(workingDir, @"NauUpdate.log");
 			}
 
 			try
@@ -50,6 +51,29 @@ namespace NAppUpdate.Updater
 					throw new ArgumentException("The command line needs to specify the mutex of the program to update.", "args");
 
 				Log("Update process name: '{0}'", syncProcessName);
+
+				// Load extra assemblies to the app domain, if present
+				var availableAssemblies = FileSystem.GetFiles(workingDir, "*.exe|*.dll", SearchOption.TopDirectoryOnly);
+				foreach (var assemblyPath in availableAssemblies)
+				{
+					Log("Loading {0}", assemblyPath);
+
+					if (assemblyPath.Equals(System.Reflection.Assembly.GetEntryAssembly().Location, StringComparison.InvariantCultureIgnoreCase)
+						|| assemblyPath.EndsWith("NAppUpdate.Framework.dll"))
+					{
+						Log("\tSkipping (part of current execution)");
+						continue;
+					}
+
+					try
+					{
+						var assembly = System.Reflection.Assembly.LoadFile(assemblyPath);
+					}
+					catch (System.BadImageFormatException ex)
+					{
+						Log("\tSkipping due to an error: {0}", ex.Message);
+					}
+				}
 
 				// Connect to the named pipe and retrieve the updates list
 				var dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace NAppUpdate.Framework.Utils
 {
@@ -51,6 +52,15 @@ namespace NAppUpdate.Framework.Utils
 
 			File.SetAttributes(targetDir, FileAttributes.Normal);
 			Directory.Delete(targetDir, false);
+		}
+
+		public static IEnumerable<string> GetFiles(string path, string searchPattern, SearchOption searchOption)
+		{
+			string[] searchPatterns = searchPattern.Split('|');
+			var files = new List<string>();
+			foreach (string sp in searchPatterns)
+				files.AddRange(System.IO.Directory.GetFiles(path, sp, searchOption));
+			return files;
 		}
 	}
 }
