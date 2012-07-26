@@ -173,7 +173,7 @@ namespace NAppUpdate.Framework.Utils
 
 					var dest = Path.Combine(updaterPath, dep);
 					FileSystem.CreateDirectoryStructure(dest);
-					File.Copy(fullPath, Path.Combine(updaterPath, dep));
+					File.Copy(fullPath, Path.Combine(updaterPath, dep), true);
 				}
 			}
 		}
