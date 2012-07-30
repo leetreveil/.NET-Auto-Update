@@ -79,6 +79,7 @@ namespace NAppUpdate.Updater
 				var dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
 
 				// Make sure we start updating only once the application has completely terminated
+				Thread.Sleep(100); // hell, let's even wait a bit
 				bool createdNew;
 				using (var mutex = new Mutex(false, syncProcessName + "Mutex", out createdNew))
 				{

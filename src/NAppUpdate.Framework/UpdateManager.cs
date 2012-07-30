@@ -53,6 +53,7 @@ namespace NAppUpdate.Framework
 			get { return instance; }
 		}
 		private static readonly UpdateManager instance = new UpdateManager();
+		private static Mutex _shutdownMutex;
 
 		#endregion
 
@@ -448,7 +449,7 @@ namespace NAppUpdate.Framework
 						          		AppPath = ApplicationPath,
 						          		WorkingDirectory = Environment.CurrentDirectory,
 						          		RelaunchApplication = relaunchApplication,
-										LogItems = Logger.LogItems,
+						          		LogItems = Logger.LogItems,
 						          	};
 
 						NauIpc.ExtractUpdaterFromResource(Config.TempFolder, Instance.Config.UpdateExecutableName);
@@ -477,13 +478,11 @@ namespace NAppUpdate.Framework
 						}
 
 						bool createdNew;
-						using (new Mutex(true, Config.UpdateProcessName + "Mutex", out createdNew))
-						{
-							if (NauIpc.LaunchProcessAndSendDto(dto, info, Config.UpdateProcessName) == null)
-								throw new UpdateProcessFailedException("Could not launch cold update process");
+						_shutdownMutex = new Mutex(true, Config.UpdateProcessName + "Mutex", out createdNew);
+						if (NauIpc.LaunchProcessAndSendDto(dto, info, Config.UpdateProcessName) == null)
+							throw new UpdateProcessFailedException("Could not launch cold update process");
 
-							Environment.Exit(0);
-						}
+						Environment.Exit(0);
 					}
 
 					State = UpdateProcessState.AppliedSuccessfully;
