@@ -9,6 +9,7 @@ namespace NAppUpdate.Updater
         public string ProcessName { get; private set; }
 		public bool ShowConsole { get; private set; }
 		public bool Log { get; private set; }
+		public string CallingApp { get; set; }
 
         private static ArgumentsParser _instance;
         protected ArgumentsParser()
@@ -42,6 +43,7 @@ namespace NAppUpdate.Updater
                 if (arg.Equals(System.Reflection.Assembly.GetEntryAssembly().Location, StringComparison.InvariantCultureIgnoreCase)
                     || arg.EndsWith(".vshost.exe", StringComparison.InvariantCultureIgnoreCase))
                 {
+                	CallingApp = arg.ToLower().Replace(".vshost.exe", string.Empty);
                 	continue;
                 }
 
