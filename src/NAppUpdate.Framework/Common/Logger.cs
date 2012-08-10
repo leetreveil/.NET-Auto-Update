@@ -80,8 +80,19 @@ namespace NAppUpdate.Framework.Common
 			             	});
 		}
 
+		public void Dump()
+		{
+			Dump(null);
+		}
+
 		public void Dump(string filePath)
 		{
+			if (string.IsNullOrEmpty(filePath))
+			{
+				var workingDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+				filePath = Path.Combine(workingDir ?? string.Empty, @"NauUpdate.log");
+			}
+
 			using (StreamWriter w = File.CreateText(filePath))
 			foreach (var logItem in LogItems)
 			{
