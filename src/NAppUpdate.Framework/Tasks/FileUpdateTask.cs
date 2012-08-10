@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using NAppUpdate.Framework.Common;
+using NAppUpdate.Framework.Utils;
 
 namespace NAppUpdate.Framework.Tasks
 {
@@ -90,6 +92,25 @@ namespace NAppUpdate.Framework.Tasks
 			// Only allow execution if the apply attribute was set to hot-swap, or if this is a cold run
 			if (CanHotSwap || coldRun)
 			{
+				if (File.Exists(_destinationFile))
+				{
+					//if (FileSystem.IsExeRunning(_destinationFile))
+					//{
+					//    UpdateManager.Instance.Logger.Log(Logger.SeverityLevel.Warning, "Process {0} is still running", _destinationFile);
+					//    Thread.Sleep(1000); // TODO: retry a few times and throw after a while
+					//}
+
+					if (!PermissionsCheck.HaveWritePermissionsForFileOrFolder(_destinationFile))
+					{
+						if (coldRun)
+						{
+							UpdateManager.Instance.Logger.Log(Logger.SeverityLevel.Warning, "Don't have permissions to touch {0}", _destinationFile);
+							File.Delete(_destinationFile); // get the original exception from the system
+						}
+						CanHotSwap = false;
+					}
+				}
+
 				try
 				{
 					if (File.Exists(_destinationFile))

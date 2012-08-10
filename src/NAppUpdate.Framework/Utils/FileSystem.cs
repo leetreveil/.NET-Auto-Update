@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace NAppUpdate.Framework.Utils
@@ -62,5 +64,17 @@ namespace NAppUpdate.Framework.Utils
 				files.AddRange(System.IO.Directory.GetFiles(path, sp, searchOption));
 			return files;
 		}
+
+		public static bool IsExeRunning(string path)
+		{
+			var processes = Process.GetProcesses();
+			foreach (Process p in processes)
+			{
+				if (p.MainModule.FileName.StartsWith(path, StringComparison.InvariantCultureIgnoreCase))
+					return true;
+			}
+			return false;
+		}
+
 	}
 }
