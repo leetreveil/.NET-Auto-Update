@@ -46,7 +46,7 @@ namespace NAppUpdate.Framework.Common
 
 		public Logger(List<LogItem> logItems)
 		{
-			LogItems = logItems;
+			LogItems = logItems ?? new List<LogItem>();
 		}
 
 		public void Log(string message, params object[] args)

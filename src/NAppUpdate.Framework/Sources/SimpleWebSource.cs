@@ -50,7 +50,7 @@ namespace NAppUpdate.Framework.Sources
 			FileDownloader fd;
 			// A baseUrl of http://testserver/somefolder with a file linklibrary.dll was resulting in a webrequest to http://testserver/linklibrary
 			// The trailing slash is required for the Uri parser to resolve correctly.
-			if (!baseUrl.EndsWith("/")) baseUrl += "/";
+			if (!string.IsNullOrEmpty(baseUrl) && !baseUrl.EndsWith("/")) baseUrl += "/";
 			if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
 				fd = new FileDownloader(url);
 			else if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute))
