@@ -83,7 +83,7 @@ namespace NAppUpdate.Framework.Utils
 			{
 				DownloadedInBytes = totalBytes,
 				FileSizeInBytes = downloadSize,
-				Percentage = (int)((totalBytes / downloadSize) * 100),
+				Percentage = (int)(((float)totalBytes / (float)downloadSize) * 100),
 				Message = string.Format("Downloading... ({0} / {1} completed)", ToFileSizeString(totalBytes), ToFileSizeString(downloadSize)),
 				StillWorking = totalBytes == downloadSize,
 			});
