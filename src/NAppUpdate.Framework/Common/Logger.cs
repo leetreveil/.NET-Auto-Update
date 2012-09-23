@@ -56,6 +56,7 @@ namespace NAppUpdate.Framework.Common
 
 		public void Log(SeverityLevel severity, string message, params object[] args)
 		{
+			lock (LogItems)
 			LogItems.Add(new LogItem
 			             	{
 			             		Message = string.Format(message, args),
@@ -71,6 +72,7 @@ namespace NAppUpdate.Framework.Common
 
 		public void Log(Exception exception, string message)
 		{
+			lock (LogItems)
 			LogItems.Add(new LogItem
 			             	{
 			             		Message = message,
@@ -93,10 +95,13 @@ namespace NAppUpdate.Framework.Common
 				filePath = Path.Combine(workingDir ?? string.Empty, @"NauUpdate.log");
 			}
 
-			using (StreamWriter w = File.CreateText(filePath))
-			foreach (var logItem in LogItems)
+			lock (LogItems)
 			{
-					w.WriteLine(logItem.ToString());
+				using (StreamWriter w = File.CreateText(filePath))
+					foreach (var logItem in LogItems)
+					{
+						w.WriteLine(logItem.ToString());
+					}
 			}
 		}
 	}
