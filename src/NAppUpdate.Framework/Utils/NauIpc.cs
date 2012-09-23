@@ -117,7 +117,8 @@ namespace NAppUpdate.Framework.Utils
 				//failed to connect client pipe
 				if (state.result == 0) return null;
 				//client connection successfull
-				using (var fStream = new FileStream(state.clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true)) {
+				using (var fStream = new FileStream(state.clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
+				{
 					new BinaryFormatter().Serialize(fStream, dto);
 					fStream.Flush();
 					fStream.Close();
@@ -132,9 +133,11 @@ namespace NAppUpdate.Framework.Utils
 			if (stateObject == null) return;
 			State state = (State)stateObject;
 
-			try {
+			try
+			{
 				state.result = ConnectNamedPipe(state.clientPipeHandle, IntPtr.Zero);
-			} catch { }
+			}
+			catch { }
 			state.eventWaitHandle.Set(); // signal we're done
 		}
 
