@@ -296,6 +296,12 @@ namespace FeedBuilder
 
 					conds = doc.CreateElement("Conditions");
 
+                    //File Exists
+                    cond = doc.CreateElement("FileExistsCondition");
+                    cond.SetAttribute("type", "or");
+                    conds.AppendChild(cond);
+                    
+
 					//Version
 					if (chkVersion.Checked && !string.IsNullOrEmpty(_with2.FileVersion)) {
 						cond = doc.CreateElement("FileVersionCondition");
