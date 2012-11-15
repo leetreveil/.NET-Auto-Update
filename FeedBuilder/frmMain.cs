@@ -286,7 +286,7 @@ namespace FeedBuilder
 				if (thisItem.Checked) {
 					var _with2 = (FileInfoEx)thisItem.Tag;
 					task = doc.CreateElement("FileUpdateTask");
-					task.SetAttribute("localPath", _with2.FileInfo.Name);
+					task.SetAttribute("localPath", _with2.RelativeName);
 
                     // generate FileUpdateTask metadata items
                     task.SetAttribute("lastModified", _with2.FileInfo.LastWriteTime.ToFileTime().ToString());
@@ -491,13 +491,16 @@ namespace FeedBuilder
 
 				lstFiles.BeginUpdate();
 				lstFiles.Items.Clear();
+
+                string outputDir = txtOutputFolder.Text.Trim();
+                int outputDirLength = txtOutputFolder.Text.Trim().Length;
                 var enumerator = new FindFiles.FileSystemEnumerator(txtOutputFolder.Text.Trim(),"*.*", true);
 				foreach (FileInfo fi in enumerator.Matches()) {
                     string thisFile = fi.FullName;
 					if ((!IsIgnorable(thisFile))) {
-						thisInfo = new FileInfoEx(thisFile);
+						thisInfo = new FileInfoEx(thisFile,outputDirLength);
 						var _with4 = thisInfo;
-						thisItem = new ListViewItem(_with4.FileInfo.Name, GetImageIndex(_with4.FileInfo.Extension));
+						thisItem = new ListViewItem(_with4.RelativeName, GetImageIndex(_with4.FileInfo.Extension));
 						thisItem.SubItems.Add(_with4.FileVersion);
 						thisItem.SubItems.Add(_with4.FileInfo.Length.ToString());
 						thisItem.SubItems.Add(_with4.FileInfo.LastWriteTime.ToString());
