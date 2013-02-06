@@ -7,6 +7,8 @@ using System.Text;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
+using System.Collections.Specialized;
+using Microsoft.VisualBasic.Devices;
 using FeedBuilder.Properties;
 
 namespace FeedBuilder

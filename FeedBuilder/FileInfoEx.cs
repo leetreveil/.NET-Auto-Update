@@ -25,11 +25,14 @@ namespace FeedBuilder
 			get { return myHash; }
 		}
 
-		public FileInfoEx(string fileName)
+        public string RelativeName { get; private set; }
+
+		public FileInfoEx(string fileName, int rootDirLength)
 		{
 			myFileInfo = new FileInfo(fileName);
 			myFileVersion = FileVersionInfo.GetVersionInfo(fileName).FileVersion;
-			myHash = FileChecksum.GetSHA256Checksum(fileName);
+			myHash = NAppUpdate.Framework.Utils.FileChecksum.GetSHA256Checksum(fileName);
+            RelativeName = fileName.Substring(rootDirLength + 1);
 		}
 	}
 }

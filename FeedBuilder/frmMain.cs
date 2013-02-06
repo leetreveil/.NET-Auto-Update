@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
+using My;
 using FeedBuilder.Properties;
 
 namespace FeedBuilder
@@ -264,7 +265,7 @@ namespace FeedBuilder
 				if (thisItem.Checked) {
 					var fileInfoEx = (FileInfoEx)thisItem.Tag;
 					XmlElement task = doc.CreateElement("FileUpdateTask");
-					task.SetAttribute("localPath", fileInfoEx.FileInfo.Name);
+					task.SetAttribute("localPath", fileInfoEx.RelativeName);
 
 					// generate FileUpdateTask metadata items
 					task.SetAttribute("lastModified", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
@@ -274,6 +275,12 @@ namespace FeedBuilder
 					XmlElement conds = doc.CreateElement("Conditions");
 					XmlElement cond;
 					bool hasFirstCondition = false;
+
+                    //File Exists
+                    cond = doc.CreateElement("FileExistsCondition");
+                    cond.SetAttribute("type", "or");
+                    conds.AppendChild(cond);
+                    
 
 					//Version
 					if (chkVersion.Checked && !string.IsNullOrEmpty(fileInfoEx.FileVersion)) {
@@ -440,12 +447,16 @@ namespace FeedBuilder
 
 			lstFiles.BeginUpdate();
 			lstFiles.Items.Clear();
+
+			string outputDir = txtOutputFolder.Text.Trim();
+			int outputDirLength = txtOutputFolder.Text.Trim().Length;
+
 			FileSystemEnumerator enumerator = new FileSystemEnumerator(txtOutputFolder.Text.Trim(), "*.*", true);
 			foreach (FileInfo fi in enumerator.Matches()) {
 				string thisFile = fi.FullName;
 				if ((IsIgnorable(thisFile))) continue;
-				FileInfoEx thisInfo = new FileInfoEx(thisFile);
-				ListViewItem thisItem = new ListViewItem(thisInfo.FileInfo.Name, GetImageIndex(thisInfo.FileInfo.Extension));
+				FileInfoEx thisInfo = new FileInfoEx(thisFile,outputDirLength);
+				ListViewItem thisItem = new ListViewItem(thisInfo.RelativeName, GetImageIndex(thisInfo.FileInfo.Extension));
 				thisItem.SubItems.Add(thisInfo.FileVersion);
 				thisItem.SubItems.Add(thisInfo.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
 				thisItem.SubItems.Add(thisInfo.FileInfo.LastWriteTime.ToString(CultureInfo.InvariantCulture));
