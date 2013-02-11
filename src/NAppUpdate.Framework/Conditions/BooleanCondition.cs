@@ -39,7 +39,7 @@ namespace NAppUpdate.Framework.Conditions
         }
         #endregion
 
-        private class ConditionItem
+        protected class ConditionItem
         {
             public ConditionItem(IUpdateCondition cnd, ConditionType typ)
             {
