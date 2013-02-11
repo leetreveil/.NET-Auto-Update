@@ -6,8 +6,6 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
-using My;
-using FeedBuilder.Properties;
 
 namespace FeedBuilder
 {

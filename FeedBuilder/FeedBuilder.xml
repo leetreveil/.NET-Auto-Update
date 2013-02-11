@@ -4,6 +4,22 @@
         <name>FeedBuilder</name>
     </assembly>
     <members>
+        <member name="T:FeedBuilder.Properties.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:FeedBuilder.Properties.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:FeedBuilder.Properties.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
         <member name="M:FeedBuilder.HelpfulTextBox.SetCue">
             <summary>
               Actually, the system cue only works for editable (i.e. not read-only) text boxes.
@@ -23,6 +39,23 @@
             <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         </member>
         <member name="M:FeedBuilder.HelpfulTextBox.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="F:FeedBuilder.frmMain.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:FeedBuilder.frmMain.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:FeedBuilder.frmMain.InitializeComponent">
             <summary>
             Required method for Designer support - do not modify
             the contents of this method with the code editor.
@@ -128,39 +161,6 @@
             </summary>
             <param name="h"> Find handle returned by FindFirstFile. </param>
             <param name="p"> Path corresponding to find handle. </param>
-        </member>
-        <member name="T:FeedBuilder.Properties.Resources">
-            <summary>
-              A strongly-typed resource class, for looking up localized strings, etc.
-            </summary>
-        </member>
-        <member name="P:FeedBuilder.Properties.Resources.ResourceManager">
-            <summary>
-              Returns the cached ResourceManager instance used by this class.
-            </summary>
-        </member>
-        <member name="P:FeedBuilder.Properties.Resources.Culture">
-            <summary>
-              Overrides the current thread's CurrentUICulture property for all
-              resource lookups using this strongly typed resource class.
-            </summary>
-        </member>
-        <member name="F:FeedBuilder.frmMain.components">
-            <summary>
-            Required designer variable.
-            </summary>
-        </member>
-        <member name="M:FeedBuilder.frmMain.Dispose(System.Boolean)">
-            <summary>
-            Clean up any resources being used.
-            </summary>
-            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        </member>
-        <member name="M:FeedBuilder.frmMain.InitializeComponent">
-            <summary>
-            Required method for Designer support - do not modify
-            the contents of this method with the code editor.
-            </summary>
         </member>
         <member name="M:FeedBuilder.Program.Main">
             <summary>
