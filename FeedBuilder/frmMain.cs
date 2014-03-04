@@ -38,7 +38,7 @@ namespace FeedBuilder
 		private void frmMain_Load(Object sender, EventArgs e)
 		{
 			Visible = false;
-
+            InitializeFormSettings();
 			string[] args = Environment.GetCommandLineArgs();
 			// The first arg is the path to ourself
 			//If args.Count >= 2 Then
@@ -64,7 +64,6 @@ namespace FeedBuilder
 					UpdateTitle();
 				}
 			}
-			InitializeFormSettings();
 			if (_argParser.ShowGui) Show();
 			if (_argParser.Build) Build();
 			if (!_argParser.ShowGui) Close();
