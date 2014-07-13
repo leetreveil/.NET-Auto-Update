@@ -23,21 +23,29 @@ namespace NAppUpdate.Framework.Conditions
             if (FileSize <= 0)
                 return true;
 
-            string localPath = !string.IsNullOrEmpty(LocalPath)
-                                   ? LocalPath
-                                   : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
-            if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
+            var localPath = !string.IsNullOrEmpty(LocalPath)
+                ? LocalPath
+                : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
+
+            // local path is invalid, we can't check for anything so we will return as if the condition was met
+            if (string.IsNullOrEmpty(localPath))
                 return true;
 
-            FileInfo fi = new FileInfo(localPath);
+            long localFileSize = 0;
+            if (File.Exists(localPath))
+            {
+                var fi = new FileInfo(localPath);
+                localFileSize = fi.Length;
+            }
+
             switch (ComparisonType)
             {
                 case "above":
-                    return FileSize < fi.Length;
+                    return FileSize < localFileSize;
                 case "is":
-                    return FileSize == fi.Length;
+                    return FileSize == localFileSize;
             }
-            return FileSize > fi.Length;
+            return FileSize > localFileSize;
         }
     }
 }
