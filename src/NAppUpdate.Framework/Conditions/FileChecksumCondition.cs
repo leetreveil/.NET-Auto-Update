@@ -21,13 +21,19 @@ namespace NAppUpdate.Framework.Conditions
 
         public bool IsMet(IUpdateTask task)
         {
-            string localPath = !string.IsNullOrEmpty(LocalPath) ? LocalPath : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
-            if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
+            var localPath = !string.IsNullOrEmpty(LocalPath) ? LocalPath : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
+
+            // local path is invalid, we can't check for anything so we will return as if the condition was met
+            if (string.IsNullOrEmpty(localPath))
                 return true;
+
+            // if the local file does not exist, checksums don't match vacuously
+            if (!File.Exists(localPath))
+                return false;
 
             if ("sha256".Equals(ChecksumType, StringComparison.InvariantCultureIgnoreCase))
             {
-                string sha256 = Utils.FileChecksum.GetSHA256Checksum(localPath);
+                var sha256 = Utils.FileChecksum.GetSHA256Checksum(localPath);
                 if (!string.IsNullOrEmpty(sha256) && sha256.Equals(Checksum))
                     return true;
             }
