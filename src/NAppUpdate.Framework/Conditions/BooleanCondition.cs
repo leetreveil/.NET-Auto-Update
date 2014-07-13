@@ -78,8 +78,6 @@ namespace NAppUpdate.Framework.Conditions
             return this;
         }
 
-        #region IUpdateCondition Members
-
         public IDictionary<string, string> Attributes { get; private set; }
 
         public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
@@ -120,7 +118,5 @@ namespace NAppUpdate.Framework.Conditions
 
             return Passed;
         }
-
-        #endregion
     }
 }

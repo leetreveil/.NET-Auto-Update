@@ -19,8 +19,6 @@ namespace NAppUpdate.Framework.Conditions
         [NauField("checksumType", "Type of checksum to calculate", true)]
         public string ChecksumType { get; set; }
 
-        #region IUpdateCondition Members
-
         public bool IsMet(IUpdateTask task)
         {
             string localPath = !string.IsNullOrEmpty(LocalPath) ? LocalPath : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
@@ -38,7 +36,5 @@ namespace NAppUpdate.Framework.Conditions
 
             return false;
         }
-
-        #endregion
     }
 }

@@ -20,8 +20,6 @@ namespace NAppUpdate.Framework.Conditions
         [NauField("what", "Comparison action to perform. Accepted values: above, is, below. Default: below.", false)]
         public string ComparisonType { get; set; }
 
-        #region IUpdateCondition Members
-
         public bool IsMet(Tasks.IUpdateTask task)
         {
             string localPath = !string.IsNullOrEmpty(LocalPath)
@@ -47,7 +45,5 @@ namespace NAppUpdate.Framework.Conditions
                     return updateVersion > localVersion;
             }
         }
-
-        #endregion
     }
 }

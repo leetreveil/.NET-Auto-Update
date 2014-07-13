@@ -18,8 +18,6 @@ namespace NAppUpdate.Framework.Conditions
         [NauField("what", "Comparison action to perform. Accepted values: above, is, below. Default: below.", false)]
         public string ComparisonType { get; set; }
 
-        #region IUpdateCondition Members
-
         public bool IsMet(Tasks.IUpdateTask task)
         {
             if (FileSize <= 0)
@@ -41,7 +39,5 @@ namespace NAppUpdate.Framework.Conditions
             }
             return FileSize > fi.Length;
         }
-
-        #endregion
     }
 }

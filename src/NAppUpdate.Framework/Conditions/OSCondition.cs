@@ -14,8 +14,6 @@ namespace NAppUpdate.Framework.Conditions
 		// use http://stackoverflow.com/questions/545666/how-to-translate-ms-windows-os-version-numbers-into-product-names-in-net
 		// and http://msdn.microsoft.com/en-us/library/ms724429(VS.85).aspx
 
-        #region IUpdateCondition Members
-
 		public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
 		{
 			bool is64Bit = Is64BitOperatingSystem();
@@ -31,8 +29,6 @@ namespace NAppUpdate.Framework.Conditions
 
 			return true;
 		}
-
-    	#endregion
 
         // Check OS bitness (32 / 64 bit)
         // As seen on http://1code.codeplex.com/SourceControl/changeset/view/39074#842775

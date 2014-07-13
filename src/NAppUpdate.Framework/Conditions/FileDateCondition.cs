@@ -23,8 +23,6 @@ namespace NAppUpdate.Framework.Conditions
 		[NauField("what", "Comparison action to perform. Accepted values: newer, is, older. Default: older.", false)]
 		public string ComparisonType { get; set; }
 
-		#region IUpdateCondition Members
-
 		public bool IsMet(Tasks.IUpdateTask task)
 		{
 			if (Timestamp == DateTime.MinValue)
@@ -58,7 +56,5 @@ namespace NAppUpdate.Framework.Conditions
 			}
 			return result;
 		}
-
-		#endregion
 	}
 }

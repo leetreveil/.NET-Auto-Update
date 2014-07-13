@@ -14,8 +14,6 @@ namespace NAppUpdate.Framework.Conditions
             , false)]
         public string LocalPath { get; set; }
 
-        #region IUpdateCondition Members
-
         public IDictionary<string, string> Attributes { get; private set; }
 
         public bool IsMet(Tasks.IUpdateTask task)
@@ -26,7 +24,5 @@ namespace NAppUpdate.Framework.Conditions
 
             return File.Exists(localPath);
         }
-
-        #endregion
     }
 }
