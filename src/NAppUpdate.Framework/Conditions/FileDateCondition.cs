@@ -31,15 +31,21 @@ namespace NAppUpdate.Framework.Conditions
 			string localPath = !string.IsNullOrEmpty(LocalPath)
 								   ? LocalPath
 								   : Utils.Reflection.GetNauAttribute(task, "LocalPath") as string;
-			if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
+
+            // local path is invalid, we can't check for anything so we will return as if the condition was met
+			if (string.IsNullOrEmpty(localPath))
 				return true;
+
+            // if the file doesn't exist it has a null timestamp, and therefore the condition result depends on the ComparisonType
+		    if (!File.Exists(localPath))
+		        return ComparisonType.Equals("older", StringComparison.InvariantCultureIgnoreCase);
 
 			// File timestamps seem to be off by a little bit (conversion rounding?), so the code below
 			// gets around that
-			DateTime dt = File.GetLastWriteTime(localPath);
-			long localPlus = dt.AddSeconds(2).ToFileTimeUtc();
-			long localMinus = dt.AddSeconds(-2).ToFileTimeUtc();
-			long remoteFileDateTime = Timestamp.ToFileTimeUtc();
+			var dt = File.GetLastWriteTime(localPath);
+			var localPlus = dt.AddSeconds(2).ToFileTimeUtc();
+			var localMinus = dt.AddSeconds(-2).ToFileTimeUtc();
+			var remoteFileDateTime = Timestamp.ToFileTimeUtc();
 
 			bool result;
 			switch (ComparisonType)
