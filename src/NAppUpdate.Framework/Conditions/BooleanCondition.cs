@@ -80,43 +80,43 @@ namespace NAppUpdate.Framework.Conditions
 
         public IDictionary<string, string> Attributes { get; private set; }
 
-        public bool IsMet(NAppUpdate.Framework.Tasks.IUpdateTask task)
+        public bool IsMet(Tasks.IUpdateTask task)
         {
             if (ChildConditions == null)
                 return true;
 
             // perform the update if Passed == true
             // otherwise, do not perform the update
-            bool Passed = true, firstRun = true;
+            bool passed = true, firstRun = true;
             foreach (ConditionItem item in ChildConditions)
             {
                 // If after the first iteration, accept as fulfilled if we are at an OR clause and the conditions
                 // before this checked OK (i.e. update needed)
                 if (!firstRun)
                 {
-                    if (Passed && (item._ConditionType & ConditionType.OR) > 0)
+                    if (passed && (item._ConditionType & ConditionType.OR) > 0)
                         return true;
                 }
                 else { firstRun = false; }
 
                 // Skip all ANDed conditions if some of them failed, until we consume all the conditions
                 // or we hit an OR'ed one
-                if (!Passed)
+                if (!passed)
                 {
                     if ((item._ConditionType & ConditionType.OR) > 0)
                     {
-                        bool checkResult = item._Condition.IsMet(task);
-                        Passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
+                        var checkResult = item._Condition.IsMet(task);
+                        passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
                     }
                 }
                 else
                 {
-                    bool checkResult = item._Condition.IsMet(task);
-                    Passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
+                    var checkResult = item._Condition.IsMet(task);
+                    passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
                 }
             }
 
-            return Passed;
+            return passed;
         }
     }
 }
