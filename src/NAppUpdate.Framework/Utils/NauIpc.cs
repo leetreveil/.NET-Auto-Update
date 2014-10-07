@@ -63,6 +63,9 @@ namespace NAppUpdate.Framework.Utils
 		//static readonly uint GENERIC_WRITE = (0x40000000);
 		const uint OPEN_EXISTING = 3;
 
+        //Which really isn't an error...
+        const uint ERROR_PIPE_CONNECTED = 535;
+
 		internal static string GetPipeName(string syncProcessName)
 		{
 			return string.Format("\\\\.\\pipe\\{0}", syncProcessName);
@@ -137,8 +140,11 @@ namespace NAppUpdate.Framework.Utils
 			{
 				state.result = ConnectNamedPipe(state.clientPipeHandle, IntPtr.Zero);
 			}
-			catch { }
-			state.eventWaitHandle.Set(); // signal we're done
+            catch {  }
+            //Check for the oddball: ERROR - PIPE CONNECTED
+            //Ref: http://msdn.microsoft.com/en-us/library/windows/desktop/aa365146%28v=vs.85%29.aspx
+            if (Marshal.GetLastWin32Error() == ERROR_PIPE_CONNECTED) { state.result = 1; }
+            state.eventWaitHandle.Set(); // signal we're done
 		}
 
 
