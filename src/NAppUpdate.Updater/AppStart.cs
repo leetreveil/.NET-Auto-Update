@@ -71,7 +71,7 @@ namespace NAppUpdate.Updater
 				var dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
 
 				// Make sure we start updating only once the application has completely terminated
-				Thread.Sleep(100); // hell, let's even wait a bit
+				Thread.Sleep(1000); // Let's even wait a bit
 				bool createdNew;
 				using (var mutex = new Mutex(false, syncProcessName + "Mutex", out createdNew)) {
 					try {
@@ -106,14 +106,15 @@ namespace NAppUpdate.Updater
 
 //This can be handy if you're trying to debug the updater.exe!
 //#if (DEBUG)
-//{  
-//                if (_args.ShowConsole) {
-//                    _console.WriteLine();
-//                    _console.WriteLine("Pausing to attach debugger.  Press any key to continue.");
-//                    _console.ReadKey();
-//                }
- 
-//}
+                {
+                    if (_args.ShowConsole)
+                    {
+                        _console.WriteLine();
+                        _console.WriteLine("Pausing to attach debugger.  Press any key to continue.");
+                        _console.ReadKey();
+                    }
+
+                }
 //#endif
 
 				// Perform the actual off-line update process
@@ -154,12 +155,25 @@ namespace NAppUpdate.Updater
 				// Start the application only if requested to do so
 				if (relaunchApp) {
 					Log("Re-launching process {0} with working dir {1}", appPath, appDir);
-
-					var info = new ProcessStartInfo {
-						UseShellExecute = true,
-						WorkingDirectory = appDir,
-						FileName = appPath,
-					};
+					ProcessStartInfo info;
+					if (_args.ShowConsole)
+					{
+						info = new ProcessStartInfo
+						{
+							UseShellExecute = false,
+							WorkingDirectory = appDir,
+							FileName = appPath,
+						};
+					}
+					else
+					{
+						info = new ProcessStartInfo
+						{
+							UseShellExecute = true,
+							WorkingDirectory = appDir,
+							FileName = appPath,
+						};
+					}
 
 					var p = NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
 					if (p == null) throw new UpdateProcessFailedException("Unable to relaunch application and/or send DTO");
