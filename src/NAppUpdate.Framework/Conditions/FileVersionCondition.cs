@@ -37,8 +37,7 @@ namespace NAppUpdate.Framework.Conditions
         	var versionInfo = FileVersionInfo.GetVersionInfo(localPath);
 			if (versionInfo.FileVersion == null) return true; // perform the update if no version info is found
 			
-			var versionString = versionInfo.FileVersion.Replace(", ", ".");
-            var localVersion = new Version(versionString);
+            var localVersion = new Version(versionInfo.FileMajorPart, versionInfo.FileMinorPart, versionInfo.FileBuildPart, versionInfo.FilePrivatePart);
             var updateVersion = Version != null ? new Version(Version) : new Version();
 
             switch (ComparisonType)
