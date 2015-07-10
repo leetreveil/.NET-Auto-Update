@@ -101,24 +101,24 @@ namespace NAppUpdate.Framework.Utils
 				   IntPtr.Zero))
 			{
 				//failed to create named pipe
-				if (state.clientPipeHandle.IsInvalid) return null;
-
-				try
+				if (state.clientPipeHandle.IsInvalid)
 				{
-					p = Process.Start(processStartInfo);
+					throw new Exception("Launch process client: Failed to create named pipe, handle is invalid.");
 				}
-				catch (Win32Exception)
-				{
-					// Person denied UAC escallation
-					return null;
-				}
-
+				
+				// This will throw Win32Exception if the user denies UAC
+				p = Process.Start(processStartInfo);
+				
 				ThreadPool.QueueUserWorkItem(ConnectPipe, state);
 				//A rather arbitary five seconds, perhaps better to be user configurable at some point?
 				state.eventWaitHandle.WaitOne(10000);
 
 				//failed to connect client pipe
-				if (state.result == 0) return null;
+				if (state.result == 0)
+				{
+					throw new Exception("Launch process client: Failed to connect to named pipe");
+				}
+
 				//client connection successfull
 				using (var fStream = new FileStream(state.clientPipeHandle, FileAccess.Write, (int)BUFFER_SIZE, true))
 				{
