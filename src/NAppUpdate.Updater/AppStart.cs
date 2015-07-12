@@ -175,8 +175,14 @@ namespace NAppUpdate.Updater
 						};
 					}
 
-					var p = NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
-					if (p == null) throw new UpdateProcessFailedException("Unable to relaunch application and/or send DTO");
+					try
+					{
+						NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
+					}
+					catch (Exception ex)
+					{
+						throw new UpdateProcessFailedException("Unable to relaunch application and/or send DTO", ex);
+					}
 				}
 
 				Log("All done");
