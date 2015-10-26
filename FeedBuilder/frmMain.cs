@@ -271,27 +271,25 @@ namespace FeedBuilder
 
 					XmlElement conds = doc.CreateElement("Conditions");
 					XmlElement cond;
-					bool hasFirstCondition = false;
 
                     //File Exists
                     cond = doc.CreateElement("FileExistsCondition");
-                    cond.SetAttribute("type", "or");
+                    cond.SetAttribute("type", "or-not");
                     conds.AppendChild(cond);
-                    
 
 					//Version
 					if (chkVersion.Checked && !string.IsNullOrEmpty(fileInfoEx.FileVersion)) {
 						cond = doc.CreateElement("FileVersionCondition");
+						cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("what", "below");
 						cond.SetAttribute("version", fileInfoEx.FileVersion);
 						conds.AppendChild(cond);
-						hasFirstCondition = true;
 					}
 
 					//Size
 					if (chkSize.Checked) {
 						cond = doc.CreateElement("FileSizeCondition");
-						cond.SetAttribute("type", hasFirstCondition ? "or-not" : "not");
+						cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("what", "is");
 						cond.SetAttribute("size", fileInfoEx.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
 						conds.AppendChild(cond);
@@ -300,7 +298,7 @@ namespace FeedBuilder
 					//Date
 					if (chkDate.Checked) {
 						cond = doc.CreateElement("FileDateCondition");
-						if (hasFirstCondition) cond.SetAttribute("type", "or");
+						cond.SetAttribute("type", "or");
 						cond.SetAttribute("what", "older");
 						// local timestamp, not UTC
 						cond.SetAttribute("timestamp", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
@@ -310,7 +308,7 @@ namespace FeedBuilder
 					//Hash
 					if (chkHash.Checked) {
 						cond = doc.CreateElement("FileChecksumCondition");
-						cond.SetAttribute("type", hasFirstCondition ? "or-not" : "not");
+						cond.SetAttribute("type", "or-not");
 						cond.SetAttribute("checksumType", "sha256");
 						cond.SetAttribute("checksum", fileInfoEx.Hash);
 						conds.AppendChild(cond);
