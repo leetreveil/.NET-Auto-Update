@@ -31,29 +31,29 @@ namespace NAppUpdate.Framework.Utils
 
 		[DllImport("kernel32.dll", SetLastError = true)]
 		private static extern SafeFileHandle CreateNamedPipe(
-		   String pipeName,
-		   uint dwOpenMode,
-		   uint dwPipeMode,
-		   uint nMaxInstances,
-		   uint nOutBufferSize,
-		   uint nInBufferSize,
-		   uint nDefaultTimeOut,
-		   IntPtr lpSecurityAttributes);
+			String pipeName,
+			uint dwOpenMode,
+			uint dwPipeMode,
+			uint nMaxInstances,
+			uint nOutBufferSize,
+			uint nInBufferSize,
+			uint nDefaultTimeOut,
+			IntPtr lpSecurityAttributes);
 
 		[DllImport("kernel32.dll", SetLastError = true)]
 		private static extern int ConnectNamedPipe(
-		   SafeFileHandle hNamedPipe,
-		   IntPtr lpOverlapped);
+			SafeFileHandle hNamedPipe,
+			IntPtr lpOverlapped);
 
 		[DllImport("kernel32.dll", SetLastError = true)]
 		private static extern SafeFileHandle CreateFile(
-		   String pipeName,
-		   uint dwDesiredAccess,
-		   uint dwShareMode,
-		   IntPtr lpSecurityAttributes,
-		   uint dwCreationDisposition,
-		   uint dwFlagsAndAttributes,
-		   IntPtr hTemplate);
+			String pipeName,
+			uint dwDesiredAccess,
+			uint dwShareMode,
+			IntPtr lpSecurityAttributes,
+			uint dwCreationDisposition,
+			uint dwFlagsAndAttributes,
+			IntPtr hTemplate);
 
 		//private const uint DUPLEX = (0x00000003);
 		private const uint WRITE_ONLY = (0x00000002);
@@ -63,8 +63,8 @@ namespace NAppUpdate.Framework.Utils
 		//static readonly uint GENERIC_WRITE = (0x40000000);
 		const uint OPEN_EXISTING = 3;
 
-        //Which really isn't an error...
-        const uint ERROR_PIPE_CONNECTED = 535;
+		//Which really isn't an error...
+		const uint ERROR_PIPE_CONNECTED = 535;
 
 		internal static string GetPipeName(string syncProcessName)
 		{
@@ -91,24 +91,24 @@ namespace NAppUpdate.Framework.Utils
 			State state = new State();
 
 			using (state.clientPipeHandle = CreateNamedPipe(
-				   GetPipeName(syncProcessName),
-				   WRITE_ONLY | FILE_FLAG_OVERLAPPED,
-				   0,
-				   1, // 1 max instance (only the updater utility is expected to connect)
-				   BUFFER_SIZE,
-				   BUFFER_SIZE,
-				   0,
-				   IntPtr.Zero))
+					GetPipeName(syncProcessName),
+					WRITE_ONLY | FILE_FLAG_OVERLAPPED,
+					0,
+					1, // 1 max instance (only the updater utility is expected to connect)
+					BUFFER_SIZE,
+					BUFFER_SIZE,
+					0,
+					IntPtr.Zero))
 			{
 				//failed to create named pipe
 				if (state.clientPipeHandle.IsInvalid)
 				{
 					throw new Exception("Launch process client: Failed to create named pipe, handle is invalid.");
 				}
-				
+
 				// This will throw Win32Exception if the user denies UAC
 				p = Process.Start(processStartInfo);
-				
+
 				ThreadPool.QueueUserWorkItem(ConnectPipe, state);
 				//A rather arbitary five seconds, perhaps better to be user configurable at some point?
 				state.eventWaitHandle.WaitOne(10000);
@@ -133,18 +133,27 @@ namespace NAppUpdate.Framework.Utils
 
 		internal static void ConnectPipe(object stateObject)
 		{
-			if (stateObject == null) return;
+			if (stateObject == null)
+			{
+				return;
+			}
+
 			State state = (State)stateObject;
 
 			try
 			{
 				state.result = ConnectNamedPipe(state.clientPipeHandle, IntPtr.Zero);
 			}
-            catch {  }
-            //Check for the oddball: ERROR - PIPE CONNECTED
-            //Ref: http://msdn.microsoft.com/en-us/library/windows/desktop/aa365146%28v=vs.85%29.aspx
-            if (Marshal.GetLastWin32Error() == ERROR_PIPE_CONNECTED) { state.result = 1; }
-            state.eventWaitHandle.Set(); // signal we're done
+			catch { }
+
+			//Check for the oddball: ERROR - PIPE CONNECTED
+			//Ref: http://msdn.microsoft.com/en-us/library/windows/desktop/aa365146%28v=vs.85%29.aspx
+			if (Marshal.GetLastWin32Error() == ERROR_PIPE_CONNECTED) 
+			{
+				state.result = 1;
+			}
+
+			state.eventWaitHandle.Set(); // signal we're done
 		}
 
 
