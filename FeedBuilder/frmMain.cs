@@ -447,6 +447,11 @@ namespace FeedBuilder
 				return;
 			}
 
+			if (!outputDir.EndsWith("\\"))
+			{
+				outputDir += "\\";
+			}
+
 			lstFiles.BeginUpdate();
 			lstFiles.Items.Clear();
 			
