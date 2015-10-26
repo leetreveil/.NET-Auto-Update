@@ -76,6 +76,7 @@ namespace NAppUpdate.Framework.Utils
 			public readonly EventWaitHandle eventWaitHandle;
 			public int result { get; set; }
 			public SafeFileHandle clientPipeHandle { get; set; }
+			public Exception exception;
 
 			public State()
 			{
@@ -116,7 +117,7 @@ namespace NAppUpdate.Framework.Utils
 				//failed to connect client pipe
 				if (state.result == 0)
 				{
-					throw new Exception("Launch process client: Failed to connect to named pipe");
+					throw new Exception("Launch process client: Failed to connect to named pipe", state.exception);
 				}
 
 				//client connection successfull
@@ -133,24 +134,27 @@ namespace NAppUpdate.Framework.Utils
 
 		internal static void ConnectPipe(object stateObject)
 		{
-			if (stateObject == null)
-			{
-				return;
-			}
-
 			State state = (State)stateObject;
 
 			try
 			{
 				state.result = ConnectNamedPipe(state.clientPipeHandle, IntPtr.Zero);
 			}
-			catch { }
+			catch (Exception e)
+			{
+				state.exception = e;
+			}
 
+			int error = Marshal.GetLastWin32Error();
 			//Check for the oddball: ERROR - PIPE CONNECTED
 			//Ref: http://msdn.microsoft.com/en-us/library/windows/desktop/aa365146%28v=vs.85%29.aspx
-			if (Marshal.GetLastWin32Error() == ERROR_PIPE_CONNECTED) 
+			if (error == ERROR_PIPE_CONNECTED) 
 			{
 				state.result = 1;
+			}
+			else if (error != 0)
+			{
+				state.exception = new Win32Exception(error);
 			}
 
 			state.eventWaitHandle.Set(); // signal we're done
