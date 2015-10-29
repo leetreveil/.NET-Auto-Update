@@ -76,6 +76,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Conditions\BooleanCondition.cs" />
     <Compile Include="Conditions\FileVersionConditionTests.cs" />
     <Compile Include="Core\UpdateStarterTests.cs" />
     <Compile Include="FeedReaders\NauXmlFeedReaderTests.cs" />

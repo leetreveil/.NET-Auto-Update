@@ -47,6 +47,11 @@ namespace NAppUpdate.Framework.Conditions
                 this._ConditionType = typ;
             }
 
+            internal bool HasConditionType(ConditionType type)
+            {
+                return (_ConditionType & type) > 0;
+            }
+
             public readonly IUpdateCondition _Condition;
             public readonly ConditionType _ConditionType;
         }
@@ -94,7 +99,7 @@ namespace NAppUpdate.Framework.Conditions
                 // before this checked OK (i.e. update needed)
                 if (!firstRun)
                 {
-                    if (passed && (item._ConditionType & ConditionType.OR) > 0)
+                    if (passed && item.HasConditionType(ConditionType.OR))
                         return true;
                 }
                 else { firstRun = false; }
@@ -103,16 +108,16 @@ namespace NAppUpdate.Framework.Conditions
                 // or we hit an OR'ed one
                 if (!passed)
                 {
-                    if ((item._ConditionType & ConditionType.OR) > 0)
+                    if (item.HasConditionType(ConditionType.OR))
                     {
                         var checkResult = item._Condition.IsMet(task);
-                        passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
+                        passed = item.HasConditionType(ConditionType.NOT) ? !checkResult : checkResult;
                     }
                 }
                 else
                 {
                     var checkResult = item._Condition.IsMet(task);
-                    passed = (item._ConditionType & ConditionType.NOT) > 0 ? !checkResult : checkResult;
+                    passed = item.HasConditionType(ConditionType.NOT) ? !checkResult : checkResult;
                 }
             }
 
