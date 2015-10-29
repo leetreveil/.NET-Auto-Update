@@ -440,28 +440,42 @@ namespace FeedBuilder
 
 		private void ReadFiles()
 		{
-			if (string.IsNullOrEmpty(txtOutputFolder.Text.Trim()) || !Directory.Exists(txtOutputFolder.Text.Trim())) return;
+			string outputDir = txtOutputFolder.Text.Trim();
+			
+			if (string.IsNullOrEmpty(outputDir) || !Directory.Exists(outputDir))
+			{
+				return;
+			}
+
+			if (!outputDir.EndsWith("\\"))
+			{
+				outputDir += "\\";
+			}
 
 			lstFiles.BeginUpdate();
 			lstFiles.Items.Clear();
-
-			string outputDir = txtOutputFolder.Text.Trim();
-			int outputDirLength = txtOutputFolder.Text.Trim().Length;
-
-			FileSystemEnumerator enumerator = new FileSystemEnumerator(txtOutputFolder.Text.Trim(), "*.*", true);
+			
+			FileSystemEnumerator enumerator = new FileSystemEnumerator(outputDir, "*.*", true);
 			foreach (FileInfo fi in enumerator.Matches()) {
-				string thisFile = fi.FullName;
-				if ((IsIgnorable(thisFile))) continue;
-				FileInfoEx thisInfo = new FileInfoEx(thisFile,outputDirLength);
-				ListViewItem thisItem = new ListViewItem(thisInfo.RelativeName, GetImageIndex(thisInfo.FileInfo.Extension));
-				thisItem.SubItems.Add(thisInfo.FileVersion);
-				thisItem.SubItems.Add(thisInfo.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
-				thisItem.SubItems.Add(thisInfo.FileInfo.LastWriteTime.ToString(CultureInfo.InvariantCulture));
-				thisItem.SubItems.Add(thisInfo.Hash);
-				thisItem.Checked = (!Settings.Default.IgnoreFiles.Contains(thisInfo.FileInfo.Name));
-				thisItem.Tag = thisInfo;
-				lstFiles.Items.Add(thisItem);
+				string filePath = fi.FullName;
+
+				if ((IsIgnorable(filePath)))
+				{
+					continue;
+				}
+
+				FileInfoEx fileInfo = new FileInfoEx(filePath, outputDir.Length);
+
+				ListViewItem item = new ListViewItem(fileInfo.RelativeName, GetImageIndex(fileInfo.FileInfo.Extension));
+				item.SubItems.Add(fileInfo.FileVersion);
+				item.SubItems.Add(fileInfo.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
+				item.SubItems.Add(fileInfo.FileInfo.LastWriteTime.ToString(CultureInfo.InvariantCulture));
+				item.SubItems.Add(fileInfo.Hash);
+				item.Checked = (!Settings.Default.IgnoreFiles.Contains(fileInfo.FileInfo.Name));
+				item.Tag = fileInfo;
+				lstFiles.Items.Add(item);
 			}
+
 			lstFiles.EndUpdate();
 		}
 
