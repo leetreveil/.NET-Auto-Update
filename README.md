@@ -1,6 +1,5 @@
 # NAppUpdate
 
-[![NuGet](https://img.shields.io/nuget/dt/NAppUpdate.Framework.svg)](https://www.nuget.org/packages/NAppUpdate.Framework)
 [![NuGet version](https://badge.fury.io/nu/NAppUpdate.Framework.svg)](http://badge.fury.io/nu/NAppUpdate.Framework)
 
 An application auto-update framework for .NET
