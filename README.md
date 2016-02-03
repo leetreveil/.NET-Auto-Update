@@ -20,7 +20,7 @@ How to contribute:
 2. Always end the document with a new line
 3. Avoid commiting lines that are irrelevant for the change (e.g. random white space changes)
 
-An [.editorconfig](http://editorconfig.org/) file is available in the project, which makes it easy to follow the standard by installing the coding standard by installing the [EditorConfig](https://visualstudiogallery.msdn.microsoft.com/c8bccfe2-650c-4b42-bc5c-845e21f96328) and [Format document on Save](https://visualstudiogallery.msdn.microsoft.com/3ea1c920-69c4-441f-9979-ccc2752dac56) extensions in Visual Studio.
+An [.editorconfig](http://editorconfig.org/) file is available in the project, which makes it easy to follow the coding standard by installing the [EditorConfig](https://visualstudiogallery.msdn.microsoft.com/c8bccfe2-650c-4b42-bc5c-845e21f96328) and [Format document on Save](https://visualstudiogallery.msdn.microsoft.com/3ea1c920-69c4-441f-9979-ccc2752dac56) extensions in Visual Studio.
 
 ## How to pack NuGet
 
