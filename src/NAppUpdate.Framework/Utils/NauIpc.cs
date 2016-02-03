@@ -148,7 +148,7 @@ namespace NAppUpdate.Framework.Utils
 			int error = Marshal.GetLastWin32Error();
 			//Check for the oddball: ERROR - PIPE CONNECTED
 			//Ref: http://msdn.microsoft.com/en-us/library/windows/desktop/aa365146%28v=vs.85%29.aspx
-			if (error == ERROR_PIPE_CONNECTED) 
+			if (error == ERROR_PIPE_CONNECTED)
 			{
 				state.result = 1;
 			}

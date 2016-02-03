@@ -27,7 +27,7 @@ namespace NAppUpdate.Tests.Conditions
 	{
 		[TestMethod]
 		public void ShortCircuitOR()
-		{	
+		{
 			BooleanCondition bc = new BooleanCondition();
 			bc.AddCondition(new MockCondition(true), BooleanCondition.ConditionType.OR);
 			bc.AddCondition(new MockCondition(true), BooleanCondition.ConditionType.OR);
@@ -105,7 +105,7 @@ namespace NAppUpdate.Tests.Conditions
 		{
 			BooleanCondition bc = new BooleanCondition();
 			bc.AddCondition(new MockCondition(false), BooleanCondition.ConditionType.AND | BooleanCondition.ConditionType.NOT);
-		
+
 			bool isMet = bc.IsMet(null);
 
 			Assert.IsTrue(isMet);

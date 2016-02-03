@@ -53,9 +53,9 @@ namespace NAppUpdate.Framework
 			get { return instance; }
 		}
 		private static readonly UpdateManager instance = new UpdateManager();
-// ReSharper disable NotAccessedField.Local
+		// ReSharper disable NotAccessedField.Local
 		private static Mutex _shutdownMutex;
-// ReSharper restore NotAccessedField.Local
+		// ReSharper restore NotAccessedField.Local
 
 		#endregion
 
@@ -131,7 +131,7 @@ namespace NAppUpdate.Framework
 		{
 			if (IsWorking)
 				throw new InvalidOperationException("Another update process is already in progress");
-			
+
 			using (WorkScope.New(isWorking => IsWorking = isWorking))
 			{
 				if (UpdateFeedReader == null)
@@ -175,19 +175,19 @@ namespace NAppUpdate.Framework
 
 			// Use a thread pool thread to perform the operation
 			ThreadPool.QueueUserWorkItem(o =>
-			                             	{
-			                             		try
-			                             		{
-			                             			// Perform the operation; if sucessful set the result
-			                             			CheckForUpdates(source ?? UpdateSource);
-			                             			ar.SetAsCompleted(null, false);
-			                             		}
-			                             		catch (Exception e)
-			                             		{
-			                             			// If operation fails, set the exception
-			                             			ar.SetAsCompleted(e, false);
-			                             		}
-			                             	}, ar);
+											{
+												try
+												{
+													// Perform the operation; if sucessful set the result
+													CheckForUpdates(source ?? UpdateSource);
+													ar.SetAsCompleted(null, false);
+												}
+												catch (Exception e)
+												{
+													// If operation fails, set the exception
+													ar.SetAsCompleted(e, false);
+												}
+											}, ar);
 
 			return ar;  // Return the IAsyncResult to the caller
 		}
@@ -357,9 +357,9 @@ namespace NAppUpdate.Framework
 					// Set current directory the the application directory
 					// this prevents the updater from writing to e.g. c:\windows\system32
 					// if the process is started by autorun on windows logon.
-// ReSharper disable AssignNullToNotNullAttribute
+					// ReSharper disable AssignNullToNotNullAttribute
 					Environment.CurrentDirectory = Path.GetDirectoryName(ApplicationPath);
-// ReSharper restore AssignNullToNotNullAttribute
+					// ReSharper restore AssignNullToNotNullAttribute
 
 					// Make sure the current backup folder is accessible for writing from this process
 					string backupParentPath = Path.GetDirectoryName(Config.BackupFolder) ?? string.Empty;
@@ -429,7 +429,7 @@ namespace NAppUpdate.Framework
 						}
 
 						if (task.ExecutionStatus == TaskExecutionStatus.RequiresAppRestart
-						    || task.ExecutionStatus == TaskExecutionStatus.RequiresPrivilegedAppRestart)
+							|| task.ExecutionStatus == TaskExecutionStatus.RequiresPrivilegedAppRestart)
 						{
 							// Record that we have cold updates to run, and if required to run any of them privileged
 							runPrivileged = runPrivileged || task.ExecutionStatus == TaskExecutionStatus.RequiresPrivilegedAppRestart;
@@ -447,27 +447,27 @@ namespace NAppUpdate.Framework
 					if (hasColdUpdates)
 					{
 						var dto = new NauIpc.NauDto
-						          	{
-						          		Configs = Instance.Config,
-						          		Tasks = Instance.UpdatesToApply,
-						          		AppPath = ApplicationPath,
-						          		WorkingDirectory = Environment.CurrentDirectory,
-						          		RelaunchApplication = relaunchApplication,
-						          		LogItems = Logger.LogItems,
-						          	};
+									{
+										Configs = Instance.Config,
+										Tasks = Instance.UpdatesToApply,
+										AppPath = ApplicationPath,
+										WorkingDirectory = Environment.CurrentDirectory,
+										RelaunchApplication = relaunchApplication,
+										LogItems = Logger.LogItems,
+									};
 
 						NauIpc.ExtractUpdaterFromResource(Config.TempFolder, Instance.Config.UpdateExecutableName);
 
 						var info = new ProcessStartInfo
-						           	{
-						           		UseShellExecute = true,
-						           		WorkingDirectory = Environment.CurrentDirectory,
-						           		FileName = Path.Combine(Config.TempFolder, Instance.Config.UpdateExecutableName),
-						           		Arguments =
-						           			string.Format(@"""{0}"" {1} {2}", Config.UpdateProcessName,
-						           			              updaterShowConsole ? "-showConsole" : string.Empty,
-						           			              updaterDoLogging ? "-log" : string.Empty),
-						           	};
+									{
+										UseShellExecute = true,
+										WorkingDirectory = Environment.CurrentDirectory,
+										FileName = Path.Combine(Config.TempFolder, Instance.Config.UpdateExecutableName),
+										Arguments =
+											string.Format(@"""{0}"" {1} {2}", Config.UpdateProcessName,
+														  updaterShowConsole ? "-showConsole" : string.Empty,
+														  updaterDoLogging ? "-log" : string.Empty),
+									};
 
 						if (!updaterShowConsole)
 						{
