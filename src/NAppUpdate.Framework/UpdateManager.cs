@@ -116,37 +116,34 @@ namespace NAppUpdate.Framework
 		#region Step 1 - Check for updates
 
 		/// <summary>
-		/// Check for update synchronously, using the default update source
+		/// Check for updates synchronously
 		/// </summary>
 		public void CheckForUpdates()
 		{
-			CheckForUpdates(UpdateSource);
-		}
-
-		/// <summary>
-		/// Check for updates synchronouly
-		/// </summary>
-		/// <param name="source">Updates source to use</param>
-		public void CheckForUpdates(IUpdateSource source)
-		{
 			if (IsWorking)
+			{
 				throw new InvalidOperationException("Another update process is already in progress");
+			}
+			else if (UpdateFeedReader == null)
+			{
+				throw new InvalidOperationException("UpdateFeedReader must be set before calling CheckForUpdates()");
+			}
+			else if (UpdateSource == null)
+			{
+				throw new InvalidOperationException("UpdateSource must be set before calling CheckForUpdates()");
+			}
 
 			using (WorkScope.New(isWorking => IsWorking = isWorking))
 			{
-				if (UpdateFeedReader == null)
-					throw new ArgumentException("An update feed reader is required; please set one before checking for updates");
-
-				if (source == null)
-					throw new ArgumentException("An update source was not specified");
-
 				if (State != UpdateProcessState.NotChecked)
+				{
 					throw new InvalidOperationException("Already checked for updates; to reset the current state call CleanUp()");
+				}
 
 				lock (UpdatesToApply)
 				{
 					UpdatesToApply.Clear();
-					var tasks = UpdateFeedReader.Read(source.GetUpdatesFeed());
+					var tasks = UpdateFeedReader.Read(UpdateSource.GetUpdatesFeed());
 					foreach (var t in tasks)
 					{
 						if (ShouldStop)
@@ -164,10 +161,9 @@ namespace NAppUpdate.Framework
 		/// <summary>
 		/// Check for updates asynchronously
 		/// </summary>
-		/// <param name="source">Update source to use</param>
 		/// <param name="callback">Callback function to call when done; can be null</param>
 		/// <param name="state">Allows the caller to preserve state; can be null</param>
-		public IAsyncResult BeginCheckForUpdates(IUpdateSource source, AsyncCallback callback, Object state)
+		public IAsyncResult BeginCheckForUpdates(AsyncCallback callback, Object state)
 		{
 			// Create IAsyncResult object identifying the 
 			// asynchronous operation
@@ -175,31 +171,21 @@ namespace NAppUpdate.Framework
 
 			// Use a thread pool thread to perform the operation
 			ThreadPool.QueueUserWorkItem(o =>
-											{
-												try
-												{
-													// Perform the operation; if sucessful set the result
-													CheckForUpdates(source ?? UpdateSource);
-													ar.SetAsCompleted(null, false);
-												}
-												catch (Exception e)
-												{
-													// If operation fails, set the exception
-													ar.SetAsCompleted(e, false);
-												}
-											}, ar);
+			{
+				try
+				{
+					// Perform the operation; if sucessful set the result
+					CheckForUpdates();
+					ar.SetAsCompleted(null, false);
+				}
+				catch (Exception e)
+				{
+					// If operation fails, set the exception
+					ar.SetAsCompleted(e, false);
+				}
+			}, ar);
 
 			return ar;  // Return the IAsyncResult to the caller
-		}
-
-		/// <summary>
-		/// Check for updates asynchronously
-		/// </summary>
-		/// <param name="callback">Callback function to call when done; can be null</param>
-		/// <param name="state">Allows the caller to preserve state; can be null</param>
-		public IAsyncResult BeginCheckForUpdates(AsyncCallback callback, Object state)
-		{
-			return BeginCheckForUpdates(UpdateSource, callback, state);
 		}
 
 		/// <summary>
