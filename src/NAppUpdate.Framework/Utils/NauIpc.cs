@@ -30,7 +30,7 @@ namespace NAppUpdate.Framework.Utils
 			public bool RelaunchApplication { get; set; }
 		}
 
-		private const int PIPE_TIMEOUT = 5000;
+		private const int PIPE_TIMEOUT = 15000;
 
 		/// <summary>
 		/// Launches the specifies process and sends the dto object to it using a named pipe
