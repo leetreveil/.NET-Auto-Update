@@ -47,6 +47,11 @@ namespace NAppUpdate.Framework.Utils
 			{
 				p = Process.Start(processStartInfo);
 
+				if (p == null)
+				{
+					throw new ProcessStartFailedException("The process failed to start");
+				}
+
 				var asyncResult = pipe.BeginWaitForConnection(null, null);
 
 				if (asyncResult.AsyncWaitHandle.WaitOne(PIPE_TIMEOUT))
@@ -56,9 +61,13 @@ namespace NAppUpdate.Framework.Utils
 					BinaryFormatter formatter = new BinaryFormatter();
 					formatter.Serialize(pipe, dto);
 				}
+				else if (p.HasExited)
+				{
+					throw new TimeoutException(string.Format("The NamedPipeServerStream timed out waiting for a named pipe connection, but the process has exited with exit code: {0}", p.ExitCode));
+				}
 				else
 				{
-					throw new TimeoutException("The NamedPipeServerStream timed out waiting for a named pipe connection");
+					throw new TimeoutException("The NamedPipeServerStream timed out waiting for a named pipe connection.");
 				}
 			}
 
