@@ -16,15 +16,34 @@ namespace NAppUpdate.Updater
 		private static ArgumentsParser _args;
 		private static Logger _logger;
 		private static ConsoleForm _console;
+		private static string _tempFolder = string.Empty;
+		private static string _logFilePath = string.Empty;
+		private static string _workingDir = string.Empty;
 
 		private static void Main()
 		{
-			//Debugger.Launch();
-			string tempFolder = string.Empty;
-			string logFile = string.Empty;
+			Setup();
+
+			try
+			{
+				PerformUpdates();
+			}
+			catch (Exception ex)
+			{
+				Log(ex);
+			}
+			finally
+			{
+				Teardown();
+			}
+		}
+
+		private static void Setup()
+		{
+			_workingDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+			_logger = UpdateManager.Instance.Logger;
 			_args = ArgumentsParser.Get();
 
-			_logger = UpdateManager.Instance.Logger;
 			_args.ParseCommandLineArgs();
 			if (_args.ShowConsole)
 			{
@@ -34,212 +53,206 @@ namespace NAppUpdate.Updater
 
 			Log("Starting to process cold updates...");
 
-			var workingDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 			if (_args.Log)
 			{
 				// Setup a temporary location for the log file, until we can get the DTO
-				logFile = Path.Combine(workingDir, @"NauUpdate.log");
+				_logFilePath = Path.Combine(_workingDir, @"NauUpdate.log");
+			}
+		}
+
+		private static void PerformUpdates()
+		{
+			// Get the update process name, to be used to create a named pipe and to wait on the application
+			// to quit
+			string syncProcessName = _args.ProcessName;
+			if (string.IsNullOrEmpty(syncProcessName)) //Application.Exit();
+				throw new ArgumentException("The command line needs to specify the mutex of the program to update.", "ar" + "gs");
+
+			Log("Update process name: '{0}'", syncProcessName);
+
+			// Load extra assemblies to the app domain, if present
+			var availableAssemblies = FileSystem.GetFiles(_workingDir, "*.exe|*.dll", SearchOption.TopDirectoryOnly);
+			foreach (var assemblyPath in availableAssemblies)
+			{
+				Log("Loading {0}", assemblyPath);
+
+				if (assemblyPath.Equals(Assembly.GetEntryAssembly().Location, StringComparison.InvariantCultureIgnoreCase) || assemblyPath.EndsWith("NAppUpdate.Framework.dll"))
+				{
+					Log("\tSkipping (part of current execution)");
+					continue;
+				}
+
+				try
+				{
+					// ReSharper disable UnusedVariable
+					var assembly = Assembly.LoadFile(assemblyPath);
+					// ReSharper restore UnusedVariable
+				}
+				catch (BadImageFormatException ex)
+				{
+					Log("\tSkipping due to an error: {0}", ex.Message);
+				}
 			}
 
-			try
+			// Connect to the named pipe and retrieve the updates list
+			var dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
+
+			// Make sure we start updating only once the application has completely terminated
+			Thread.Sleep(1000); // Let's even wait a bit
+			bool createdNew;
+			using (var mutex = new Mutex(false, syncProcessName + "Mutex", out createdNew))
 			{
-				// Get the update process name, to be used to create a named pipe and to wait on the application
-				// to quit
-				string syncProcessName = _args.ProcessName;
-				if (string.IsNullOrEmpty(syncProcessName)) //Application.Exit();
-					throw new ArgumentException("The command line needs to specify the mutex of the program to update.", "ar" + "gs");
-
-				Log("Update process name: '{0}'", syncProcessName);
-
-				// Load extra assemblies to the app domain, if present
-				var availableAssemblies = FileSystem.GetFiles(workingDir, "*.exe|*.dll", SearchOption.TopDirectoryOnly);
-				foreach (var assemblyPath in availableAssemblies)
+				try
 				{
-					Log("Loading {0}", assemblyPath);
+					if (!createdNew) mutex.WaitOne();
+				}
+				catch (AbandonedMutexException)
+				{
+					// An abandoned mutex is exactly what we are expecting...
+				}
+				finally
+				{
+					Log("The application has terminated (as expected)");
+				}
+			}
 
-					if (assemblyPath.Equals(Assembly.GetEntryAssembly().Location, StringComparison.InvariantCultureIgnoreCase) || assemblyPath.EndsWith("NAppUpdate.Framework.dll"))
-					{
-						Log("\tSkipping (part of current execution)");
-						continue;
-					}
+			bool updateSuccessful = true;
 
-					try
-					{
-						// ReSharper disable UnusedVariable
-						var assembly = Assembly.LoadFile(assemblyPath);
-						// ReSharper restore UnusedVariable
-					}
-					catch (BadImageFormatException ex)
-					{
-						Log("\tSkipping due to an error: {0}", ex.Message);
-					}
+			if (dto == null || dto.Configs == null) throw new Exception("Invalid DTO received");
+
+			if (dto.LogItems != null) // shouldn't really happen
+				_logger.LogItems.InsertRange(0, dto.LogItems);
+			dto.LogItems = _logger.LogItems;
+
+			// Get some required environment variables
+			string appPath = dto.AppPath;
+			string appDir = dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
+			_tempFolder = dto.Configs.TempFolder;
+			string backupFolder = dto.Configs.BackupFolder;
+			bool relaunchApp = dto.RelaunchApplication;
+
+			if (!string.IsNullOrEmpty(dto.AppPath)) _logFilePath = Path.Combine(Path.GetDirectoryName(dto.AppPath), @"NauUpdate.log"); // now we can log to a more accessible location
+
+			if (dto.Tasks == null || dto.Tasks.Count == 0) throw new Exception("Could not find the updates list (or it was empty).");
+
+			Log("Got {0} task objects", dto.Tasks.Count);
+
+			//This can be handy if you're trying to debug the updater.exe!
+			//#if (DEBUG)
+			{
+				if (_args.ShowConsole)
+				{
+					_console.WriteLine();
+					_console.WriteLine("Pausing to attach debugger.  Press any key to continue.");
+					_console.ReadKey();
 				}
 
-				// Connect to the named pipe and retrieve the updates list
-				var dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
+			}
+			//#endif
 
-				// Make sure we start updating only once the application has completely terminated
-				Thread.Sleep(1000); // Let's even wait a bit
-				bool createdNew;
-				using (var mutex = new Mutex(false, syncProcessName + "Mutex", out createdNew))
+			// Perform the actual off-line update process
+			foreach (var t in dto.Tasks)
+			{
+				Log("Task \"{0}\": {1}", t.Description, t.ExecutionStatus);
+
+				if (t.ExecutionStatus != TaskExecutionStatus.RequiresAppRestart && t.ExecutionStatus != TaskExecutionStatus.RequiresPrivilegedAppRestart)
 				{
-					try
-					{
-						if (!createdNew) mutex.WaitOne();
-					}
-					catch (AbandonedMutexException)
-					{
-						// An abandoned mutex is exactly what we are expecting...
-					}
-					finally
-					{
-						Log("The application has terminated (as expected)");
-					}
+					Log("\tSkipping");
+					continue;
 				}
 
-				bool updateSuccessful = true;
+				Log("\tExecuting...");
 
-				if (dto == null || dto.Configs == null) throw new Exception("Invalid DTO received");
-
-				if (dto.LogItems != null) // shouldn't really happen
-					_logger.LogItems.InsertRange(0, dto.LogItems);
-				dto.LogItems = _logger.LogItems;
-
-				// Get some required environment variables
-				string appPath = dto.AppPath;
-				string appDir = dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
-				tempFolder = dto.Configs.TempFolder;
-				string backupFolder = dto.Configs.BackupFolder;
-				bool relaunchApp = dto.RelaunchApplication;
-
-				if (!string.IsNullOrEmpty(dto.AppPath)) logFile = Path.Combine(Path.GetDirectoryName(dto.AppPath), @"NauUpdate.log"); // now we can log to a more accessible location
-
-				if (dto.Tasks == null || dto.Tasks.Count == 0) throw new Exception("Could not find the updates list (or it was empty).");
-
-				Log("Got {0} task objects", dto.Tasks.Count);
-
-				//This can be handy if you're trying to debug the updater.exe!
-				//#if (DEBUG)
+				// TODO: Better handling on failure: logging, rollbacks
+				try
 				{
-					if (_args.ShowConsole)
-					{
-						_console.WriteLine();
-						_console.WriteLine("Pausing to attach debugger.  Press any key to continue.");
-						_console.ReadKey();
-					}
-
+					t.ExecutionStatus = t.Execute(true);
 				}
-				//#endif
-
-				// Perform the actual off-line update process
-				foreach (var t in dto.Tasks)
+				catch (Exception ex)
 				{
-					Log("Task \"{0}\": {1}", t.Description, t.ExecutionStatus);
-
-					if (t.ExecutionStatus != TaskExecutionStatus.RequiresAppRestart && t.ExecutionStatus != TaskExecutionStatus.RequiresPrivilegedAppRestart)
-					{
-						Log("\tSkipping");
-						continue;
-					}
-
-					Log("\tExecuting...");
-
-					// TODO: Better handling on failure: logging, rollbacks
-					try
-					{
-						t.ExecutionStatus = t.Execute(true);
-					}
-					catch (Exception ex)
-					{
-						Log(ex);
-						updateSuccessful = false;
-						t.ExecutionStatus = TaskExecutionStatus.Failed;
-					}
-
-					if (t.ExecutionStatus == TaskExecutionStatus.Successful) continue;
-					Log("\tTask execution failed");
+					Log(ex);
 					updateSuccessful = false;
-					break;
+					t.ExecutionStatus = TaskExecutionStatus.Failed;
 				}
 
-				if (updateSuccessful)
+				if (t.ExecutionStatus == TaskExecutionStatus.Successful) continue;
+				Log("\tTask execution failed");
+				updateSuccessful = false;
+				break;
+			}
+
+			if (updateSuccessful)
+			{
+				Log("Finished successfully");
+				Log("Removing backup folder");
+				if (Directory.Exists(backupFolder)) FileSystem.DeleteDirectory(backupFolder);
+			}
+			else
+			{
+				MessageBox.Show("Update Failed");
+				Log(Logger.SeverityLevel.Error, "Update failed");
+			}
+
+			// Start the application only if requested to do so
+			if (relaunchApp)
+			{
+				Log("Re-launching process {0} with working dir {1}", appPath, appDir);
+				ProcessStartInfo info;
+				if (_args.ShowConsole)
 				{
-					Log("Finished successfully");
-					Log("Removing backup folder");
-					if (Directory.Exists(backupFolder)) FileSystem.DeleteDirectory(backupFolder);
+					info = new ProcessStartInfo
+					{
+						UseShellExecute = false,
+						WorkingDirectory = appDir,
+						FileName = appPath,
+					};
 				}
 				else
 				{
-					MessageBox.Show("Update Failed");
-					Log(Logger.SeverityLevel.Error, "Update failed");
+					info = new ProcessStartInfo
+					{
+						UseShellExecute = true,
+						WorkingDirectory = appDir,
+						FileName = appPath,
+					};
 				}
 
-				// Start the application only if requested to do so
-				if (relaunchApp)
+				try
 				{
-					Log("Re-launching process {0} with working dir {1}", appPath, appDir);
-					ProcessStartInfo info;
-					if (_args.ShowConsole)
-					{
-						info = new ProcessStartInfo
-						{
-							UseShellExecute = false,
-							WorkingDirectory = appDir,
-							FileName = appPath,
-						};
-					}
-					else
-					{
-						info = new ProcessStartInfo
-						{
-							UseShellExecute = true,
-							WorkingDirectory = appDir,
-							FileName = appPath,
-						};
-					}
-
-					try
-					{
-						NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
-					}
-					catch (Exception ex)
-					{
-						throw new UpdateProcessFailedException("Unable to relaunch application and/or send DTO", ex);
-					}
+					NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
 				}
+				catch (Exception ex)
+				{
+					throw new UpdateProcessFailedException("Unable to relaunch application and/or send DTO", ex);
+				}
+			}
 
-				Log("All done");
-				//Application.Exit();
-			}
-			catch (Exception ex)
+			Log("All done");
+		}
+
+		private static void Teardown()
+		{
+			if (_args.Log)
 			{
-				// supressing catch because if at any point we get an error the update has failed
-				Log(ex);
+				// at this stage we can't make any assumptions on correctness of the path
+				FileSystem.CreateDirectoryStructure(_logFilePath, true);
+				_logger.Dump(_logFilePath);
 			}
-			finally
+
+			if (_args.ShowConsole)
 			{
 				if (_args.Log)
 				{
-					// at this stage we can't make any assumptions on correctness of the path
-					FileSystem.CreateDirectoryStructure(logFile, true);
-					_logger.Dump(logFile);
-				}
-
-				if (_args.ShowConsole)
-				{
-					if (_args.Log)
-					{
-						_console.WriteLine();
-						_console.WriteLine("Log file was saved to {0}", logFile);
-						_console.WriteLine();
-					}
 					_console.WriteLine();
-					_console.WriteLine("Press any key or close this window to exit.");
-					_console.ReadKey();
+					_console.WriteLine("Log file was saved to {0}", _logFilePath);
+					_console.WriteLine();
 				}
-				if (!string.IsNullOrEmpty(tempFolder)) SelfCleanUp(tempFolder);
-				Application.Exit();
+				_console.WriteLine();
+				_console.WriteLine("Press any key or close this window to exit.");
+				_console.ReadKey();
 			}
+			if (!string.IsNullOrEmpty(_tempFolder)) SelfCleanUp(_tempFolder);
+			Application.Exit();
 		}
 
 		private static void SelfCleanUp(string tempFolder)
