@@ -31,6 +31,13 @@ namespace NAppUpdate.Updater
 			catch (Exception ex)
 			{
 				Log(ex);
+
+				if (!_args.Log && !_args.ShowConsole)
+				{
+					MessageBox.Show(ex.ToString());
+				}
+
+				throw ex;
 			}
 			finally
 			{
@@ -62,11 +69,12 @@ namespace NAppUpdate.Updater
 
 		private static void PerformUpdates()
 		{
-			// Get the update process name, to be used to create a named pipe and to wait on the application
-			// to quit
 			string syncProcessName = _args.ProcessName;
-			if (string.IsNullOrEmpty(syncProcessName)) //Application.Exit();
-				throw new ArgumentException("The command line needs to specify the mutex of the program to update.", "ar" + "gs");
+
+			if (string.IsNullOrEmpty(syncProcessName))
+			{
+				throw new ArgumentException("Required command line argument is missing", "ProcessName");
+			}
 
 			Log("Update process name: '{0}'", syncProcessName);
 
@@ -306,8 +314,6 @@ namespace NAppUpdate.Updater
 				_console.WriteLine();
 				_console.WriteLine("The updater will close when you close this window.");
 			}
-
-			Application.DoEvents();
 		}
 	}
 }
