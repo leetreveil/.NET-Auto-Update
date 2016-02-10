@@ -130,8 +130,6 @@ namespace NAppUpdate.Updater
 				}
 			}
 
-			bool updateSuccessful = true;
-
 			if (dto == null || dto.Configs == null)
 			{
 				throw new Exception("Received an invalid dto from the pipe");
@@ -151,7 +149,6 @@ namespace NAppUpdate.Updater
 			string appDir = dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
 			_tempFolder = dto.Configs.TempFolder;
 			string backupFolder = dto.Configs.BackupFolder;
-			bool relaunchApp = dto.RelaunchApplication;
 
 			if (!string.IsNullOrEmpty(dto.AppPath))
 			{
@@ -180,18 +177,16 @@ namespace NAppUpdate.Updater
 					continue;
 				}
 
-				Log("\tExecuting...");
-
-				// TODO: Better handling on failure: logging, rollbacks
 				try
 				{
+					Log("\tExecuting...");
 					t.ExecutionStatus = t.Execute(true);
 				}
 				catch (Exception ex)
 				{
-					Log(ex);
-					updateSuccessful = false;
 					t.ExecutionStatus = TaskExecutionStatus.Failed;
+					string exceptionMessage = string.Format("Update failed, task execution threw an exception, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
+					throw new Exception(exceptionMessage, ex);
 				}
 
 				if (t.ExecutionStatus == TaskExecutionStatus.Successful)
@@ -199,30 +194,23 @@ namespace NAppUpdate.Updater
 					continue;
 				}
 
-				Log("\tTask execution failed");
-				updateSuccessful = false;
-				break;
+				string taskFailedMessage = string.Format("Update failed, task execution failed, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
+
+				Log(Logger.SeverityLevel.Error, taskFailedMessage);
+				throw new Exception(taskFailedMessage);
 			}
 
-			if (updateSuccessful)
-			{
-				Log("Finished successfully");
-				Log("Removing backup folder");
+			Log("Finished successfully");
+			Log("Removing backup folder");
 
-				// QUESTION(robin): What is the difference between this clean up and the teardown?
-				if (Directory.Exists(backupFolder))
-				{
-					FileSystem.DeleteDirectory(backupFolder);
-				}
-			}
-			else
+			// QUESTION(robin): What is the difference between this clean up and the teardown?
+			if (Directory.Exists(backupFolder))
 			{
-				MessageBox.Show("Update Failed");
-				Log(Logger.SeverityLevel.Error, "Update failed");
+				FileSystem.DeleteDirectory(backupFolder);
 			}
 
 			// Start the application only if requested to do so
-			if (relaunchApp)
+			if (dto.RelaunchApplication)
 			{
 				Log("Re-launching process {0} with working dir {1}", appPath, appDir);
 				ProcessStartInfo info;
