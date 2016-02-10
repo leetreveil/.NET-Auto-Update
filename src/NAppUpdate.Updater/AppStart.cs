@@ -78,9 +78,6 @@ namespace NAppUpdate.Updater
 
 			Log("Update process name: '{0}'", syncProcessName);
 
-
-			// QUESTION(robin): WHAT DOES THIS PART DO? IT LOADS ALL ASSEMBLIES IN THE CURRENT WD?
-
 			// Load extra assemblies to the app domain, if present
 			var availableAssemblies = FileSystem.GetFiles(_workingDir, "*.exe|*.dll", SearchOption.TopDirectoryOnly);
 			foreach (var assemblyPath in availableAssemblies)
@@ -135,13 +132,7 @@ namespace NAppUpdate.Updater
 				throw new Exception("Received an invalid dto from the pipe");
 			}
 
-			// shouldn't really happen
-			// QUESTION(robin): Why is it being checked then?
-			if (_dto.LogItems != null)
-			{
-				_logger.LogItems.InsertRange(0, _dto.LogItems);
-			}
-
+			_logger.LogItems.InsertRange(0, _dto.LogItems);
 			_dto.LogItems = _logger.LogItems;
 
 			// Get some required environment variables
