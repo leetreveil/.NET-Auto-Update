@@ -78,6 +78,9 @@ namespace NAppUpdate.Updater
 
 			Log("Update process name: '{0}'", syncProcessName);
 
+
+			// QUESTION(robin): WHAT DOES THIS PART DO? IT LOADS ALL ASSEMBLIES IN THE CURRENT WD?
+
 			// Load extra assemblies to the app domain, if present
 			var availableAssemblies = FileSystem.GetFiles(_workingDir, "*.exe|*.dll", SearchOption.TopDirectoryOnly);
 			foreach (var assemblyPath in availableAssemblies)
@@ -112,7 +115,10 @@ namespace NAppUpdate.Updater
 			{
 				try
 				{
-					if (!createdNew) mutex.WaitOne();
+					if (!createdNew)
+					{
+						mutex.WaitOne();
+					}
 				}
 				catch (AbandonedMutexException)
 				{
@@ -126,10 +132,18 @@ namespace NAppUpdate.Updater
 
 			bool updateSuccessful = true;
 
-			if (dto == null || dto.Configs == null) throw new Exception("Invalid DTO received");
+			if (dto == null || dto.Configs == null)
+			{
+				throw new Exception("Received an invalid dto from the pipe");
+			}
 
-			if (dto.LogItems != null) // shouldn't really happen
+			// shouldn't really happen
+			// QUESTION(robin): Why is it being checked then?
+			if (dto.LogItems != null)
+			{
 				_logger.LogItems.InsertRange(0, dto.LogItems);
+			}
+
 			dto.LogItems = _logger.LogItems;
 
 			// Get some required environment variables
@@ -139,24 +153,21 @@ namespace NAppUpdate.Updater
 			string backupFolder = dto.Configs.BackupFolder;
 			bool relaunchApp = dto.RelaunchApplication;
 
-			if (!string.IsNullOrEmpty(dto.AppPath)) _logFilePath = Path.Combine(Path.GetDirectoryName(dto.AppPath), @"NauUpdate.log"); // now we can log to a more accessible location
+			if (!string.IsNullOrEmpty(dto.AppPath))
+			{
+				_logFilePath = Path.Combine(Path.GetDirectoryName(dto.AppPath), @"NauUpdate.log"); // now we can log to a more accessible location
+			}
 
-			if (dto.Tasks == null || dto.Tasks.Count == 0) throw new Exception("Could not find the updates list (or it was empty).");
+			if (dto.Tasks == null)
+			{
+				throw new Exception("The Task list received in the dto is null");
+			}
+			else if (dto.Tasks.Count == 0)
+			{
+				throw new Exception("The Task list received in the dto is empty");
+			}
 
 			Log("Got {0} task objects", dto.Tasks.Count);
-
-			//This can be handy if you're trying to debug the updater.exe!
-			//#if (DEBUG)
-			{
-				if (_args.ShowConsole)
-				{
-					_console.WriteLine();
-					_console.WriteLine("Pausing to attach debugger.  Press any key to continue.");
-					_console.ReadKey();
-				}
-
-			}
-			//#endif
 
 			// Perform the actual off-line update process
 			foreach (var t in dto.Tasks)
@@ -183,7 +194,11 @@ namespace NAppUpdate.Updater
 					t.ExecutionStatus = TaskExecutionStatus.Failed;
 				}
 
-				if (t.ExecutionStatus == TaskExecutionStatus.Successful) continue;
+				if (t.ExecutionStatus == TaskExecutionStatus.Successful)
+				{
+					continue;
+				}
+
 				Log("\tTask execution failed");
 				updateSuccessful = false;
 				break;
@@ -193,7 +208,12 @@ namespace NAppUpdate.Updater
 			{
 				Log("Finished successfully");
 				Log("Removing backup folder");
-				if (Directory.Exists(backupFolder)) FileSystem.DeleteDirectory(backupFolder);
+
+				// QUESTION(robin): What is the difference between this clean up and the teardown?
+				if (Directory.Exists(backupFolder))
+				{
+					FileSystem.DeleteDirectory(backupFolder);
+				}
 			}
 			else
 			{
@@ -234,8 +254,6 @@ namespace NAppUpdate.Updater
 					throw new UpdateProcessFailedException("Unable to relaunch application and/or send DTO", ex);
 				}
 			}
-
-			Log("All done");
 		}
 
 		private static void Teardown()
@@ -259,7 +277,12 @@ namespace NAppUpdate.Updater
 				_console.WriteLine("Press any key or close this window to exit.");
 				_console.ReadKey();
 			}
-			if (!string.IsNullOrEmpty(_tempFolder)) SelfCleanUp(_tempFolder);
+
+			if (!string.IsNullOrEmpty(_tempFolder))
+			{
+				SelfCleanUp(_tempFolder);
+			}
+
 			Application.Exit();
 		}
 
