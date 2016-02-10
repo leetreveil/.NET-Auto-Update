@@ -213,25 +213,15 @@ namespace NAppUpdate.Updater
 			if (dto.RelaunchApplication)
 			{
 				Log("Re-launching process {0} with working dir {1}", appPath, appDir);
-				ProcessStartInfo info;
-				if (_args.ShowConsole)
+
+				bool useShellExecute = !_args.ShowConsole;
+
+				ProcessStartInfo info = new ProcessStartInfo
 				{
-					info = new ProcessStartInfo
-					{
-						UseShellExecute = false,
-						WorkingDirectory = appDir,
-						FileName = appPath,
-					};
-				}
-				else
-				{
-					info = new ProcessStartInfo
-					{
-						UseShellExecute = true,
-						WorkingDirectory = appDir,
-						FileName = appPath,
-					};
-				}
+					UseShellExecute = useShellExecute,
+					WorkingDirectory = appDir,
+					FileName = appPath
+				};
 
 				try
 				{
