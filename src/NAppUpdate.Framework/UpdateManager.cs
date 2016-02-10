@@ -506,10 +506,20 @@ namespace NAppUpdate.Framework
 
 		public void ReinstateIfRestarted()
 		{
+			if (!IsAfterRestart())
+			{
+				return;
+			}
+
 			lock (UpdatesToApply)
 			{
-				var dto = NauIpc.ReadDto(Config.UpdateProcessName) as NauIpc.NauDto;
-				if (dto == null) return;
+				NauIpc.NauDto dto = NauIpc.ReadDto(Config.UpdateProcessName);
+
+				if (dto == null)
+				{
+					return;
+				}
+
 				Config = dto.Configs;
 				UpdatesToApply = dto.Tasks;
 				Logger = new Logger(dto.LogItems);
@@ -580,6 +590,19 @@ namespace NAppUpdate.Framework
 
 				ShouldStop = false;
 			}
+		}
+
+		private bool IsAfterRestart()
+		{
+			foreach (string arg in Environment.GetCommandLineArgs())
+			{
+				if (arg == "-nappupdate-afterrestart")
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 	}
 }
