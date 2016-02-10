@@ -91,7 +91,7 @@ namespace NAppUpdate.Framework.Utils
 				dto = formatter.Deserialize(pipe) as NauDto;
 			}
 
-			if (dto == null)
+			if (dto == null || dto.Configs == null)
 			{
 				throw new Exception("Failed to read the dto from the pipe stream");
 			}

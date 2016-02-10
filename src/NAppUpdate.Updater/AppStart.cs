@@ -22,10 +22,9 @@ namespace NAppUpdate.Updater
 
 		private static void Main()
 		{
-			Setup();
-
 			try
 			{
+				Setup();
 				PerformUpdates();
 			}
 			catch (Exception ex)
@@ -37,7 +36,7 @@ namespace NAppUpdate.Updater
 					MessageBox.Show(ex.ToString());
 				}
 
-				throw ex;
+				throw;
 			}
 			finally
 			{
@@ -103,7 +102,7 @@ namespace NAppUpdate.Updater
 			}
 
 			// Connect to the named pipe and retrieve the updates list
-			_dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
+			_dto = NauIpc.ReadDto(syncProcessName);
 
 			// Make sure we start updating only once the application has completely terminated
 			Thread.Sleep(1000); // Let's even wait a bit
@@ -125,11 +124,6 @@ namespace NAppUpdate.Updater
 				{
 					Log("The application has terminated (as expected)");
 				}
-			}
-
-			if (_dto == null || _dto.Configs == null)
-			{
-				throw new Exception("Received an invalid dto from the pipe");
 			}
 
 			_logger.LogItems.InsertRange(0, _dto.LogItems);
