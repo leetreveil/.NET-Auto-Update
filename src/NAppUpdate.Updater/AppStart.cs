@@ -16,7 +16,7 @@ namespace NAppUpdate.Updater
 		private static ArgumentsParser _args;
 		private static Logger _logger;
 		private static ConsoleForm _console;
-		private static string _tempFolder = string.Empty;
+		private static NauIpc.NauDto _dto;
 		private static string _logFilePath = string.Empty;
 		private static string _workingDir = string.Empty;
 
@@ -106,7 +106,7 @@ namespace NAppUpdate.Updater
 			}
 
 			// Connect to the named pipe and retrieve the updates list
-			var dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
+			_dto = NauIpc.ReadDto(syncProcessName) as NauIpc.NauDto;
 
 			// Make sure we start updating only once the application has completely terminated
 			Thread.Sleep(1000); // Let's even wait a bit
@@ -130,44 +130,42 @@ namespace NAppUpdate.Updater
 				}
 			}
 
-			if (dto == null || dto.Configs == null)
+			if (_dto == null || _dto.Configs == null)
 			{
 				throw new Exception("Received an invalid dto from the pipe");
 			}
 
 			// shouldn't really happen
 			// QUESTION(robin): Why is it being checked then?
-			if (dto.LogItems != null)
+			if (_dto.LogItems != null)
 			{
-				_logger.LogItems.InsertRange(0, dto.LogItems);
+				_logger.LogItems.InsertRange(0, _dto.LogItems);
 			}
 
-			dto.LogItems = _logger.LogItems;
+			_dto.LogItems = _logger.LogItems;
 
 			// Get some required environment variables
-			string appPath = dto.AppPath;
-			string appDir = dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
-			_tempFolder = dto.Configs.TempFolder;
-			string backupFolder = dto.Configs.BackupFolder;
+			string appPath = _dto.AppPath;
+			string appDir = _dto.WorkingDirectory ?? Path.GetDirectoryName(appPath) ?? string.Empty;
 
-			if (!string.IsNullOrEmpty(dto.AppPath))
+			if (!string.IsNullOrEmpty(_dto.AppPath))
 			{
-				_logFilePath = Path.Combine(Path.GetDirectoryName(dto.AppPath), @"NauUpdate.log"); // now we can log to a more accessible location
+				_logFilePath = Path.Combine(Path.GetDirectoryName(_dto.AppPath), @"NauUpdate.log"); // now we can log to a more accessible location
 			}
 
-			if (dto.Tasks == null)
+			if (_dto.Tasks == null)
 			{
 				throw new Exception("The Task list received in the dto is null");
 			}
-			else if (dto.Tasks.Count == 0)
+			else if (_dto.Tasks.Count == 0)
 			{
 				throw new Exception("The Task list received in the dto is empty");
 			}
 
-			Log("Got {0} task objects", dto.Tasks.Count);
+			Log("Got {0} task objects", _dto.Tasks.Count);
 
 			// Perform the actual off-line update process
-			foreach (var t in dto.Tasks)
+			foreach (var t in _dto.Tasks)
 			{
 				Log("Task \"{0}\": {1}", t.Description, t.ExecutionStatus);
 
@@ -203,14 +201,13 @@ namespace NAppUpdate.Updater
 			Log("Finished successfully");
 			Log("Removing backup folder");
 
-			// QUESTION(robin): What is the difference between this clean up and the teardown?
-			if (Directory.Exists(backupFolder))
+			if (Directory.Exists(_dto.Configs.BackupFolder))
 			{
-				FileSystem.DeleteDirectory(backupFolder);
+				FileSystem.DeleteDirectory(_dto.Configs.BackupFolder);
 			}
 
 			// Start the application only if requested to do so
-			if (dto.RelaunchApplication)
+			if (_dto.RelaunchApplication)
 			{
 				Log("Re-launching process {0} with working dir {1}", appPath, appDir);
 
@@ -225,7 +222,7 @@ namespace NAppUpdate.Updater
 
 				try
 				{
-					NauIpc.LaunchProcessAndSendDto(dto, info, syncProcessName);
+					NauIpc.LaunchProcessAndSendDto(_dto, info, syncProcessName);
 				}
 				catch (Exception ex)
 				{
@@ -256,9 +253,9 @@ namespace NAppUpdate.Updater
 				_console.ReadKey();
 			}
 
-			if (!string.IsNullOrEmpty(_tempFolder))
+			if (_dto != null && !string.IsNullOrEmpty(_dto.Configs.TempFolder))
 			{
-				SelfCleanUp(_tempFolder);
+				SelfCleanUp(_dto.Configs.TempFolder);
 			}
 
 			Application.Exit();
@@ -296,9 +293,11 @@ namespace NAppUpdate.Updater
 			message = string.Format(message, args);
 
 			_logger.Log(severity, message);
-			if (_args.ShowConsole) _console.WriteLine(message);
 
-			Application.DoEvents();
+			if (_args.ShowConsole)
+			{
+				_console.WriteLine(message);
+			}
 		}
 
 		private static void Log(Exception ex)
