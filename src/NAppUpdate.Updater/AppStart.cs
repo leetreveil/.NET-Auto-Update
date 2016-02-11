@@ -34,10 +34,7 @@ namespace NAppUpdate.Updater
 
 				Log(ex);
 
-				if (!_args.Log && !_args.ShowConsole)
-				{
-					MessageBox.Show(ex.ToString());
-				}
+				EventLog.WriteEntry("NAppUpdate.Updater", ex.ToString(), EventLogEntryType.Error);
 			}
 			finally
 			{
