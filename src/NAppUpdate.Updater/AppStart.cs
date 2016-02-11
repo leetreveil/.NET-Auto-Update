@@ -20,6 +20,7 @@ namespace NAppUpdate.Updater
 		private static NauIpc.NauDto _dto;
 		private static string _logFilePath = string.Empty;
 		private static string _workingDir = string.Empty;
+		private static bool _appRunning = true;
 
 		private static void Main()
 		{
@@ -33,6 +34,11 @@ namespace NAppUpdate.Updater
 				Environment.ExitCode = Marshal.GetHRForException(ex);
 
 				Log(ex);
+
+				if (!_appRunning && !_args.Log && !_args.ShowConsole)
+				{
+					MessageBox.Show(ex.ToString());
+				}
 
 				EventLog.WriteEntry("NAppUpdate.Updater", ex.ToString(), EventLogEntryType.Error);
 			}
@@ -121,6 +127,7 @@ namespace NAppUpdate.Updater
 				finally
 				{
 					Log("The application has terminated (as expected)");
+					_appRunning = false;
 				}
 			}
 
@@ -204,6 +211,7 @@ namespace NAppUpdate.Updater
 				try
 				{
 					NauIpc.LaunchProcessAndSendDto(_dto, info, syncProcessName);
+					_appRunning = true;
 				}
 				catch (Exception ex)
 				{
