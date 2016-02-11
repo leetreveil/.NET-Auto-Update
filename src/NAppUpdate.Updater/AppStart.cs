@@ -202,7 +202,8 @@ namespace NAppUpdate.Updater
 				{
 					UseShellExecute = useShellExecute,
 					WorkingDirectory = appDir,
-					FileName = appPath
+					FileName = appPath,
+					Arguments = "-nappupdate-afterrestart"
 				};
 
 				try
