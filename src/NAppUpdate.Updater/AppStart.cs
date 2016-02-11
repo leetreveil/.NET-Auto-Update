@@ -158,6 +158,8 @@ namespace NAppUpdate.Updater
 					continue;
 				}
 
+				Exception exception = null;
+
 				try
 				{
 					Log("\tExecuting...");
@@ -166,19 +168,14 @@ namespace NAppUpdate.Updater
 				catch (Exception ex)
 				{
 					t.ExecutionStatus = TaskExecutionStatus.Failed;
-					string exceptionMessage = string.Format("Update failed, task execution threw an exception, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
-					throw new Exception(exceptionMessage, ex);
+					exception = ex;
 				}
 
-				if (t.ExecutionStatus == TaskExecutionStatus.Successful)
+				if (t.ExecutionStatus != TaskExecutionStatus.Successful)
 				{
-					continue;
+					string taskFailedMessage = string.Format("Update failed, task execution failed, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
+					throw new Exception(taskFailedMessage, exception);
 				}
-
-				string taskFailedMessage = string.Format("Update failed, task execution failed, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
-
-				Log(Logger.SeverityLevel.Error, taskFailedMessage);
-				throw new Exception(taskFailedMessage);
 			}
 
 			Log("Finished successfully");
