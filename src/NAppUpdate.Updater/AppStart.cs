@@ -242,7 +242,7 @@ namespace NAppUpdate.Updater
 				_console.ReadKey();
 			}
 
-			if (_dto != null && !string.IsNullOrEmpty(_dto.Configs.TempFolder))
+			if (_dto != null && _dto.Configs != null & !string.IsNullOrEmpty(_dto.Configs.TempFolder))
 			{
 				SelfCleanUp(_dto.Configs.TempFolder);
 			}
