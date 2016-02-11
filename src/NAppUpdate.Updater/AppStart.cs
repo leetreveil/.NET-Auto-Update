@@ -8,6 +8,7 @@ using NAppUpdate.Framework;
 using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Tasks;
 using NAppUpdate.Framework.Utils;
+using System.Runtime.InteropServices;
 
 namespace NAppUpdate.Updater
 {
@@ -29,14 +30,14 @@ namespace NAppUpdate.Updater
 			}
 			catch (Exception ex)
 			{
+				Environment.ExitCode = Marshal.GetHRForException(ex);
+
 				Log(ex);
 
 				if (!_args.Log && !_args.ShowConsole)
 				{
 					MessageBox.Show(ex.ToString());
 				}
-
-				throw;
 			}
 			finally
 			{
