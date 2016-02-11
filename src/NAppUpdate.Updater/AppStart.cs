@@ -283,6 +283,8 @@ namespace NAppUpdate.Updater
 			if (_args.ShowConsole)
 			{
 				_console.WriteLine(message);
+
+				Application.DoEvents();
 			}
 		}
 
@@ -299,6 +301,8 @@ namespace NAppUpdate.Updater
 
 				_console.WriteLine();
 				_console.WriteLine("The updater will close when you close this window.");
+
+				Application.DoEvents();
 			}
 		}
 	}
