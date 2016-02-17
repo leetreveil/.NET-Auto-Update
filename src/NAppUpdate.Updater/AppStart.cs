@@ -8,6 +8,7 @@ using NAppUpdate.Framework;
 using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Tasks;
 using NAppUpdate.Framework.Utils;
+using System.Runtime.InteropServices;
 
 namespace NAppUpdate.Updater
 {
@@ -19,6 +20,7 @@ namespace NAppUpdate.Updater
 		private static NauIpc.NauDto _dto;
 		private static string _logFilePath = string.Empty;
 		private static string _workingDir = string.Empty;
+		private static bool _appRunning = true;
 
 		private static void Main()
 		{
@@ -29,14 +31,16 @@ namespace NAppUpdate.Updater
 			}
 			catch (Exception ex)
 			{
+				Environment.ExitCode = Marshal.GetHRForException(ex);
+
 				Log(ex);
 
-				if (!_args.Log && !_args.ShowConsole)
+				if (!_appRunning && !_args.Log && !_args.ShowConsole)
 				{
 					MessageBox.Show(ex.ToString());
 				}
 
-				throw;
+				EventLog.WriteEntry("NAppUpdate.Updater", ex.ToString(), EventLogEntryType.Error);
 			}
 			finally
 			{
@@ -123,6 +127,7 @@ namespace NAppUpdate.Updater
 				finally
 				{
 					Log("The application has terminated (as expected)");
+					_appRunning = false;
 				}
 			}
 
@@ -160,6 +165,8 @@ namespace NAppUpdate.Updater
 					continue;
 				}
 
+				Exception exception = null;
+
 				try
 				{
 					Log("\tExecuting...");
@@ -168,19 +175,14 @@ namespace NAppUpdate.Updater
 				catch (Exception ex)
 				{
 					t.ExecutionStatus = TaskExecutionStatus.Failed;
-					string exceptionMessage = string.Format("Update failed, task execution threw an exception, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
-					throw new Exception(exceptionMessage, ex);
+					exception = ex;
 				}
 
-				if (t.ExecutionStatus == TaskExecutionStatus.Successful)
+				if (t.ExecutionStatus != TaskExecutionStatus.Successful)
 				{
-					continue;
+					string taskFailedMessage = string.Format("Update failed, task execution failed, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
+					throw new Exception(taskFailedMessage, exception);
 				}
-
-				string taskFailedMessage = string.Format("Update failed, task execution failed, description: {0}, execution status: {1}", t.Description, t.ExecutionStatus);
-
-				Log(Logger.SeverityLevel.Error, taskFailedMessage);
-				throw new Exception(taskFailedMessage);
 			}
 
 			Log("Finished successfully");
@@ -202,12 +204,14 @@ namespace NAppUpdate.Updater
 				{
 					UseShellExecute = useShellExecute,
 					WorkingDirectory = appDir,
-					FileName = appPath
+					FileName = appPath,
+					Arguments = "-nappupdate-afterrestart"
 				};
 
 				try
 				{
 					NauIpc.LaunchProcessAndSendDto(_dto, info, syncProcessName);
+					_appRunning = true;
 				}
 				catch (Exception ex)
 				{
@@ -238,7 +242,7 @@ namespace NAppUpdate.Updater
 				_console.ReadKey();
 			}
 
-			if (_dto != null && !string.IsNullOrEmpty(_dto.Configs.TempFolder))
+			if (_dto != null && _dto.Configs != null & !string.IsNullOrEmpty(_dto.Configs.TempFolder))
 			{
 				SelfCleanUp(_dto.Configs.TempFolder);
 			}
@@ -282,6 +286,8 @@ namespace NAppUpdate.Updater
 			if (_args.ShowConsole)
 			{
 				_console.WriteLine(message);
+
+				Application.DoEvents();
 			}
 		}
 
@@ -298,6 +304,8 @@ namespace NAppUpdate.Updater
 
 				_console.WriteLine();
 				_console.WriteLine("The updater will close when you close this window.");
+
+				Application.DoEvents();
 			}
 		}
 	}

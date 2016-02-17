@@ -63,7 +63,10 @@ namespace NAppUpdate.Framework.Utils
 				}
 				else if (p.HasExited)
 				{
-					throw new TimeoutException(string.Format("The NamedPipeServerStream timed out waiting for a named pipe connection, but the process has exited with exit code: {0}", p.ExitCode));
+					Type exceptionType = Marshal.GetExceptionForHR(p.ExitCode).GetType();
+
+					throw new TimeoutException(string.Format("The NamedPipeServerStream timed out waiting for a named pipe connection, " +
+						"but the process has exited with exit code: {0} ({1})", p.ExitCode, exceptionType.FullName));
 				}
 				else
 				{
