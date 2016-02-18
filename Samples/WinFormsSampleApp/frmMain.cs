@@ -81,6 +81,7 @@ namespace WinFormsSampleApp
 		{
 			// Get a local pointer to the UpdateManager instance
 			UpdateManager updManager = UpdateManager.Instance;
+			updManager.UpdateSource = source;
 
 			// Only check for updates if we haven't done so already
 			if (updManager.State != UpdateManager.UpdateProcessState.NotChecked)
@@ -94,7 +95,7 @@ namespace WinFormsSampleApp
 				// Check for updates - returns true if relevant updates are found (after processing all the tasks and
 				// conditions)
 				// Throws exceptions in case of bad arguments or unexpected results
-				updManager.CheckForUpdates(source);
+				updManager.CheckForUpdates();
 			}
 			catch (Exception ex)
 			{
