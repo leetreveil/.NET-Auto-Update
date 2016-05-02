@@ -295,7 +295,7 @@ namespace FeedBuilder
 					if (chkVersion.Checked && !string.IsNullOrEmpty(fileInfoEx.FileVersion))
 					{
 						cond = doc.CreateElement("FileVersionCondition");
-						cond.SetAttribute("type", "or-not");
+						cond.SetAttribute("type", "or");
 						cond.SetAttribute("what", "below");
 						cond.SetAttribute("version", fileInfoEx.FileVersion);
 						conds.AppendChild(cond);
