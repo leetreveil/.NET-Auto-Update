@@ -88,8 +88,9 @@ namespace FeedBuilder
 			chkIgnoreVsHost.Checked = Settings.Default.IgnoreVsHosting;
 			chkCopyFiles.Checked = Settings.Default.CopyFiles;
 			chkCleanUp.Checked = Settings.Default.CleanUp;
+            txtAddExtension.Text = Settings.Default.AddExtension;
 
-			if (Settings.Default.IgnoreFiles == null) Settings.Default.IgnoreFiles = new StringCollection();
+            if (Settings.Default.IgnoreFiles == null) Settings.Default.IgnoreFiles = new StringCollection();
 			ReadFiles();
 			UpdateTitle();
 		}
@@ -109,7 +110,9 @@ namespace FeedBuilder
 			// ReSharper restore AssignNullToNotNullAttribute
 			if (!string.IsNullOrEmpty(txtBaseURL.Text.Trim())) Settings.Default.BaseURL = txtBaseURL.Text.Trim();
 
-			Settings.Default.CompareVersion = chkVersion.Checked;
+            if (!string.IsNullOrEmpty(txtAddExtension.Text.Trim())) Settings.Default.AddExtension = txtAddExtension.Text.Trim();
+
+            Settings.Default.CompareVersion = chkVersion.Checked;
 			Settings.Default.CompareSize = chkSize.Checked;
 			Settings.Default.CompareDate = chkDate.Checked;
 			Settings.Default.CompareHash = chkHash.Checked;
@@ -277,9 +280,9 @@ namespace FeedBuilder
 					var fileInfoEx = (FileInfoEx)thisItem.Tag;
 					XmlElement task = doc.CreateElement("FileUpdateTask");
 					task.SetAttribute("localPath", fileInfoEx.RelativeName);
-
-					// generate FileUpdateTask metadata items
-					task.SetAttribute("lastModified", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
+                    if (!string.IsNullOrEmpty(txtAddExtension.Text)) task.SetAttribute("updateTo",fileInfoEx.RelativeName+"."+txtAddExtension.Text.Trim());
+                    // generate FileUpdateTask metadata items
+                    task.SetAttribute("lastModified", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
 					task.SetAttribute("fileSize", fileInfoEx.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
 					if (!string.IsNullOrEmpty(fileInfoEx.FileVersion)) task.SetAttribute("version", fileInfoEx.FileVersion);
 
@@ -379,7 +382,7 @@ namespace FeedBuilder
 			var fi = new FileInfo(destFile);
 			var d = Directory.GetParent(fi.FullName);
 			if (!Directory.Exists(d.FullName)) CreateDirectoryPath(d.FullName);
-
+            if (!string.IsNullOrEmpty(txtAddExtension.Text)) destFile += "." + txtAddExtension.Text.Trim();
 			// Copy with delayed retry
 			int retries = 3;
 			while (retries > 0)
@@ -387,7 +390,7 @@ namespace FeedBuilder
 				try
 				{
 					if (File.Exists(destFile)) File.Delete(destFile);
-					File.Copy(sourceFile, destFile);
+                    File.Copy(sourceFile, destFile);
 					retries = 0; // success
 					return true;
 				}
