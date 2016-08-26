@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -122,13 +122,13 @@ namespace NAppUpdate.Framework.Tasks
 						File.Delete(_destinationFile);
 					}
 
-                    FileInfo fiDest = new FileInfo(_destinationFile);
-                    FileInfo fiSrc = new FileInfo(_tempFile);
-                    FileSecurity ac1 = fiDest.GetAccessControl();
-                    ac1.SetAccessRuleProtection(true, true);
-                    fiSrc.SetAccessControl(ac1);
+					FileInfo fiDest = new FileInfo(_destinationFile);
+					FileInfo fiSrc = new FileInfo(_tempFile);
+					FileSecurity ac1 = fiDest.GetAccessControl();
+					ac1.SetAccessRuleProtection(true, true);
+					fiSrc.SetAccessControl(ac1);
 					File.Move(_tempFile, _destinationFile);
-                    _tempFile = null;
+					_tempFile = null;
 				}
 				catch (Exception ex)
 				{
