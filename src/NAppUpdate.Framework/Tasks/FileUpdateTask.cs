@@ -119,14 +119,15 @@ namespace NAppUpdate.Framework.Tasks
 				{
 					if (File.Exists(_destinationFile))
 					{
+					    FileInfo fiDest = new FileInfo(_destinationFile);
+					    FileInfo fiSrc = new FileInfo(_tempFile);
+					    FileSecurity ac1 = fiDest.GetAccessControl();
+					    ac1.SetAccessRuleProtection(true, true);
+					    fiSrc.SetAccessControl(ac1);
+
 						File.Delete(_destinationFile);
 					}
 
-					FileInfo fiDest = new FileInfo(_destinationFile);
-					FileInfo fiSrc = new FileInfo(_tempFile);
-					FileSecurity ac1 = fiDest.GetAccessControl();
-					ac1.SetAccessRuleProtection(true, true);
-					fiSrc.SetAccessControl(ac1);
 					File.Move(_tempFile, _destinationFile);
 					_tempFile = null;
 				}
