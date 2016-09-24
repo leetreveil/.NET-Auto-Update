@@ -262,7 +262,7 @@ namespace FeedBuilder
 				xmlWriter.Close();
 				node.InnerXml = builder.ToString();
 			}
-			else node.InnerText = propVal.SerializedValue.ToString();
+			else node.InnerText = propVal.SerializedValue != null ? propVal.SerializedValue.ToString() : string.Empty;
 		}
 
 		private bool IsRoaming(SettingsProperty prop)
