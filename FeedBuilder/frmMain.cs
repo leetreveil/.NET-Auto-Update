@@ -75,7 +75,14 @@ namespace FeedBuilder
 
 		private void InitializeFormSettings()
 		{
-			if (!string.IsNullOrEmpty(Settings.Default.OutputFolder) && Directory.Exists(Settings.Default.OutputFolder)) txtOutputFolder.Text = Settings.Default.OutputFolder;
+			if (!string.IsNullOrEmpty(Settings.Default.OutputFolder))
+			{
+				string path = GetFullDirectoryPath(Settings.Default.OutputFolder);
+
+				if (Directory.Exists(path))
+					txtOutputFolder.Text = Settings.Default.OutputFolder;
+			}
+
 			if (!string.IsNullOrEmpty(Settings.Default.FeedXML)) txtFeedXML.Text = Settings.Default.FeedXML;
 			if (!string.IsNullOrEmpty(Settings.Default.BaseURL)) txtBaseURL.Text = Settings.Default.BaseURL;
 
@@ -421,7 +428,14 @@ namespace FeedBuilder
 
 		private void OpenOutputsFolder()
 		{
-			string dir = Path.GetDirectoryName(txtFeedXML.Text.Trim());
+			string path = txtOutputFolder.Text.Trim();
+
+			if (string.IsNullOrEmpty(path))
+			{
+				return;
+			}
+
+			string dir = GetFullDirectoryPath(path);
 			if (dir == null) return;
 			CreateDirectoryPath(dir);
 			Process process = new Process
@@ -484,10 +498,7 @@ namespace FeedBuilder
 				return;
 			}
 
-			if (!outputDir.EndsWith("\\"))
-			{
-				outputDir += "\\";
-			}
+			outputDir = GetFullDirectoryPath(outputDir);
 
 			lstFiles.BeginUpdate();
 			lstFiles.Items.Clear();
@@ -515,6 +526,23 @@ namespace FeedBuilder
 			}
 
 			lstFiles.EndUpdate();
+		}
+
+		private string GetFullDirectoryPath(string path)
+		{
+			string absolutePath = path;
+
+			if (!Path.IsPathRooted(absolutePath))
+			{
+				absolutePath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), path);
+			}
+
+			if (!absolutePath.EndsWith("\\"))
+			{
+				absolutePath += "\\";
+			}
+
+			return Path.GetFullPath(absolutePath);
 		}
 
 		private bool IsIgnorable(string filename)
