@@ -436,7 +436,7 @@ namespace FeedBuilder
 			}
 
 			string dir = GetFullDirectoryPath(path);
-			if (dir == null) return;
+
 			CreateDirectoryPath(dir);
 			Process process = new Process
 			{
