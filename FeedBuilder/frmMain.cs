@@ -59,14 +59,16 @@ namespace FeedBuilder
 				{
 					FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
 					p.LoadFrom(FileName);
+					InitializeFormSettings();
 				}
 				else
 				{
 					_argParser.ShowGui = true;
 					_argParser.Build = false;
-					FileName = _argParser.FileName;
-					UpdateTitle();
 				}
+
+				FileName = _argParser.FileName;
+				UpdateTitle();
 			}
 			if (_argParser.ShowGui) Show();
 			if (_argParser.Build) Build();
