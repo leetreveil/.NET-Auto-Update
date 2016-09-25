@@ -10,7 +10,7 @@ using System.Xml.Serialization;
 
 namespace FeedBuilder
 {
-	public class FeedBuilderSettingsProvider : SettingsProvider
+	public class FeedBuilderSettingsProvider : SettingsProvider, IApplicationSettingsProvider
 	{
 		//XML Root Node
 		private const string SETTINGSROOT = "Settings";
@@ -37,7 +37,7 @@ namespace FeedBuilder
 				string dest = Path.Combine(GetAppSettingsPath(), GetAppSettingsFilename());
 				if (filename == dest) return;
 				File.Copy(filename, dest, true);
-				Settings.Default.Reload();
+				Settings.Default.Reset();
 			}
 			catch (Exception ex)
 			{
@@ -275,5 +275,17 @@ namespace FeedBuilder
 			}
 			return false;
 		}
+
+		public void Reset(SettingsContext context)
+		{
+			m_SettingsXML = null;
+		}
+
+		public SettingsPropertyValue GetPreviousVersion(SettingsContext context, SettingsProperty property)
+		{
+			return null;
+		}
+
+		public void Upgrade(SettingsContext context, SettingsPropertyCollection properties)	{ }
 	}
 }
