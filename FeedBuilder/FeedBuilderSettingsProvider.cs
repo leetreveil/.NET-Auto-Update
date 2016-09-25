@@ -131,6 +131,21 @@ namespace FeedBuilder
 					try
 					{
 						m_SettingsXML.Load(Path.Combine(GetAppSettingsPath(), GetAppSettingsFilename()));
+						XmlNode node = m_SettingsXML.SelectSingleNode(string.Format("{0}/*", SETTINGSROOT));
+
+						// Adopt configuration if it is from another machine.
+						if (node != null && node.Name != Environment.MachineName)
+						{
+							XmlNode machineNode = m_SettingsXML.CreateElement(Environment.MachineName);
+
+							while (node.ChildNodes.Count > 0)
+							{
+								machineNode.AppendChild(node.FirstChild);
+							}
+
+							node.ParentNode.AppendChild(machineNode);
+							node.ParentNode.RemoveChild(node);
+						}
 					}
 					catch (Exception)
 					{
