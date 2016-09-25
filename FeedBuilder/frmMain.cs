@@ -110,7 +110,6 @@ namespace FeedBuilder
 
 		private void SaveFormSettings()
 		{
-
 			if (!string.IsNullOrEmpty(txtOutputFolder.Text.Trim()) && Directory.Exists(txtOutputFolder.Text.Trim())) Settings.Default.OutputFolder = txtOutputFolder.Text.Trim();
 			// ReSharper disable AssignNullToNotNullAttribute
 			if (!string.IsNullOrEmpty(txtFeedXML.Text.Trim()) && Directory.Exists(Path.GetDirectoryName(txtFeedXML.Text.Trim()))) Settings.Default.FeedXML = txtFeedXML.Text.Trim();
@@ -140,6 +139,7 @@ namespace FeedBuilder
 		private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			SaveFormSettings();
+			Settings.Default.Save();
 		}
 
 		#endregion
