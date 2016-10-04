@@ -59,12 +59,12 @@ namespace FeedBuilder
 				{
 					FeedBuilderSettingsProvider p = new FeedBuilderSettingsProvider();
 					p.LoadFrom(FileName);
+					InitializeFormSettings();
 				}
 				else
 				{
 					_argParser.ShowGui = true;
 					_argParser.Build = false;
-					FileName = _argParser.FileName;
 					UpdateTitle();
 				}
 			}
@@ -75,9 +75,18 @@ namespace FeedBuilder
 
 		private void InitializeFormSettings()
 		{
-			if (!string.IsNullOrEmpty(Settings.Default.OutputFolder) && Directory.Exists(Settings.Default.OutputFolder)) txtOutputFolder.Text = Settings.Default.OutputFolder;
-			if (!string.IsNullOrEmpty(Settings.Default.FeedXML)) txtFeedXML.Text = Settings.Default.FeedXML;
-			if (!string.IsNullOrEmpty(Settings.Default.BaseURL)) txtBaseURL.Text = Settings.Default.BaseURL;
+			if (string.IsNullOrEmpty(Settings.Default.OutputFolder))
+			{
+				txtOutputFolder.Text = string.Empty;
+			}
+			else
+			{
+				string path = GetFullDirectoryPath(Settings.Default.OutputFolder);
+				txtOutputFolder.Text = Directory.Exists(path) ? Settings.Default.OutputFolder : string.Empty;
+			}
+
+			txtFeedXML.Text = string.IsNullOrEmpty(Settings.Default.FeedXML) ? string.Empty : Settings.Default.FeedXML;
+			txtBaseURL.Text = string.IsNullOrEmpty(Settings.Default.BaseURL) ? string.Empty : Settings.Default.BaseURL;
 
 			chkVersion.Checked = Settings.Default.CompareVersion;
 			chkSize.Checked = Settings.Default.CompareSize;
@@ -103,7 +112,6 @@ namespace FeedBuilder
 
 		private void SaveFormSettings()
 		{
-
 			if (!string.IsNullOrEmpty(txtOutputFolder.Text.Trim()) && Directory.Exists(txtOutputFolder.Text.Trim())) Settings.Default.OutputFolder = txtOutputFolder.Text.Trim();
 			// ReSharper disable AssignNullToNotNullAttribute
 			if (!string.IsNullOrEmpty(txtFeedXML.Text.Trim()) && Directory.Exists(Path.GetDirectoryName(txtFeedXML.Text.Trim()))) Settings.Default.FeedXML = txtFeedXML.Text.Trim();
@@ -133,6 +141,7 @@ namespace FeedBuilder
 		private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			SaveFormSettings();
+			Settings.Default.Save();
 		}
 
 		#endregion
@@ -421,8 +430,15 @@ namespace FeedBuilder
 
 		private void OpenOutputsFolder()
 		{
-			string dir = Path.GetDirectoryName(txtFeedXML.Text.Trim());
-			if (dir == null) return;
+			string path = txtOutputFolder.Text.Trim();
+
+			if (string.IsNullOrEmpty(path))
+			{
+				return;
+			}
+
+			string dir = GetFullDirectoryPath(path);
+
 			CreateDirectoryPath(dir);
 			Process process = new Process
 			{
@@ -484,10 +500,7 @@ namespace FeedBuilder
 				return;
 			}
 
-			if (!outputDir.EndsWith("\\"))
-			{
-				outputDir += "\\";
-			}
+			outputDir = GetFullDirectoryPath(outputDir);
 
 			lstFiles.BeginUpdate();
 			lstFiles.Items.Clear();
@@ -515,6 +528,23 @@ namespace FeedBuilder
 			}
 
 			lstFiles.EndUpdate();
+		}
+
+		private string GetFullDirectoryPath(string path)
+		{
+			string absolutePath = path;
+
+			if (!Path.IsPathRooted(absolutePath))
+			{
+				absolutePath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), path);
+			}
+
+			if (!absolutePath.EndsWith("\\"))
+			{
+				absolutePath += "\\";
+			}
+
+			return Path.GetFullPath(absolutePath);
 		}
 
 		private bool IsIgnorable(string filename)
