@@ -65,10 +65,8 @@ namespace FeedBuilder
 				{
 					_argParser.ShowGui = true;
 					_argParser.Build = false;
+					UpdateTitle();
 				}
-
-				FileName = _argParser.FileName;
-				UpdateTitle();
 			}
 			if (_argParser.ShowGui) Show();
 			if (_argParser.Build) Build();
