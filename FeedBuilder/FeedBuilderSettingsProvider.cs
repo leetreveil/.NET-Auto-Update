@@ -36,8 +36,8 @@ namespace FeedBuilder
 			{
 				string dest = Path.Combine(GetAppSettingsPath(), GetAppSettingsFilename());
 				if (filename == dest) return;
-				File.Copy(filename, dest, true);
 				Settings.Default.Reset();
+				File.Copy(filename, dest, true);
 			}
 			catch (Exception ex)
 			{
@@ -293,6 +293,8 @@ namespace FeedBuilder
 
 		public void Reset(SettingsContext context)
 		{
+			string settingsFilePath = Path.Combine(GetAppSettingsPath(), GetAppSettingsFilename());
+			File.Delete(settingsFilePath);
 			m_SettingsXML = null;
 		}
 

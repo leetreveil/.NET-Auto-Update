@@ -77,16 +77,18 @@ namespace FeedBuilder
 
 		private void InitializeFormSettings()
 		{
-			if (!string.IsNullOrEmpty(Settings.Default.OutputFolder))
+			if (string.IsNullOrEmpty(Settings.Default.OutputFolder))
+			{
+				txtOutputFolder.Text = string.Empty;
+			}
+			else
 			{
 				string path = GetFullDirectoryPath(Settings.Default.OutputFolder);
-
-				if (Directory.Exists(path))
-					txtOutputFolder.Text = Settings.Default.OutputFolder;
+				txtOutputFolder.Text = Directory.Exists(path) ? Settings.Default.OutputFolder : string.Empty;
 			}
 
-			if (!string.IsNullOrEmpty(Settings.Default.FeedXML)) txtFeedXML.Text = Settings.Default.FeedXML;
-			if (!string.IsNullOrEmpty(Settings.Default.BaseURL)) txtBaseURL.Text = Settings.Default.BaseURL;
+			txtFeedXML.Text = string.IsNullOrEmpty(Settings.Default.FeedXML) ? string.Empty : Settings.Default.FeedXML;
+			txtBaseURL.Text = string.IsNullOrEmpty(Settings.Default.BaseURL) ? string.Empty : Settings.Default.BaseURL;
 
 			chkVersion.Checked = Settings.Default.CompareVersion;
 			chkSize.Checked = Settings.Default.CompareSize;
