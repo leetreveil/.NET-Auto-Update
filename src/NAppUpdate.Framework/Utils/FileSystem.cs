@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 namespace NAppUpdate.Framework.Utils
 {
@@ -95,6 +97,23 @@ namespace NAppUpdate.Framework.Utils
 
 			//file is not locked
 			return false;
+		}
+
+		public static void CopyAccessControl(FileInfo src, FileInfo dst)
+		{
+			FileSecurity fs = src.GetAccessControl();
+
+			bool hasInheritanceRules = fs.GetAccessRules(false, true, typeof(SecurityIdentifier)).Count > 0;
+			if (hasInheritanceRules)
+			{
+				fs.SetAccessRuleProtection(false, false);
+			}
+			else
+			{
+				fs.SetAccessRuleProtection(true, true);
+			}
+
+			dst.SetAccessControl(fs);
 		}
 	}
 }
