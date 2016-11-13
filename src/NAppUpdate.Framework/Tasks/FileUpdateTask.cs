@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Threading;
 using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Utils;
@@ -117,6 +119,12 @@ namespace NAppUpdate.Framework.Tasks
 				{
 					if (File.Exists(_destinationFile))
 					{
+					    FileInfo fiDest = new FileInfo(_destinationFile);
+					    FileInfo fiSrc = new FileInfo(_tempFile);
+					    FileSecurity ac1 = fiDest.GetAccessControl();
+					    ac1.SetAccessRuleProtection(true, true);
+					    fiSrc.SetAccessControl(ac1);
+
 						File.Delete(_destinationFile);
 					}
 
