@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Threading;
 using NAppUpdate.Framework.Common;
 using NAppUpdate.Framework.Utils;
@@ -117,6 +119,8 @@ namespace NAppUpdate.Framework.Tasks
 				{
 					if (File.Exists(_destinationFile))
 					{
+						FileSystem.CopyAccessControl(new FileInfo(_destinationFile), new FileInfo(_tempFile));
+
 						File.Delete(_destinationFile);
 					}
 
@@ -147,6 +151,7 @@ namespace NAppUpdate.Framework.Tasks
 			}
 			return TaskExecutionStatus.RequiresAppRestart;
 		}
+
 
 		public override bool Rollback()
 		{
