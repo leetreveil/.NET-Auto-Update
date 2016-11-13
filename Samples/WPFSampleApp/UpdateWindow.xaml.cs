@@ -46,28 +46,27 @@ namespace NAppUpdate.SampleApp
 				// ApplyUpdates is a synchronous method by design. Make sure to save all user work before calling
 				// it as it might restart your application
 				// get out of the way so the console window isn't obstructed
-				Dispatcher d = Application.Current.Dispatcher;
-				d.BeginInvoke(new Action(Hide));
 				try
 				{
 					_updateManager.ApplyUpdates(true);
-					d.BeginInvoke(new Action(Close));
+
+					if (Dispatcher.CheckAccess())
+					{
+						Close();
+					}
+					else
+					{
+						Dispatcher.Invoke(new Action(Close));
+					}
 				}
 				catch
 				{
-					d.BeginInvoke(new Action(this.Show));
 					MessageBox.Show("An error occurred while trying to install software updates");
 				}
-
-				_updateManager.CleanUp();
-				d.BeginInvoke(new Action(this.Close));
-
-				Action close = Close;
-
-				if (Dispatcher.CheckAccess())
-					close();
-				else
-					Dispatcher.Invoke(close);
+				finally
+				{
+					_updateManager.CleanUp();
+				}
 			}, null);
 		}
 
