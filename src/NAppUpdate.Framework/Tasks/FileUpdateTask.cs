@@ -119,11 +119,7 @@ namespace NAppUpdate.Framework.Tasks
 				{
 					if (File.Exists(_destinationFile))
 					{
-					    FileInfo fiDest = new FileInfo(_destinationFile);
-					    FileInfo fiSrc = new FileInfo(_tempFile);
-					    FileSecurity ac1 = fiDest.GetAccessControl();
-					    ac1.SetAccessRuleProtection(true, true);
-					    fiSrc.SetAccessControl(ac1);
+						FileSystem.CopyAccessControl(new FileInfo(_destinationFile), new FileInfo(_tempFile));
 
 						File.Delete(_destinationFile);
 					}
@@ -155,6 +151,7 @@ namespace NAppUpdate.Framework.Tasks
 			}
 			return TaskExecutionStatus.RequiresAppRestart;
 		}
+
 
 		public override bool Rollback()
 		{
