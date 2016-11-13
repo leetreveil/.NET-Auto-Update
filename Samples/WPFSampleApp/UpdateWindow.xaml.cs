@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Media.Imaging;
@@ -32,47 +31,44 @@ namespace NAppUpdate.SampleApp
 			this.DataContext = _helper;
 		}
 
-		// TODO: Reimplement download progress bar
 		private void InstallNow_Click(object sender, RoutedEventArgs e)
 		{
 			ShowThrobber();
 			// dummy time delay for demonstration purposes
-			var t = new System.Timers.Timer(5000) { AutoReset = false };
+			var t = new System.Timers.Timer(2000) { AutoReset = false };
 			t.Start();
 			while (t.Enabled) { DoEvents(); }
 
 			_updateManager.BeginPrepareUpdates(asyncResult =>
+			{
+				((UpdateProcessAsyncResult)asyncResult).EndInvoke();
+
+				// ApplyUpdates is a synchronous method by design. Make sure to save all user work before calling
+				// it as it might restart your application
+				// get out of the way so the console window isn't obstructed
+				Dispatcher d = Application.Current.Dispatcher;
+				d.BeginInvoke(new Action(Hide));
+				try
 				{
-					((UpdateProcessAsyncResult)asyncResult).EndInvoke();
+					_updateManager.ApplyUpdates(true);
+					d.BeginInvoke(new Action(Close));
+				}
+				catch
+				{
+					d.BeginInvoke(new Action(this.Show));
+					MessageBox.Show("An error occurred while trying to install software updates");
+				}
 
-					// ApplyUpdates is a synchronous method by design. Make sure to save all user work before calling
-					// it as it might restart your application
-					// get out of the way so the console window isn't obstructed
-					Dispatcher d = Application.Current.Dispatcher;
-					d.BeginInvoke(new Action(Hide));
-					try
-					{
-						_updateManager.ApplyUpdates(true);
-						d.BeginInvoke(new Action(Close));
-					}
-					catch
-					{
-						d.BeginInvoke(new Action(this.Show));
-						// this.WindowState = WindowState.Normal;
-						MessageBox.Show(
-							"An error occurred while trying to install software updates");
-					}
+				_updateManager.CleanUp();
+				d.BeginInvoke(new Action(this.Close));
 
-					_updateManager.CleanUp();
-					d.BeginInvoke(new Action(this.Close));
+				Action close = Close;
 
-					Action close = Close;
-
-					if (Dispatcher.CheckAccess())
-						close();
-					else
-						Dispatcher.Invoke(close);
-				}, null);
+				if (Dispatcher.CheckAccess())
+					close();
+				else
+					Dispatcher.Invoke(close);
+			}, null);
 		}
 
 		static void DoEvents()
@@ -102,7 +98,6 @@ namespace NAppUpdate.SampleApp
 
 		private void InstallAtExit_Click(object sender, RoutedEventArgs e)
 		{
-			// TODO: the main application needs to know this was clicked?
 			Close();
 		}
 
