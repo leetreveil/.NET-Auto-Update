@@ -6,7 +6,7 @@
     <ProductVersion />
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{734FA44E-39AC-478E-A5AA-0F3D1F1974AA}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <StartupObject>FeedBuilder.Program</StartupObject>
     <RootNamespace>FeedBuilder</RootNamespace>
     <AssemblyName>FeedBuilder</AssemblyName>

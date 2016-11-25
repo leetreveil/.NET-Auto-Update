@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
@@ -51,7 +52,13 @@ namespace FeedBuilder
 
 			// The first arg is the path to ourself
 			_argParser = new ArgumentsParser(args);
-			if (!_argParser.HasArgs) return;
+
+			if (!_argParser.HasArgs)
+			{
+				FreeConsole();
+				return;
+			}
+
 			FileName = _argParser.FileName;
 			if (!string.IsNullOrEmpty(FileName))
 			{
@@ -235,6 +242,8 @@ namespace FeedBuilder
 
 		private void Build()
 		{
+			AttachConsole(-1);
+			
 			Console.WriteLine("Building NAppUpdater feed '{0}'", txtBaseURL.Text.Trim());
 			if (string.IsNullOrEmpty(txtFeedXML.Text))
 			{
@@ -606,5 +615,11 @@ namespace FeedBuilder
 				MessageBox.Show("The file could not be opened: \n" + ex.Message);
 			}
 		}
+
+		[DllImport("kernel32.dll")]
+		private static extern bool AttachConsole(int dwProcessId);
+
+		[DllImport("kernel32.dll")]
+		private static extern bool FreeConsole();
 	}
 }
