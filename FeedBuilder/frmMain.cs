@@ -245,7 +245,7 @@ namespace FeedBuilder
 			}
 			// If the target folder doesn't exist, create a path to it
 			string dest = txtFeedXML.Text.Trim();
-			var destDir = Directory.GetParent(new FileInfo(dest).FullName);
+			var destDir = Directory.GetParent(GetFullDirectoryPath(Path.GetDirectoryName(dest)));
 			if (!Directory.Exists(destDir.FullName)) Directory.CreateDirectory(destDir.FullName);
 
 			XmlDocument doc = new XmlDocument();
@@ -267,18 +267,16 @@ namespace FeedBuilder
 			foreach (ListViewItem thisItem in lstFiles.Items)
 			{
 				string destFile = "";
-				string folder = "";
 				string filename = "";
 				try
 				{
-					folder = Path.GetDirectoryName(txtFeedXML.Text.Trim());
 					filename = thisItem.Text;
-					if (folder != null) destFile = Path.Combine(folder, filename);
+					destFile = Path.Combine(destDir.FullName, filename);
 				}
 				catch { }
-				if (destFile == "" || folder == "" || filename == "")
+				if (destFile == "" || filename == "")
 				{
-					string msg = string.Format("The file could not be pathed:\nFolder:'{0}'\nFile:{1}", folder, filename);
+					string msg = string.Format("The file could not be pathed:\nFolder:'{0}'\nFile:{1}", destDir.FullName, filename);
 					if (_argParser.ShowGui) MessageBox.Show(msg);
 					Console.WriteLine(msg);
 					continue;
@@ -372,7 +370,9 @@ namespace FeedBuilder
 				}
 			}
 			feed.AppendChild(tasks);
-			doc.Save(txtFeedXML.Text.Trim());
+
+			string xmlDest = Path.Combine(destDir.FullName, Path.GetFileName(dest));
+			doc.Save(xmlDest);
 
 			// open the outputs folder if we're running from the GUI or 
 			// we have an explicit command line option to do so
@@ -493,7 +493,7 @@ namespace FeedBuilder
 
 		private void ReadFiles()
 		{
-			string outputDir = txtOutputFolder.Text.Trim();
+			string outputDir = GetFullDirectoryPath(txtOutputFolder.Text.Trim());
 
 			if (string.IsNullOrEmpty(outputDir) || !Directory.Exists(outputDir))
 			{
