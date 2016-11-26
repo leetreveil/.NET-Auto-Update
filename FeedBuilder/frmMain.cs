@@ -242,7 +242,7 @@ namespace FeedBuilder
 
 		private void Build()
 		{
-			AttachConsole(-1);
+			AttachConsole(ATTACH_PARENT_PROCESS);
 			
 			Console.WriteLine("Building NAppUpdater feed '{0}'", txtBaseURL.Text.Trim());
 			if (string.IsNullOrEmpty(txtFeedXML.Text))
@@ -615,6 +615,8 @@ namespace FeedBuilder
 				MessageBox.Show("The file could not be opened: \n" + ex.Message);
 			}
 		}
+
+		private static readonly int ATTACH_PARENT_PROCESS = -1;
 
 		[DllImport("kernel32.dll")]
 		private static extern bool AttachConsole(int dwProcessId);
