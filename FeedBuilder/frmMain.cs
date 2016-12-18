@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using System.Xml;
@@ -51,7 +52,13 @@ namespace FeedBuilder
 
 			// The first arg is the path to ourself
 			_argParser = new ArgumentsParser(args);
-			if (!_argParser.HasArgs) return;
+
+			if (!_argParser.HasArgs)
+			{
+				FreeConsole();
+				return;
+			}
+
 			FileName = _argParser.FileName;
 			if (!string.IsNullOrEmpty(FileName))
 			{
@@ -235,6 +242,8 @@ namespace FeedBuilder
 
 		private void Build()
 		{
+			AttachConsole(ATTACH_PARENT_PROCESS);
+			
 			Console.WriteLine("Building NAppUpdater feed '{0}'", txtBaseURL.Text.Trim());
 			if (string.IsNullOrEmpty(txtFeedXML.Text))
 			{
@@ -245,7 +254,7 @@ namespace FeedBuilder
 			}
 			// If the target folder doesn't exist, create a path to it
 			string dest = txtFeedXML.Text.Trim();
-			var destDir = Directory.GetParent(new FileInfo(dest).FullName);
+			var destDir = Directory.GetParent(GetFullDirectoryPath(Path.GetDirectoryName(dest)));
 			if (!Directory.Exists(destDir.FullName)) Directory.CreateDirectory(destDir.FullName);
 
 			XmlDocument doc = new XmlDocument();
@@ -267,18 +276,16 @@ namespace FeedBuilder
 			foreach (ListViewItem thisItem in lstFiles.Items)
 			{
 				string destFile = "";
-				string folder = "";
 				string filename = "";
 				try
 				{
-					folder = Path.GetDirectoryName(txtFeedXML.Text.Trim());
 					filename = thisItem.Text;
-					if (folder != null) destFile = Path.Combine(folder, filename);
+					destFile = Path.Combine(destDir.FullName, filename);
 				}
 				catch { }
-				if (destFile == "" || folder == "" || filename == "")
+				if (destFile == "" || filename == "")
 				{
-					string msg = string.Format("The file could not be pathed:\nFolder:'{0}'\nFile:{1}", folder, filename);
+					string msg = string.Format("The file could not be pathed:\nFolder:'{0}'\nFile:{1}", destDir.FullName, filename);
 					if (_argParser.ShowGui) MessageBox.Show(msg);
 					Console.WriteLine(msg);
 					continue;
@@ -372,7 +379,9 @@ namespace FeedBuilder
 				}
 			}
 			feed.AppendChild(tasks);
-			doc.Save(txtFeedXML.Text.Trim());
+
+			string xmlDest = Path.Combine(destDir.FullName, Path.GetFileName(dest));
+			doc.Save(xmlDest);
 
 			// open the outputs folder if we're running from the GUI or 
 			// we have an explicit command line option to do so
@@ -493,7 +502,7 @@ namespace FeedBuilder
 
 		private void ReadFiles()
 		{
-			string outputDir = txtOutputFolder.Text.Trim();
+			string outputDir = GetFullDirectoryPath(txtOutputFolder.Text.Trim());
 
 			if (string.IsNullOrEmpty(outputDir) || !Directory.Exists(outputDir))
 			{
@@ -606,5 +615,13 @@ namespace FeedBuilder
 				MessageBox.Show("The file could not be opened: \n" + ex.Message);
 			}
 		}
+
+		private static readonly int ATTACH_PARENT_PROCESS = -1;
+
+		[DllImport("kernel32.dll")]
+		private static extern bool AttachConsole(int dwProcessId);
+
+		[DllImport("kernel32.dll")]
+		private static extern bool FreeConsole();
 	}
 }
