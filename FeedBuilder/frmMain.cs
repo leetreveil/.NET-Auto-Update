@@ -296,9 +296,13 @@ namespace FeedBuilder
 					var fileInfoEx = (FileInfoEx)thisItem.Tag;
 					XmlElement task = doc.CreateElement("FileUpdateTask");
 					task.SetAttribute("localPath", fileInfoEx.RelativeName);
-                    if (!string.IsNullOrEmpty(txtAddExtension.Text)) task.SetAttribute("updateTo",fileInfoEx.RelativeName+"."+txtAddExtension.Text.Trim());
                     // generate FileUpdateTask metadata items
                     task.SetAttribute("lastModified", fileInfoEx.FileInfo.LastWriteTime.ToFileTime().ToString(CultureInfo.InvariantCulture));
+					if (!string.IsNullOrEmpty(txtAddExtension.Text))
+					{
+						task.SetAttribute("updateTo", AddExtensionToPath(fileInfoEx.RelativeName, txtAddExtension.Text));
+					}
+
 					task.SetAttribute("fileSize", fileInfoEx.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
 					if (!string.IsNullOrEmpty(fileInfoEx.FileVersion)) task.SetAttribute("version", fileInfoEx.FileVersion);
 
@@ -400,7 +404,11 @@ namespace FeedBuilder
 			var fi = new FileInfo(destFile);
 			var d = Directory.GetParent(fi.FullName);
 			if (!Directory.Exists(d.FullName)) CreateDirectoryPath(d.FullName);
-            if (!string.IsNullOrEmpty(txtAddExtension.Text)) destFile += "." + txtAddExtension.Text.Trim();
+			if (!string.IsNullOrEmpty(txtAddExtension.Text))
+			{
+				destFile = AddExtensionToPath(destFile, txtAddExtension.Text);
+			}
+
 			// Copy with delayed retry
 			int retries = 3;
 			while (retries > 0)
@@ -561,6 +569,12 @@ namespace FeedBuilder
 			string ext = Path.GetExtension(filename);
 			if ((chkIgnoreSymbols.Checked && ext == ".pdb")) return true;
 			return (chkIgnoreVsHost.Checked && filename.ToLower().Contains("vshost.exe"));
+		}
+
+		private string AddExtensionToPath(string filePath, string extension)
+		{
+			string sanitizedExtension = (extension.Trim().StartsWith(".") ? String.Empty : ".") + extension.Trim();
+			return filePath + sanitizedExtension;
 		}
 
 		private void Save(bool forceDialog)
