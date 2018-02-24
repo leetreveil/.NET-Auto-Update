@@ -115,5 +115,11 @@ namespace NAppUpdate.Framework.Utils
 
 			dst.SetAccessControl(fs);
 		}
+
+		public static string GetFullPath(string localPath)
+		{
+			var currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+			return Path.Combine(currentDirectory, localPath);
+		}
 	}
 }
